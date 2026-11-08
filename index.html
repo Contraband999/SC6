@@ -15,7 +15,7 @@
   --panel:rgba(255,255,255,.06);--bg:#0a0a0a;
   color-scheme:dark
 }
-html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Manrope',sans-serif;color:var(--ink);overflow-x:hidden}
+html{overflow-x:hidden;max-width:100%}body{width:100%;max-width:100%;min-height:100%;background:var(--bg);font-family:'Manrope',sans-serif;color:var(--ink);overflow-x:hidden}
 body{
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -105,7 +105,7 @@ section .sec-body{padding:14px 16px}
 /* ── Panel scroll view ── */
 .panel-view{
   display:none;min-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
-  padding:12px 0 32px
+  padding:12px 0 32px;overflow-x:hidden;max-width:100%
 }
 .panel-view.open{display:block}
 .panel-back{
@@ -142,7 +142,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.3.8</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.3.9</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -162,7 +162,12 @@ ul.devlist li:last-child{border-bottom:none}
 
   <!-- Code gate -->
   <div id="devGate">
-    <section>
+    <div id="devLockedBanner" style="display:none;margin-bottom:12px;background:rgba(192,0,14,.1);border:1px solid rgba(192,0,14,.35);border-radius:12px;padding:18px 16px;text-align:center">
+      <div style="font-size:1.5rem;margin-bottom:8px">🔒</div>
+      <div style="font-size:.88rem;font-weight:700;color:#ff6b6b;margin-bottom:4px">Dev Panel Disabled</div>
+      <div style="font-size:.72rem;color:rgba(255,107,107,.7)">Under maintenance — check back later.</div>
+    </div>
+    <section id="devGateSection">
       <div class="sec-head"><h3>Dev panel</h3><p class="note" style="margin:4px 0 0">Enter access code.</p></div>
       <div class="sec-body">
         <div class="code-wrap"><input type="password" id="devCodeInput" maxlength="32" autocomplete="off" placeholder="Access code…"></div>
@@ -378,12 +383,22 @@ function show(id){
   if(id)document.getElementById(id).classList.add('open');
   else document.getElementById('home').style.display='flex';
 }
-document.getElementById('btnDev').addEventListener('click',function(){show('devView');});
+document.getElementById('btnDev').addEventListener('click',function(){
+  show('devView');
+  fetch(devLockedUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(locked){
+    var banner=document.getElementById('devLockedBanner');
+    var section=document.getElementById('devGateSection');
+    if(locked===true){banner.style.display='';section.style.display='none';}
+    else{banner.style.display='none';section.style.display='';}
+  });
+});
 document.getElementById('btnOp').addEventListener('click',function(){show('opView');});
 document.getElementById('devBack').addEventListener('click',function(){
   document.getElementById('devGate').style.display='';
   document.getElementById('devContent').style.display='none';
   document.getElementById('devCodeInput').value='';
+  document.getElementById('devLockedBanner').style.display='none';
+  document.getElementById('devGateSection').style.display='';
   show(null);
 });
 document.getElementById('opBack').addEventListener('click',function(){
