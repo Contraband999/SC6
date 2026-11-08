@@ -142,7 +142,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.3.9</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.4.1</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -276,7 +276,7 @@ ul.devlist li:last-child{border-bottom:none}
     <section>
       <div class="sec-head"><h3>Dev panel passwords</h3><p class="note" style="margin:4px 0 0">Anyone with one of these can open the Dev panel.</p></div>
       <div class="sec-body">
-        <div id="opPassList"><p class="note">Loading…</p></div>
+        <div id="opPassList" style="max-height:260px;overflow-y:auto;padding-right:4px"><p class="note">Loading…</p></div>
         <div class="row" style="margin-top:8px">
           <input type="text" id="opPassNew" maxlength="32" placeholder="New password…" style="flex:1">
           <button class="btn-sm" id="opPassAdd">Add</button>
@@ -682,7 +682,10 @@ document.getElementById('opPassAdd').addEventListener('click',function(){
     var arr=extrasFromRaw(d);
     if(arr.some(function(e){return e.code===val;})){alert('Already exists.');return;}
     arr.push({code:val,disabled:false});
-    syncFetch(devPasswordsUrl(),{method:'PUT',body:JSON.stringify(arr)}).then(function(){inp.value='';loadOpPasswords();}).catch(function(e){alert('Failed: '+e.message);});
+    fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
+      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+      .then(function(){inp.value='';loadOpPasswords();})
+      .catch(function(e){alert('Failed: '+e.message);});
   });
 });
 
