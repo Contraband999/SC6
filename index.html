@@ -142,7 +142,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.3.5</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.3.6</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -187,17 +187,6 @@ ul.devlist li:last-child{border-bottom:none}
           <button class="btn-sm" id="devTrapGen">Generate &amp; copy link</button>
         </div>
         <ul class="devlist" id="devTrapList"></ul>
-      </div>
-    </section>
-
-    <section>
-      <div class="sec-head"><h3>Sync code</h3><p class="note" style="margin:4px 0 0">All devices sharing this code share the same data bucket.</p></div>
-      <div class="sec-body">
-        <div class="row">
-          <input type="text" id="syncCodeInput" maxlength="40" placeholder="Sync code…" style="flex:1">
-          <button class="btn-sm" id="syncCodeSave">Save</button>
-        </div>
-        <p class="note" style="margin:0" id="syncCodeCurrent"></p>
       </div>
     </section>
 
@@ -334,18 +323,6 @@ var DEV_CODE='admin';
 var DEV_CODE_ALT='sc6op';
 var OP_CODE='0653';
 
-// ── Sync code (per-device override) ──
-var _syncCode=null;
-function getSyncCode(){
-  if(_syncCode)return _syncCode;
-  try{var s=localStorage.getItem('sc6_syncCode');if(s)return(_syncCode=s);}catch(e){}
-  return APP_ID;
-}
-function setSyncCode(c){
-  _syncCode=c||APP_ID;
-  try{if(c&&c!==APP_ID)localStorage.setItem('sc6_syncCode',c);else localStorage.removeItem('sc6_syncCode');}catch(e){}
-}
-
 // ── Helpers ──
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function fbUrl(path){return FIREBASE_BASE+path+'.json'}
@@ -425,10 +402,6 @@ function openDev(){
   loadDevTrapList();
   loadDevMessage();
   refreshDevTrapStatus();
-  // show sync code
-  var sc=getSyncCode();
-  document.getElementById('syncCodeInput').value=(sc===APP_ID?'':sc);
-  document.getElementById('syncCodeCurrent').textContent='Current: '+(sc===APP_ID?'default ('+APP_ID+')':sc);
 }
 
 function loadDevMessage(){
@@ -474,14 +447,6 @@ function tryDevCode(){
 }
 
 function shake(el){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');}
-
-// Sync code save
-document.getElementById('syncCodeSave').addEventListener('click',function(){
-  var val=document.getElementById('syncCodeInput').value.trim();
-  setSyncCode(val||null);
-  document.getElementById('syncCodeCurrent').textContent='Current: '+(val||'default ('+APP_ID+')');
-  alert('Sync code saved.');
-});
 
 // ══════════════════════════════════════════
 // OPERATOR AUTH
