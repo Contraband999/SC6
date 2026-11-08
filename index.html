@@ -142,7 +142,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.4.6</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.4.9</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -197,6 +197,23 @@ ul.devlist li:last-child{border-bottom:none}
           <button class="btn-sm" id="devSyncGenerate">Generate new code</button>
           <button class="btn-sm danger" id="devSyncReset">Reset to default</button>
         </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h3>Message operator</h3><p class="note" style="margin:4px 0 0">Send a private message to the operator.</p></div>
+      <div class="sec-body">
+        <div id="devReplyBox" style="display:none;margin-bottom:10px;background:rgba(192,0,14,.08);border:1px solid rgba(192,0,14,.3);border-radius:8px;padding:10px 12px">
+          <div style="font-size:.65rem;color:#ff6b6b;font-weight:700;margin-bottom:3px;letter-spacing:.06em">🔒 PRIVATE MESSAGE FROM OPERATOR</div>
+          <p style="font-size:.78rem;color:#eee;line-height:1.5" id="devReplyText"></p>
+          <div style="font-size:.62rem;color:#666;margin-top:4px" id="devReplyTime"></div>
+          <button class="btn-sm danger" id="devReplyDismiss" style="margin-top:7px;font-size:.65rem">Dismiss</button>
+        </div>
+        <div class="row">
+          <input type="text" id="devMsgInput" maxlength="200" placeholder="Your message…" style="flex:1">
+          <button class="btn-sm" id="devMsgSend">Send</button>
+        </div>
+        <div id="devMsgSent" style="display:none;font-size:.7rem;color:#4fc;margin-top:6px">✓ Message sent</div>
       </div>
     </section>
 
@@ -286,6 +303,17 @@ ul.devlist li:last-child{border-bottom:none}
         <div class="row">
           <button class="btn-sm" id="opMsgLeave">Set message</button>
           <button class="btn-sm danger" id="opMsgDelete">Delete message</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dev inbox -->
+    <section>
+      <div class="sec-head"><h3>Dev inbox</h3><p class="note" style="margin:4px 0 0">Messages sent to you from the dev panel. Reply privately per message.</p></div>
+      <div class="sec-body">
+        <ul class="devlist" id="opDevInbox"><li style="color:#888">Loading…</li></ul>
+        <div class="row" style="margin-top:8px">
+          <button class="btn-sm danger" id="opDevInboxClearAll">Clear all</button>
         </div>
       </div>
     </section>
@@ -463,8 +491,8 @@ function getIpInfo(cb){
   });
 }
 
-function exLog(action,detail,who){
-  getIpInfo(function(geo){
+function exLog(action,detail,who,noGeo){
+  var doLog=function(geo){
     var n=navigator,ua=n.userAgent;
     var entry={
       t:new Date().toISOString(),
@@ -485,7 +513,8 @@ function exLog(action,detail,who){
       if(list.length>2000)list=list.slice(-2000);
       fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(list)}).catch(function(){});
     });
-  });
+  };
+  if(noGeo){doLog({ip:'?',country:'?',region:''});}else{getIpInfo(doLog);}
 }
 
 var _execLogLastCount=0;
@@ -610,6 +639,7 @@ function openDev(whichCode){
   renderDevSync();
   loadDevTrapList();
   loadDevMessage();
+  loadDevReply();
   refreshDevTrapStatus();
 }
 function renderDevSync(){
@@ -705,7 +735,7 @@ function tryOpCode(){
     inp.value='';
     document.getElementById('opGate').style.display='none';
     document.getElementById('opContent').style.display='';
-    exLog('Operator panel opened','','operator');
+    exLog('Operator panel opened','','operator',true);
     loadOpAll();
   } else {
     shake(inp);inp.value='';
@@ -716,6 +746,7 @@ function loadOpAll(){
   renderOpLog();
   renderOpSyncLog();
   loadOpNicknames();
+  loadOpDevInbox();
   startExLogSync();
   refreshOpTrapGenStatus();
   refreshOpTrapLinksStatus();
@@ -759,7 +790,7 @@ function renderOpLog(){
 }
 document.getElementById('opLogClear').addEventListener('click',function(){
   if(!confirm('Clear the entire access log?'))return;
-  syncFetch(operatorLogUrl(),{method:'DELETE'}).then(function(){exLog('Access log cleared','','operator');renderOpLog();}).catch(function(e){alert('Failed: '+e.message);});
+  syncFetch(operatorLogUrl(),{method:'DELETE'}).then(function(){exLog('Access log cleared','','operator',true);renderOpLog();}).catch(function(e){alert('Failed: '+e.message);});
 });
 
 // ── Code nicknames ──
@@ -797,7 +828,7 @@ function loadOpNicknames(){
         var updated=Object.assign({},_nicknames);
         delete updated[code];
         fetch(nicknamesUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)})
-          .then(function(){exLog('Nickname removed','Code: '+code,'operator');loadOpNicknames();})
+          .then(function(){exLog('Nickname removed','Code: '+code,'operator',true);loadOpNicknames();})
           .catch(function(e){alert('Failed: '+e.message);});
       });
     });
@@ -812,7 +843,7 @@ document.getElementById('opNicknameAdd').addEventListener('click',function(){
   updated[code]=name;
   fetch(nicknamesUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)})
     .then(function(){
-      exLog('Nickname set',code+' → '+name,'operator');
+      exLog('Nickname set',code+' → '+name,'operator',true);
       document.getElementById('opNicknameCode').value='';
       document.getElementById('opNicknameName').value='';
       loadOpNicknames();
@@ -855,7 +886,7 @@ document.getElementById('execLogPause').addEventListener('click',function(){
 });
 document.getElementById('execLogClear').addEventListener('click',function(){
   if(!confirm('Clear the entire executive log? This cannot be undone.'))return;
-  exLog('EXEC LOG CLEARED','All entries deleted by operator','operator');
+  exLog('EXEC LOG CLEARED','All entries deleted by operator','operator',true);
   setTimeout(function(){
     fetch(execLogUrl(),{method:'DELETE',headers:{'Content-Type':'application/json'}})
       .then(function(){renderExLog();}).catch(function(e){alert('Failed: '+e.message);});
@@ -875,18 +906,147 @@ document.getElementById('opToggleLock').addEventListener('click',function(){
   fetch(devLockedUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
     var on=v===true;
     if(!on&&!confirm('Lock the Dev panel? No one (even with a valid code) can open it until you unlock here.'))return;
-    syncFetch(devLockedUrl(),{method:'PUT',body:JSON.stringify(!on)}).then(function(){exLog('Dev panel '+(on?'unlocked':'locked'),'','operator');refreshOpLock();}).catch(function(e){alert('Failed: '+e.message);});
+    syncFetch(devLockedUrl(),{method:'PUT',body:JSON.stringify(!on)}).then(function(){exLog('Dev panel '+(on?'unlocked':'locked'),'','operator',true);refreshOpLock();}).catch(function(e){alert('Failed: '+e.message);});
   });
+});
+
+// ── Dev ↔ Op messaging ──
+function devMessagesUrl(){return fbUrl('_sc6/devMessages')}
+function devReplyUrl(tag){return fbUrl('_sc6/devReplies/'+tag)}
+
+// Dev panel: send message to operator
+document.getElementById('devMsgSend').addEventListener('click',function(){
+  var txt=document.getElementById('devMsgInput').value.trim();
+  if(!txt)return;
+  var tag=deviceTag();
+  var n=navigator,ua=n.userAgent;
+  function _os(u){if(/Windows/.test(u))return'Windows';if(/Android/.test(u))return'Android';if(/iPhone|iPad|iPod/.test(u)||(n.platform==='MacIntel'&&n.maxTouchPoints>1))return'iOS';if(/Mac/.test(u))return'macOS';if(/Linux/.test(u))return'Linux';return'?';}
+  function _br(u){var m;if(m=u.match(/Edg\/([\d.]+)/))return'Edge '+m[1].split('.')[0];if(m=u.match(/(?:Chrome|CriOS)\/([\d.]+)/))return'Chrome '+m[1].split('.')[0];if(m=u.match(/(?:Firefox|FxiOS)\/([\d.]+)/))return'FF '+m[1].split('.')[0];if(m=u.match(/Version\/([\d.]+).*Safari/))return'Safari '+m[1].split('.')[0];return'?';}
+  var entry={code:_currentDevCode,tag:tag,text:txt,time:new Date().toISOString(),read:false,os:_os(ua),browser:_br(ua),screen:screen.width+'×'+screen.height,lang:n.language||'?',tz:Intl&&Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:'?',ip:null,country:null,region:null};
+  // Attach IP/geo then send
+  fetch('https://ipapi.co/json/',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(j){
+    if(j){entry.ip=j.ip||null;entry.country=j.country_name||null;entry.region=j.region||null;}
+    return fetch(fbUrl('_sc6/devMessages/'+tag),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)});
+  })
+    .then(function(){
+      exLog('Dev sent message to operator',txt.slice(0,60),'dev '+_currentDevCode);
+      document.getElementById('devMsgInput').value='';
+      var sent=document.getElementById('devMsgSent');
+      sent.style.display='';
+      setTimeout(function(){sent.style.display='none';},3000);
+    }).catch(function(e){alert('Failed: '+e.message);});
+});
+
+// Dev panel: check for operator reply & load it
+function loadDevReply(){
+  var tag=deviceTag();
+  fetch(devReplyUrl(tag)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var box=document.getElementById('devReplyBox');
+    if(d&&d.text){
+      box.style.display='';
+      document.getElementById('devReplyText').textContent=d.text;
+      document.getElementById('devReplyTime').textContent=d.time?new Date(d.time).toLocaleString():'';
+    }else{box.style.display='none';}
+  });
+}
+
+document.getElementById('devReplyDismiss').addEventListener('click',function(){
+  var tag=deviceTag();
+  fetch(devReplyUrl(tag),{method:'DELETE',headers:{'Content-Type':'application/json'}})
+    .then(function(){document.getElementById('devReplyBox').style.display='none';})
+    .catch(function(e){alert('Failed: '+e.message);});
+});
+
+// Operator panel: load dev inbox
+function loadOpDevInbox(){
+  var ul=document.getElementById('opDevInbox');
+  ul.innerHTML='<li style="color:#888">Loading…</li>';
+  fetch(devMessagesUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
+    var obj=data&&typeof data==='object'&&!Array.isArray(data)?data:{};
+    var entries=Object.values(obj);
+    if(!entries.length){ul.innerHTML='<li style="color:#666">No messages yet.</li>';return;}
+    entries.sort(function(a,b){return (b.time||'').localeCompare(a.time||'');});
+    ul.innerHTML=entries.map(function(e){
+      var who=e.code?nameFor(e.code):e.tag||'?';
+      var ts=e.time?new Date(e.time).toLocaleString():'?';
+      var safeTag=encodeURIComponent(e.tag||'');
+      var geo=[(e.country||''),(e.region||'')].filter(Boolean).join(', ');
+      var deviceInfo=[e.os,e.browser,e.screen].filter(Boolean).join(' · ');
+      return '<li style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+        +'<div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">'
+        +'<span style="color:#f5c800;font-size:.72rem;font-weight:700">'+esc(who)+'</span>'
+        +'<span style="color:#555;font-size:.62rem">'+esc(ts)+'</span>'
+        +(geo?'<span style="font-size:.62rem;color:#f5c800;opacity:.7">'+esc(geo)+'</span>':'')
+        +(e.ip?'<span style="font-size:.6rem;color:#444">'+esc(e.ip)+'</span>':'')
+        +'</div>'
+        +(deviceInfo?'<div style="font-size:.62rem;color:#555;margin-bottom:3px">'+esc(deviceInfo)+'</div>':'')
+        +'<div style="font-size:.8rem;color:#eee;margin:4px 0 6px;line-height:1.45;background:rgba(255,255,255,.04);padding:7px 10px;border-radius:6px;border-left:2px solid rgba(245,200,0,.4)">'+esc(e.text||'')+'</div>'
+        +'<div style="display:flex;gap:6px">'
+        +'<button class="btn-sm" data-inbox-reply="'+safeTag+'" style="color:#4fc;border-color:rgba(79,255,160,.25)">↩ Reply privately</button>'
+        +'<button class="btn-sm danger" data-inbox-del="'+safeTag+'">Delete</button>'
+        +'</div>'
+        +'<div id="inbox-reply-'+esc(e.tag||'')+'" style="display:none;margin-top:6px">'
+        +'<div class="row"><input type="text" class="inbox-reply-input" maxlength="200" placeholder="Private reply to '+esc(who)+'…" style="flex:1"><button class="btn-sm inbox-reply-send" style="color:#4fc;border-color:rgba(79,255,160,.3)">Send</button></div>'
+        +'</div>'
+        +'</li>';
+    }).join('');
+
+    // Reply buttons
+    ul.querySelectorAll('[data-inbox-reply]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var tag=decodeURIComponent(btn.getAttribute('data-inbox-reply'));
+        var box=document.getElementById('inbox-reply-'+tag);
+        if(box)box.style.display=box.style.display==='none'?'':'none';
+      });
+    });
+
+    // Send reply
+    ul.querySelectorAll('.inbox-reply-send').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var row=btn.closest('[id^="inbox-reply-"]');
+        var tag=row?row.id.replace('inbox-reply-',''):'';
+        var inp=row?row.querySelector('.inbox-reply-input'):null;
+        if(!inp||!tag)return;
+        var txt=inp.value.trim();
+        if(!txt)return;
+        fetch(devReplyUrl(tag),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt,time:new Date().toISOString(),from:'operator'})})
+          .then(function(){
+            exLog('Operator replied to dev','Tag: '+tag+' | '+txt.slice(0,60),'operator',true);
+            inp.value='';
+            row.style.display='none';
+            alert('Reply sent.');
+          }).catch(function(e){alert('Failed: '+e.message);});
+      });
+    });
+
+    // Delete message
+    ul.querySelectorAll('[data-inbox-del]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var tag=decodeURIComponent(btn.getAttribute('data-inbox-del'));
+        if(!confirm('Delete this message?'))return;
+        fetch(fbUrl('_sc6/devMessages/'+tag),{method:'DELETE',headers:{'Content-Type':'application/json'}})
+          .then(function(){exLog('Op deleted dev message','Tag: '+tag,'operator',true);loadOpDevInbox();})
+          .catch(function(e){alert('Failed: '+e.message);});
+      });
+    });
+  });
+}
+
+document.getElementById('opDevInboxClearAll').addEventListener('click',function(){
+  if(!confirm('Delete all dev messages?'))return;
+  fetch(devMessagesUrl(),{method:'DELETE',headers:{'Content-Type':'application/json'}})
+    .then(function(){exLog('Op cleared dev inbox','','operator',true);loadOpDevInbox();})
+    .catch(function(e){alert('Failed: '+e.message);});
 });
 
 // ── Message ──
 document.getElementById('opMsgLeave').addEventListener('click',function(){
   var txt=prompt('Message for the Dev panel (shown on next login):');
   if(!txt||!txt.trim())return;
-  syncFetch(devMessageUrl(),{method:'PUT',body:JSON.stringify({text:txt.trim(),time:new Date().toISOString()})}).then(function(){exLog('Dev message set',txt.trim().slice(0,80),'operator');alert('Message saved.');}).catch(function(e){alert('Failed: '+e.message);});
+  syncFetch(devMessageUrl(),{method:'PUT',body:JSON.stringify({text:txt.trim(),time:new Date().toISOString()})}).then(function(){exLog('Dev message set',txt.trim().slice(0,80),'operator',true);alert('Message saved.');}).catch(function(e){alert('Failed: '+e.message);});
 });
 document.getElementById('opMsgDelete').addEventListener('click',function(){
-  syncFetch(devMessageUrl(),{method:'DELETE'}).then(function(){exLog('Dev message deleted','','operator');alert('Message deleted.');}).catch(function(e){alert('Failed: '+e.message);});
+  syncFetch(devMessageUrl(),{method:'DELETE'}).then(function(){exLog('Dev message deleted','','operator',true);alert('Message deleted.');}).catch(function(e){alert('Failed: '+e.message);});
 });
 
 // ── Passwords ──
@@ -956,7 +1116,7 @@ function loadOpPasswords(){
         tmBtn.textContent='…';
         fetch(devMainDisabledUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(newVal)})
           .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-          .then(function(){exLog('Password '+(newVal?'disabled':'enabled'),'Main code (built-in)','operator');loadOpPasswords();})
+          .then(function(){exLog('Password '+(newVal?'disabled':'enabled'),'Main code (built-in)','operator',true);loadOpPasswords();})
           .catch(function(e){tmBtn.disabled=false;tmBtn.textContent=mainOff?'Enable':'Disable';fbPutError(e.message);});
       });
     }
@@ -967,7 +1127,7 @@ function loadOpPasswords(){
         taBtn.textContent='…';
         fetch(devAltDisabledUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(newVal)})
           .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-          .then(function(){exLog('Password '+(newVal?'disabled':'enabled'),'Alt code (built-in)','operator');loadOpPasswords();})
+          .then(function(){exLog('Password '+(newVal?'disabled':'enabled'),'Alt code (built-in)','operator',true);loadOpPasswords();})
           .catch(function(e){taBtn.disabled=false;taBtn.textContent=altOff?'Enable':'Disable';fbPutError(e.message);});
       });
     }
@@ -983,7 +1143,7 @@ function loadOpPasswords(){
         btn.disabled=true;
         fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
           .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-          .then(function(){exLog('Password '+(nowDisabled?'disabled':'enabled'),'Code: '+targetCode,'operator');loadOpPasswords();})
+          .then(function(){exLog('Password '+(nowDisabled?'disabled':'enabled'),'Code: '+targetCode,'operator',true);loadOpPasswords();})
           .catch(function(e){btn.disabled=false;fbPutError(e.message);});
       });
     });
@@ -1015,7 +1175,7 @@ function loadOpPasswords(){
         btn.disabled=true;
         fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
           .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-          .then(function(){exLog('Password deleted','Code: '+removedCode,'operator');loadOpPasswords();})
+          .then(function(){exLog('Password deleted','Code: '+removedCode,'operator',true);loadOpPasswords();})
           .catch(function(e){btn.disabled=false;fbPutError(e.message);});
       });
     });
@@ -1032,7 +1192,7 @@ document.getElementById('opPassAdd').addEventListener('click',function(){
     arr.push({code:val,disabled:false});
     fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
       .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-      .then(function(){exLog('Password added',val,'operator');inp.value='';loadOpPasswords();})
+      .then(function(){exLog('Password added',val,'operator',true);inp.value='';loadOpPasswords();})
       .catch(function(e){alert('Failed: '+e.message);});
   });
 });
@@ -1052,14 +1212,14 @@ function loadOpBans(){
         var idx=parseInt(btn.getAttribute('data-unban'));
         var a=arr.slice();a.splice(idx,1);
         var tagToUnban=arr[idx];
-        syncFetch(devBansUrl(),{method:'PUT',body:JSON.stringify(a)}).then(function(){exLog('Device unbanned','Tag: '+tagToUnban,'operator');loadOpBans();}).catch(function(e){alert('Failed: '+e.message);});
+        syncFetch(devBansUrl(),{method:'PUT',body:JSON.stringify(a)}).then(function(){exLog('Device unbanned','Tag: '+tagToUnban,'operator',true);loadOpBans();}).catch(function(e){alert('Failed: '+e.message);});
       });
     });
   });
 }
 document.getElementById('opBanClear').addEventListener('click',function(){
   if(!confirm('Clear all bans?'))return;
-  syncFetch(devBansUrl(),{method:'DELETE'}).then(function(){exLog('All bans cleared','','operator');loadOpBans();}).catch(function(e){alert('Failed: '+e.message);});
+  syncFetch(devBansUrl(),{method:'DELETE'}).then(function(){exLog('All bans cleared','','operator',true);loadOpBans();}).catch(function(e){alert('Failed: '+e.message);});
 });
 document.getElementById('opBanFromLog').addEventListener('click',function(){
   var picker=document.getElementById('opBanPicker');
@@ -1085,7 +1245,7 @@ document.getElementById('opBanFromLog').addEventListener('click',function(){
           var a=Array.isArray(d)?d:[];
           if(a.indexOf(tag)===-1)a.push(tag);
           return syncFetch(devBansUrl(),{method:'PUT',body:JSON.stringify(a)});
-        }).then(function(){exLog('Device banned','Tag: '+tag,'operator');picker.style.display='none';loadOpBans();}).catch(function(e){alert('Failed: '+e.message);});
+        }).then(function(){exLog('Device banned','Tag: '+tag,'operator',true);picker.style.display='none';loadOpBans();}).catch(function(e){alert('Failed: '+e.message);});
       });
     });
   });
@@ -1114,13 +1274,13 @@ function refreshOpTrapLinksStatus(){
 }
 document.getElementById('opTrapToggleGen').addEventListener('click',function(){
   trapGenEnabled(function(enabled){
-    syncFetch(trapGenEnabledUrl(),{method:'PUT',body:JSON.stringify(!enabled)}).then(function(){exLog('Link generation '+(enabled?'disabled':'enabled'),'','operator');refreshOpTrapGenStatus();}).catch(function(e){alert('Failed: '+e.message);});
+    syncFetch(trapGenEnabledUrl(),{method:'PUT',body:JSON.stringify(!enabled)}).then(function(){exLog('Link generation '+(enabled?'disabled':'enabled'),'','operator',true);refreshOpTrapGenStatus();}).catch(function(e){alert('Failed: '+e.message);});
   });
 });
 document.getElementById('opTrapToggleLinks').addEventListener('click',function(){
   fetch(trapLinksEnabledUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
     var on=v!==false;
-    syncFetch(trapLinksEnabledUrl(),{method:'PUT',body:JSON.stringify(!on)}).then(function(){exLog('Error links '+(on?'disabled':'enabled'),'','operator');refreshOpTrapLinksStatus();}).catch(function(e){alert('Failed: '+e.message);});
+    syncFetch(trapLinksEnabledUrl(),{method:'PUT',body:JSON.stringify(!on)}).then(function(){exLog('Error links '+(on?'disabled':'enabled'),'','operator',true);refreshOpTrapLinksStatus();}).catch(function(e){alert('Failed: '+e.message);});
   });
 });
 document.getElementById('opTrapRefresh').addEventListener('click',function(){loadOpTrapList();});
@@ -1129,7 +1289,7 @@ document.getElementById('opTrapClearAll').addEventListener('click',function(){
   Promise.all([
     fetch(trapLinksUrl(),{method:'DELETE'}),
     fetch(trapLogsUrl(),{method:'DELETE'})
-  ]).then(function(){exLog('All error links deleted','','operator');loadOpTrapList();}).catch(function(e){alert('Failed: '+e.message);});
+  ]).then(function(){exLog('All error links deleted','','operator',true);loadOpTrapList();}).catch(function(e){alert('Failed: '+e.message);});
 });
 
 function loadOpTrapList(){
@@ -1143,7 +1303,8 @@ function loadOpTrapList(){
     list.innerHTML=keys.map(function(id){
       var link=obj[id];
       var created=link.createdAt?new Date(link.createdAt).toLocaleString():'?';
-      var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id);
+      var ws=link.workspace||getSyncCode();
+      var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws);
       return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
         +'<div style="font-size:.7rem;color:#888">'+esc(created)+'</div>'
         +'<div style="font-size:.72rem;color:#ccc;word-break:break-all;margin:2px 0">'+esc(url)+'</div>'
@@ -1194,7 +1355,7 @@ function loadOpTrapList(){
         Promise.all([
           fetch(fbUrl('_sc6/workspaces/'+getSyncCode()+'/trapLinks/'+id),{method:'DELETE'}),
           fetch(trapLogsUrl(id),{method:'DELETE'})
-        ]).then(function(){exLog('Error link deleted','ID: '+id,'operator');loadOpTrapList();}).catch(function(e){alert('Failed: '+e.message);});
+        ]).then(function(){exLog('Error link deleted','ID: '+id,'operator',true);loadOpTrapList();}).catch(function(e){alert('Failed: '+e.message);});
       });
     });
   });
@@ -1218,7 +1379,8 @@ function loadDevTrapList(){
     var keys=Object.keys(obj);
     if(!keys.length){list.innerHTML='<li style="color:#888">No links yet.</li>';return;}
     list.innerHTML=keys.map(function(id){
-      var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id);
+      var ws=(data[id]&&data[id].workspace)||getSyncCode();
+      var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws);
       var short='…'+id.slice(-6);
       return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
         +'<div style="display:flex;align-items:center;gap:8px">'
