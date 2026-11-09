@@ -779,22 +779,6 @@ function _loginFail(inp){
 }
 function _loginSuccess(){_loginAttempts=0;_loginLockedUntil=0;}
 
-// ── Anti-DevTools: lock panel if inspector opens ──
-var _devtoolsOpen=false;
-(function _watchDevTools(){
-  var t=function(){};
-  t.toString=function(){_devtoolsOpen=true;_onDevToolsOpen();return '';};
-  setInterval(function(){_devtoolsOpen=false;console.log('%c',t);},1500);
-})();
-function _onDevToolsOpen(){
-  // If operator panel is open, lock it immediately
-  var opC=document.getElementById('opContent');
-  if(opC&&opC.style.display!=='none'){
-    opC.style.display='none';
-    document.getElementById('opGate').style.display='';
-    exLog('Operator panel auto-locked','DevTools detected','operator',true);
-  }
-}
 
 // ── Helpers ──
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
