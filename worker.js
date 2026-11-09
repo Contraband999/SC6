@@ -1,4 +1,4 @@
-// SC6 Redirect Tracker Worker — v1.8.1
+// SC6 Redirect Tracker Worker — v1.8.2
 // Deploy at: media.sharelink-1.workers.dev
 
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
