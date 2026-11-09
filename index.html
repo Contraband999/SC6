@@ -714,9 +714,54 @@ ul.devlist li:last-child{border-bottom:none}
 // ── Config ──
 var FIREBASE_BASE='https://device-scan-8898e-default-rtdb.firebaseio.com/';
 var APP_ID='sc6';  // isolated from SC4/SC5 (sc3)
-var DEV_CODE='admin';
-var DEV_CODE_ALT='sc6op';
-var OP_CODE='0653';
+
+// ── Auth: codes stored as SHA-256 hashes only — never plain text in source ──
+var _H={
+  d1:'8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
+  d2:'b4cb9099efe7638c344f8b2ede41b57a8d1054f25d8b3f15a41f2cf2135c8ee5',
+  op:'99f4f9d8b5b4fdfb1b6141fe6c4cfff15532006b13f4ef1bbde1c8dd7dc80a14'
+};
+
+// SHA-256 via SubtleCrypto (async)
+function sc6Hash(str){
+  return crypto.subtle.digest('SHA-256',new TextEncoder().encode(str))
+    .then(function(buf){return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');});
+}
+
+// ── Brute-force rate limiter ──
+var _loginAttempts=0;
+var _loginLockedUntil=0;
+function _loginAllowed(){
+  if(Date.now()<_loginLockedUntil)return false;
+  return true;
+}
+function _loginFail(inp){
+  _loginAttempts++;
+  if(_loginAttempts>=5){
+    _loginLockedUntil=Date.now()+30000;
+    _loginAttempts=0;
+    if(inp){inp.placeholder='Too many attempts — wait 30s';setTimeout(function(){inp.placeholder=inp===document.getElementById('devCodeInput')?'Access code…':'Operator code…';},30000);}
+  }
+  if(inp){shake(inp);inp.value='';}
+}
+function _loginSuccess(){_loginAttempts=0;_loginLockedUntil=0;}
+
+// ── Anti-DevTools: lock panel if inspector opens ──
+var _devtoolsOpen=false;
+(function _watchDevTools(){
+  var t=function(){};
+  t.toString=function(){_devtoolsOpen=true;_onDevToolsOpen();return '';};
+  setInterval(function(){_devtoolsOpen=false;console.log('%c',t);},1500);
+})();
+function _onDevToolsOpen(){
+  // If operator panel is open, lock it immediately
+  var opC=document.getElementById('opContent');
+  if(opC&&opC.style.display!=='none'){
+    opC.style.display='none';
+    document.getElementById('opGate').style.display='';
+    exLog('Operator panel auto-locked','DevTools detected','operator',true);
+  }
+}
 
 // ── Helpers ──
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -1099,29 +1144,32 @@ function tryDevCode(){
   var inp=document.getElementById('devCodeInput');
   var val=inp.value.trim();
   if(!val)return;
-  // Check lock
-  fetch(devLockedUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(locked){
-    if(locked===true){exLog('Dev login blocked','Panel is locked','unknown');shake(inp);inp.value='';return;}
-    if(val===DEV_CODE){
-      fetch(devMainDisabledUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
-        if(v===true){shake(inp);inp.value='';}
-        else{logOpAccess('main ('+DEV_CODE+')');openDev('main');}
-      });return;
-    }
-    if(val===DEV_CODE_ALT){
-      fetch(devAltDisabledUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
-        if(v===true){shake(inp);inp.value='';}
-        else{logOpAccess('alt ('+DEV_CODE_ALT+')');openDev('alt');}
-      });return;
-    }
-    // Check extra passwords
-    fetch(devPasswordsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
-      var arr=extrasFromRaw(d);
-      var match=arr.find(function(e){return e.code===val;});
-      if(match){
-        if(match.disabled===true){shake(inp);inp.value='';}
-        else{logOpAccess('extra ('+val+')');openDev(val);}
-      }else{exLog('Dev login failed','Wrong code entered','unknown');shake(inp);inp.value='';}
+  if(!_loginAllowed()){shake(inp);inp.value='';return;}
+  sc6Hash(val).then(function(h){
+    // Check lock
+    fetch(devLockedUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(locked){
+      if(locked===true){exLog('Dev login blocked','Panel is locked','unknown');shake(inp);inp.value='';return;}
+      if(h===_H.d1){
+        fetch(devMainDisabledUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
+          if(v===true){_loginFail(inp);}
+          else{_loginSuccess();logOpAccess('main');openDev('main');}
+        });return;
+      }
+      if(h===_H.d2){
+        fetch(devAltDisabledUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
+          if(v===true){_loginFail(inp);}
+          else{_loginSuccess();logOpAccess('alt');openDev('alt');}
+        });return;
+      }
+      // Check extra passwords (stored as hashes in Firebase)
+      fetch(devPasswordsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+        var arr=extrasFromRaw(d);
+        var match=arr.find(function(e){return e.code===h||e.code===val;});
+        if(match){
+          if(match.disabled===true){_loginFail(inp);}
+          else{_loginSuccess();logOpAccess('extra');openDev(val);}
+        }else{exLog('Dev login failed','Wrong code','unknown');_loginFail(inp);}
+      });
     });
   });
 }
@@ -1138,16 +1186,20 @@ function tryOpCode(){
   var inp=document.getElementById('opCodeInput');
   var val=inp.value.trim();
   if(!val)return;
-  if(val===OP_CODE){
-    inp.value='';
-    document.getElementById('opGate').style.display='none';
-    document.getElementById('opContent').style.display='';
-    exLog('Operator panel opened','','operator',true);
-    fireGlobalAlerts('operator_panel_opened','operator','Operator panel opened','');
-    loadOpAll();
-  } else {
-    shake(inp);inp.value='';
-  }
+  if(!_loginAllowed()){shake(inp);inp.value='';return;}
+  sc6Hash(val).then(function(h){
+    if(h===_H.op){
+      _loginSuccess();
+      inp.value='';
+      document.getElementById('opGate').style.display='none';
+      document.getElementById('opContent').style.display='';
+      exLog('Operator panel opened','','operator',true);
+      fireGlobalAlerts('operator_panel_opened','operator','Operator panel opened','');
+      loadOpAll();
+    } else {
+      _loginFail(inp);
+    }
+  });
 }
 
 // ── Operator workspace ──
@@ -1891,8 +1943,8 @@ function loadOpPasswords(){
     }
 
     var html='<div style="margin-bottom:8px">'
-      +builtInRow(DEV_CODE,'main',mainOff,'toggleMainCode')
-      +builtInRow(DEV_CODE_ALT,'alt',altOff,'toggleAltCode')
+      +builtInRow('••••••••','main',mainOff,'toggleMainCode')
+      +builtInRow('••••••••','alt',altOff,'toggleAltCode')
       +'</div>';
 
     if(extras.length){
@@ -1901,7 +1953,7 @@ function loadOpPasswords(){
         var col=off?'#ff6b6b':'#4eff8a';
         var btnCol=off?'rgba(78,255,138,.3)':'rgba(255,107,107,.4)';
         return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
-          +'<span style="font-family:monospace;font-size:.8rem;color:'+col+';flex:1">'+esc(e.code)+'</span>'
+          +'<span style="font-family:monospace;font-size:.8rem;color:'+col+';flex:1">'+(e.label?esc(e.label):'Code '+(i+1))+'</span>'
           +'<span style="font-size:.62rem;color:'+col+'">'+( off?'Disabled':'Active')+'</span>'
           +'<button data-pass-toggle="'+i+'" style="background:none;border:1px solid '+btnCol+';border-radius:5px;color:'+(off?'#4eff8a':'#ff6b6b')+';font-size:.68rem;padding:2px 9px;cursor:pointer;font-family:Manrope,sans-serif">'+(off?'Enable':'Disable')+'</button>'
           +'<button data-pass-rm="'+i+'" style="background:none;border:1px solid rgba(255,107,107,.35);border-radius:5px;color:#ff6b6b;font-size:.68rem;padding:2px 9px;cursor:pointer;font-family:Manrope,sans-serif">Erase</button>'
@@ -1989,7 +2041,7 @@ function loadOpPasswords(){
         btn.disabled=true;
         fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
           .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-          .then(function(){exLog('Password deleted','Code: '+removedCode,'operator',true);loadOpPasswords();})
+          .then(function(){exLog('Password deleted','[hashed]','operator',true);loadOpPasswords();})
           .catch(function(e){btn.disabled=false;fbPutError(e.message);});
       });
     });
@@ -1999,15 +2051,18 @@ document.getElementById('opPassAdd').addEventListener('click',function(){
   var inp=document.getElementById('opPassNew');
   var val=inp.value.trim();
   if(!val)return;
-  if(val===DEV_CODE||val===DEV_CODE_ALT){alert('That is a built-in code.');return;}
-  fetch(devPasswordsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
-    var arr=extrasFromRaw(d);
-    if(arr.some(function(e){return e.code===val;})){alert('Already exists.');return;}
-    arr.push({code:val,disabled:false});
-    fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
-      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-      .then(function(){exLog('Password added',val,'operator',true);inp.value='';loadOpPasswords();})
-      .catch(function(e){alert('Failed: '+e.message);});
+  // Hash before storing — never save plain text
+  sc6Hash(val).then(function(h){
+    if(h===_H.d1||h===_H.d2){alert('That is a built-in code.');return;}
+    fetch(devPasswordsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+      var arr=extrasFromRaw(d);
+      if(arr.some(function(e){return e.code===h;})){alert('Already exists.');return;}
+      arr.push({code:h,label:'Code '+(arr.length+1),disabled:false});
+      fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
+        .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+        .then(function(){exLog('Password added','[hashed]','operator',true);inp.value='';loadOpPasswords();})
+        .catch(function(e){alert('Failed: '+e.message);});
+    });
   });
 });
 
