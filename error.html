@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>404 — Not Found</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--y:#f5c800;--red:#c0000e;--bg:#0d0d0d}
@@ -30,15 +31,15 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 </head>
 <body>
 <div class="wrap">
-  <div class="err404">404</div>
-  <div class="sub">THIS DEVICE HAS BEEN TERMINATED BY PURO &lt;3</div>
+  <div class="err404" id="errTitle">404</div>
+  <div class="sub" id="errSubtitle">THIS DEVICE HAS BEEN TERMINATED BY PURO &lt;3</div>
   <div class="tri-wrap">
     <svg viewBox="0 0 120 107" fill="none" xmlns="http://www.w3.org/2000/svg">
       <polygon points="60,8 114,100 6,100" fill="rgba(192,0,14,.08)" stroke="#c0000e" stroke-width="2" stroke-linejoin="round"/>
       <text x="60" y="78" text-anchor="middle" font-family="'Courier New',monospace" font-size="30" font-weight="700" fill="rgba(192,0,14,.55)">!</text>
     </svg>
   </div>
-  <div class="errtext">
+  <div class="errtext" id="errBody">
     <span class="eline">► <span class="eh">ERR_SOCKET_NOT_CONNECTED</span> — remote host refused handshake on port <span class="eh">443/tcp</span></span>
     <span class="eline">► Kernel bridge <span class="eh">0x4F2A</span> returned null frame after 3 retries (timeout: 8000ms)</span>
     <span class="eline">► TLS certificate chain incomplete — issuer <span class="eh">CN=VOLATILE_ROOT_CA</span> not in trust store</span>
@@ -55,20 +56,130 @@ var FIREBASE_BASE='https://device-scan-8898e-default-rtdb.firebaseio.com/';
 var LINK_ID=(function(){var p=new URLSearchParams(location.search);return p.get('id')||'';})();
 var WORKSPACE=(function(){var p=new URLSearchParams(location.search);return p.get('ws')||'void-alpha';})();
 
+// ── EmailJS alerts ──
+try{if(typeof emailjs!=='undefined')emailjs.init({publicKey:'mUmPqMu2UV2nOSa4T'});}catch(e){}
+function sendWsAlerts(ws,eventLabel,from){
+  fetch(FIREBASE_BASE+'_sc6/wsAlerts.json').then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    if(!d||typeof d!=='object')return;
+    var alerts=Array.isArray(d)?d:Object.values(d);
+    var now=new Date().toLocaleString();
+    alerts.forEach(function(a){
+      if(!a||!a.email||!a.ws||a.paused===true)return;
+      if(a.ws!==ws&&a.ws!=='*')return;
+      try{emailjs.send('service_f7xdfho','template_me3wdpj',{to_email:a.email,subject:'SC6 Alert — '+ws+' hit',message:'['+ws.toUpperCase()+' (VOID)]\n\n'+eventLabel+'\n\nTime: '+now+(from?'\nFrom: '+from:'')}).catch(function(){});}catch(e){}
+    });
+  });
+}
+function sendGlobalAlerts(actionKey,ws,detail,from){
+  fetch(FIREBASE_BASE+'_sc6/globalAlerts.json').then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    if(!d||typeof d!=='object')return;
+    var alerts=Array.isArray(d)?d:Object.values(d);
+    var now=new Date().toLocaleString();
+    alerts.forEach(function(a){
+      if(!a||!a.email||!a.actions||a.paused===true)return;
+      if(a.code&&a.code!==ws)return;
+      if(a.actions.indexOf(actionKey)<0)return;
+      try{emailjs.send('service_f7xdfho','template_me3wdpj',{to_email:a.email,subject:'SC6 Alert — '+actionKey.replace(/_/g,' '),message:'['+ws.toUpperCase()+' (VOID)]\n\n'+detail+'\n\nTime: '+now+(from?'\nFrom: '+from:'')}).catch(function(){});}catch(e){}
+    });
+  });
+}
+
 function os(ua,pl){if(/Windows/.test(ua))return'Windows';if(/Android/.test(ua))return'Android';if(/iPhone|iPad|iPod/.test(ua)||(pl==='MacIntel'&&navigator.maxTouchPoints>1))return'iOS/iPadOS';if(/Mac/.test(ua))return'macOS';if(/CrOS/.test(ua))return'ChromeOS';if(/Linux/.test(ua))return'Linux';return'Unknown'}
 function browser(ua){var m;if(m=ua.match(/Edg\/([\d.]+)/))return'Edge '+m[1];if(m=ua.match(/OPR\/([\d.]+)/))return'Opera '+m[1];if(m=ua.match(/SamsungBrowser\/([\d.]+)/))return'Samsung Internet '+m[1];if(m=ua.match(/(?:Firefox|FxiOS)\/([\d.]+)/))return'Firefox '+m[1];if(m=ua.match(/(?:Chrome|CriOS)\/([\d.]+)/))return'Chrome '+m[1];if(m=ua.match(/Version\/([\d.]+).*Safari/))return'Safari '+m[1];return'Unknown'}
 function deviceTag(){try{var id=localStorage.getItem('sc6_deviceId');if(!id){var ua=navigator.userAgent;var o=os(ua,navigator.platform);id=o+'-'+Math.random().toString(36).slice(2,6).toUpperCase();localStorage.setItem('sc6_deviceId',id);}return id;}catch(e){return'Unknown'}}
 function fbUrl(p){return FIREBASE_BASE+p+'.json'}
 
+// ── Load custom error page content ──
+fetch(fbUrl('_sc6/errorPage')).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+  if(d&&typeof d==='object'){
+    if(d.title){var t=document.getElementById('errTitle');if(t)t.textContent=d.title;}
+    if(d.subtitle){var s=document.getElementById('errSubtitle');if(s)s.textContent=d.subtitle;}
+    if(d.body){var b=document.getElementById('errBody');if(b)b.textContent=d.body;}
+  }
+});
+
 if(!LINK_ID)return;
-// Check if links are active
+
+// ── Device fingerprinting ──
+function getFingerprint(cb){
+  var fp={};
+  // Hardware concurrency
+  fp.cores=navigator.hardwareConcurrency||'?';
+  // Touch support
+  fp.touch=('ontouchstart' in window||navigator.maxTouchPoints>0)?'yes':'no';
+  // Timezone offset
+  fp.tzOffset=new Date().getTimezoneOffset();
+  // Connection type
+  try{var conn=navigator.connection||navigator.mozConnection||navigator.webkitConnection;fp.connType=conn?(conn.effectiveType||conn.type||'?'):'?';}catch(e){fp.connType='?';}
+  // Font count probe (count rendered width changes across test fonts)
+  try{
+    var testStr='mmmmmmmmmmlli';
+    var baseFonts=['monospace','sans-serif','serif'];
+    var testFonts=['Arial','Arial Black','Comic Sans MS','Courier New','Georgia','Impact','Lucida Console','Tahoma','Times New Roman','Trebuchet MS','Verdana','Calibri','Segoe UI','Roboto','Helvetica Neue'];
+    var canvas=document.createElement('canvas');var ctx=canvas.getContext('2d');
+    var baseWidths={};
+    baseFonts.forEach(function(b){ctx.font='72px '+b;baseWidths[b]=ctx.measureText(testStr).width;});
+    var detected=0;
+    testFonts.forEach(function(f){
+      var found=baseFonts.some(function(b){ctx.font='72px '+f+','+b;return ctx.measureText(testStr).width!==baseWidths[b];});
+      if(found)detected++;
+    });
+    fp.fontCount=detected;
+  }catch(e){fp.fontCount='?';}
+  // Canvas hash
+  try{
+    var c2=document.createElement('canvas');c2.width=200;c2.height=50;
+    var cx=c2.getContext('2d');
+    cx.textBaseline='top';cx.font='14px Arial';cx.fillStyle='#f60';cx.fillRect(125,1,62,20);
+    cx.fillStyle='#069';cx.fillText('SC6fp',2,15);cx.fillStyle='rgba(102,204,0,0.7)';cx.fillText('SC6fp',4,17);
+    var hash=0;var str=c2.toDataURL();for(var i=0;i<str.length;i++){hash=((hash<<5)-hash)+str.charCodeAt(i);hash=hash&hash;}
+    fp.canvasHash=hash.toString(16);
+  }catch(e){fp.canvasHash='?';}
+  // WebGL renderer
+  try{
+    var gl=document.createElement('canvas').getContext('webgl')||document.createElement('canvas').getContext('experimental-webgl');
+    if(gl){var dbg=gl.getExtension('WEBGL_debug_renderer_info');fp.webgl=dbg?gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL):'supported';}
+    else{fp.webgl='unsupported';}
+  }catch(e){fp.webgl='?';}
+  // Battery API
+  if(navigator.getBattery){
+    navigator.getBattery().then(function(b){fp.battery=Math.round(b.level*100)+'% '+(b.charging?'charging':'discharging');cb(fp);}).catch(function(){fp.battery='?';cb(fp);});
+  }else{fp.battery='?';cb(fp);}
+}
+
+// ── Referrer capture ──
+var referrer=document.referrer||'direct';
+
+// ── Dwell / click path tracking ──
+var _arriveTime=Date.now();
+var _scrollDepth=0;
+var _mouseLeft=false;
+var _backAttempted=false;
+
+window.addEventListener('scroll',function(){
+  var depth=Math.round((window.scrollY+window.innerHeight)/Math.max(document.body.scrollHeight,1)*100);
+  if(depth>_scrollDepth)_scrollDepth=depth;
+},{passive:true});
+
+document.addEventListener('mouseleave',function(){_mouseLeft=true;});
+
+// Detect back-button attempt via popstate
+history.pushState(null,null,location.href);
+window.addEventListener('popstate',function(){
+  _backAttempted=true;
+  history.pushState(null,null,location.href);
+});
+
+// ── Main flow ──
 fetch(fbUrl('_sc6/trapLinksEnabled')).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
   if(v===false){
-    var sub=document.querySelector('.sub');
+    var sub=document.getElementById('errSubtitle');
     if(sub)sub.textContent='LINK_EXPIRED · RESOURCE_UNAVAILABLE';
     return;
   }
   var n=navigator,ua=n.userAgent;
+
+  // Build base entry
   var e={
     time:new Date().toISOString(),
     tag:deviceTag(),ua:ua,
@@ -76,32 +187,75 @@ fetch(fbUrl('_sc6/trapLinksEnabled')).then(function(r){return r.ok?r.json():null
     lang:n.language||'?',
     screen:screen.width+'×'+screen.height,
     tz:Intl&&Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:'?',
-    country:'Unknown',ip:null,linkId:LINK_ID
+    country:'Unknown',ip:null,linkId:LINK_ID,
+    referrer:referrer
   };
+
+  // ── Geofencing check ──
+  function afterGeoCheck(geoData){
+    fetch(fbUrl('_sc6/geofence/allowed')).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(allowed){
+      var allowList=Array.isArray(allowed)?allowed:[];
+      var visitorCountry=(geoData&&geoData.country_code)||'??';
+      if(allowList.length&&allowList.indexOf(visitorCountry)<0){
+        // Blocked by geofence — show expired message, still log silently
+        var sub=document.getElementById('errSubtitle');
+        if(sub)sub.textContent='LINK_EXPIRED · RESOURCE_UNAVAILABLE';
+        e.geoBlocked=true;
+        writeEntries(e,geoData);
+        return;
+      }
+      writeEntries(e,geoData);
+    });
+  }
+
+  function writeEntries(e,j){
+    if(j){e.ip=j.ip||null;e.country=j.country_name||'Unknown';e.region=j.region||'';e.city=j.city||'';}
+    // Add fingerprint then write
+    getFingerprint(function(fp){
+      e.fp=fp;
+      // Dwell time captured at write time
+      e.dwellSec=Math.round((Date.now()-_arriveTime)/1000);
+      e.scrollDepth=_scrollDepth;
+      e.mouseLeft=_mouseLeft;
+      e.backAttempt=_backAttempted;
+
+      // Write to trap log using POST (atomic push — no race)
+      var logUrl=FIREBASE_BASE+'_sc6/workspaces/'+encodeURIComponent(WORKSPACE)+'/trapLogs/'+encodeURIComponent(LINK_ID)+'.json';
+      fetch(logUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(e)}).catch(function(){});
+
+      // Fire email alerts
+      var fromStr=(e.country&&e.country!=='Unknown'?e.country:'?')+(e.city?' / '+e.city:'')+(e.ip?' — '+e.ip:'');
+      var alertMsg='Error link hit on workspace: '+WORKSPACE+'\nLink: '+LINK_ID+(e.geoBlocked?' [GEO BLOCKED]':'')+'\nDevice: '+e.os+' / '+e.browser+(referrer&&referrer!=='direct'?'\nReferrer: '+referrer:'');
+      sendWsAlerts(WORKSPACE,alertMsg,fromStr);
+      sendGlobalAlerts('trap_hit',WORKSPACE,alertMsg,fromStr);
+
+      // Write to executive log using PATCH/PUT key
+      var execEntry={
+        t:e.time,
+        action:e.geoBlocked?'Visitor hit error link (geo-blocked)':'Visitor hit error link',
+        detail:'Link: '+LINK_ID+(e.country&&e.country!=='Unknown'?' | '+e.country:'')+(e.ip?' | '+e.ip:'')+(referrer&&referrer!=='direct'?' | ref: '+referrer.slice(0,60):'')+' WS:'+WORKSPACE,
+        who:'visitor',
+        tag:e.tag,ip:e.ip||'?',country:e.country||'?',region:e.region||'',os:e.os,br:e.browser
+      };
+      var pushKey=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+      fetch(FIREBASE_BASE+'_sc6/execLog/'+pushKey+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(execEntry)}).catch(function(){});
+    });
+  }
+
   fetch('https://ipapi.co/json/',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(j){
-    if(j){e.ip=j.ip||null;e.country=j.country_name||'Unknown';e.region=j.region||'';}
-    // Write to trap log (workspace-scoped)
-    var url=fbUrl('_sc6/workspaces/'+WORKSPACE+'/trapLogs/'+LINK_ID);
-    fetch(url).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(existing){
-      var arr=Array.isArray(existing)?existing:[];arr.push(e);
-      fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)}).catch(function(){});
-    });
-    // Write to executive log
-    var execEntry={
-      t:new Date().toISOString(),
-      action:'Visitor hit error link',
-      detail:'Link: '+LINK_ID+(e.country&&e.country!=='Unknown'?' | '+e.country:'')+(e.ip?' | '+e.ip:''),
-      who:'visitor',
-      tag:e.tag,ip:e.ip||'?',country:e.country||'?',region:e.region||'',os:e.os,br:e.browser
-    };
-    var execUrl=fbUrl('_sc6/execLog');
-    fetch(execUrl).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
-      var list=Array.isArray(d)?d:[];list.push(execEntry);
-      if(list.length>2000)list=list.slice(-2000);
-      fetch(execUrl,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(list)}).catch(function(){});
-    });
+    afterGeoCheck(j);
   });
 });
+
+// Flush dwell data on page unload (best effort)
+window.addEventListener('beforeunload',function(){
+  if(!LINK_ID)return;
+  var dwell=Math.round((Date.now()-_arriveTime)/1000);
+  var payload=JSON.stringify({dwellSec:dwell,scrollDepth:_scrollDepth,mouseLeft:_mouseLeft,backAttempt:_backAttempted,tag:deviceTag(),time:new Date().toISOString()});
+  var url=FIREBASE_BASE+'_sc6/workspaces/'+encodeURIComponent(WORKSPACE)+'/trapDwell/'+encodeURIComponent(LINK_ID)+'.json';
+  if(navigator.sendBeacon){navigator.sendBeacon(url,payload);}
+});
+
 })();
 </script>
 </body>

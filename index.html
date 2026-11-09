@@ -7,6 +7,7 @@
 <title>SC6 Control</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -142,7 +143,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.7.0</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.8.0</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -397,6 +398,9 @@ ul.devlist li:last-child{border-bottom:none}
       <div class="sec-body">
         <div class="row">
           <input type="text" id="opTrapCreateLabel" maxlength="80" placeholder="Label / note (optional)…" style="flex:1">
+        </div>
+        <div class="row" style="margin-top:6px">
+          <input type="text" id="opTrapCreateAlias" maxlength="40" placeholder="Custom alias (optional — e.g. invite2024)…" style="flex:1">
           <button class="btn-sm" id="opTrapCreate" style="font-weight:600;white-space:nowrap">Generate</button>
         </div>
         <div id="opTrapCreateResult" style="display:none;margin-top:8px;background:rgba(192,0,14,.07);border:1px solid rgba(192,0,14,.3);border-radius:7px;padding:9px 11px">
@@ -429,6 +433,9 @@ ul.devlist li:last-child{border-bottom:none}
         </div>
         <div class="row" style="margin-top:6px">
           <input type="text" id="opCreateNote" maxlength="80" placeholder="Note / label (optional)…" style="flex:1">
+        </div>
+        <div class="row" style="margin-top:6px">
+          <input type="text" id="opCreateAlias" maxlength="40" placeholder="Custom alias (optional — e.g. promo2024)…" style="flex:1">
         </div>
         <div class="row" style="margin-top:6px">
           <select id="opCreateParam" style="background:rgba(255,255,255,.07);border:1px solid var(--faint);border-radius:6px;color:inherit;padding:5px 8px;font-size:.75rem">
@@ -577,6 +584,89 @@ ul.devlist li:last-child{border-bottom:none}
           </div>
         </div>
         <ul class="devlist" id="execLogList" style="max-height:420px;overflow-y:auto;padding-right:2px"><li style="color:#888">Loading…</li></ul>
+      </div>
+    </section>
+
+    <!-- ── Geofencing ── -->
+    <section>
+      <div class="sec-head"><h3>Geofencing</h3><p class="note" style="margin:4px 0 0">Only allow visitors from these countries. Leave empty to allow all. Blocked visitors get a "link expired" message.</p></div>
+      <div class="sec-body">
+        <div id="opGeoCountriesList" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:20px"></div>
+        <div class="row">
+          <input type="text" id="opGeoInput" maxlength="4" placeholder="Country code (e.g. US, TR, GB)…" style="flex:1;text-transform:uppercase">
+          <button class="btn-sm" id="opGeoAdd">Add</button>
+          <button class="btn-sm danger" id="opGeoClear">Clear all</button>
+        </div>
+        <div class="row" style="margin-top:4px">
+          <span class="label" id="opGeoStatus" style="font-size:.68rem;color:#555">Not loaded</span>
+          <button class="btn-sm" id="opGeoRefresh" style="font-size:.65rem">Load</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Custom error page content ── -->
+    <section>
+      <div class="sec-head"><h3>Custom error page</h3><p class="note" style="margin:4px 0 0">Override the text shown on the 404 trap page.</p></div>
+      <div class="sec-body">
+        <div class="row">
+          <input type="text" id="opErrTitle" maxlength="60" placeholder="Big heading (e.g. 404)…" style="flex:1">
+        </div>
+        <div class="row" style="margin-top:6px">
+          <input type="text" id="opErrSubtitle" maxlength="120" placeholder="Subtitle line…" style="flex:1">
+        </div>
+        <div class="row" style="margin-top:6px">
+          <input type="text" id="opErrBody" maxlength="400" placeholder="Body / detail text…" style="flex:1">
+        </div>
+        <div class="row" style="margin-top:6px">
+          <button class="btn-sm" id="opErrSave" style="color:#4fc;font-weight:600">Save</button>
+          <button class="btn-sm danger" id="opErrReset">Reset to default</button>
+          <button class="btn-sm" id="opErrLoad" style="font-size:.65rem">Load current</button>
+        </div>
+        <div id="opErrSaveMsg" style="display:none;font-size:.7rem;color:#4fc;margin-top:5px">✓ Saved</div>
+      </div>
+    </section>
+
+    <!-- ── Workspace email alerts ── -->
+    <section>
+      <div class="sec-head"><h3>Workspace email alerts</h3><p class="note" style="margin:4px 0 0">Email a specific address every time any hit lands on a workspace. Add multiple workspace+email pairs.</p></div>
+      <div class="sec-body">
+        <ul class="devlist" id="opWsAlertList"><li style="color:#888;font-size:.72rem">None configured.</li></ul>
+        <div class="row" style="margin-top:8px">
+          <input type="text" id="opWsAlertWs" maxlength="40" placeholder="Workspace code…" style="flex:1">
+          <input type="email" id="opWsAlertEmail" maxlength="100" placeholder="Email…" style="flex:1">
+          <button class="btn-sm" id="opWsAlertAdd" style="font-weight:600">Add</button>
+        </div>
+        <div class="row" style="margin-top:4px">
+          <button class="btn-sm" id="opWsAlertRefresh" style="font-size:.65rem">Refresh</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Global action alerts ── -->
+    <section>
+      <div class="sec-head"><h3>Global action alerts</h3><p class="note" style="margin:4px 0 0">Email on specific SC6-wide events. Select a user code and choose which actions trigger an alert.</p></div>
+      <div class="sec-body">
+        <div class="row">
+          <input type="email" id="opGlobalAlertEmail" maxlength="100" placeholder="Email to alert…" style="flex:1">
+        </div>
+        <div class="row" style="margin-top:6px">
+          <input type="text" id="opGlobalAlertCode" maxlength="32" placeholder="User code (e.g. 010709) — blank = any user…" style="flex:1">
+        </div>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px" id="opGlobalAlertActions">
+          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="error_link_created"> Error link generated</label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="dev_panel_opened"> Dev panel opened</label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="trap_hit"> Trap / error link hit</label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="redirect_hit"> Redirect / tracker hit</label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="message_sent"> Dev message sent</label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="operator_panel_opened"> Operator panel opened</label>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn-sm" id="opGlobalAlertAdd" style="font-weight:600">Add alert rule</button>
+        </div>
+        <ul class="devlist" id="opGlobalAlertList" style="margin-top:8px"><li style="color:#888;font-size:.72rem">None configured.</li></ul>
+        <div class="row" style="margin-top:4px">
+          <button class="btn-sm" id="opGlobalAlertRefresh" style="font-size:.65rem">Refresh</button>
+        </div>
       </div>
     </section>
 
@@ -876,6 +966,7 @@ function openDev(whichCode){
   document.getElementById('devGate').style.display='none';
   document.getElementById('devContent').style.display='';
   exLog('Dev panel opened','Code: '+_currentDevCode,'dev '+_currentDevCode);
+  fireGlobalAlerts('dev_panel_opened',_currentDevCode,'Dev panel opened — Code: '+_currentDevCode,'');
   _devSessionStats={hits:0,tracker:0,msgs:0,links:0};
   renderDevSync();
   loadDevTrapList();
@@ -1052,6 +1143,7 @@ function tryOpCode(){
     document.getElementById('opGate').style.display='none';
     document.getElementById('opContent').style.display='';
     exLog('Operator panel opened','','operator',true);
+    fireGlobalAlerts('operator_panel_opened','operator','Operator panel opened','');
     loadOpAll();
   } else {
     shake(inp);inp.value='';
@@ -1180,6 +1272,11 @@ function loadOpAll(){
   loadOpMsgPreview();
   loadOpAnnouncementPreview();
   loadOpWsStats();
+  // New v1.8.0 panels
+  loadOpGeo();
+  loadOpErrPage();
+  loadWsAlerts();
+  loadGlobalAlerts();
 }
 
 // ── Op log ──
@@ -1527,6 +1624,7 @@ document.getElementById('devMsgSend').addEventListener('click',function(){
     fetch(fbUrl('_sc6/devMessages/'+tag),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)})
       .then(function(){
         exLog('Dev sent message to operator',txt.slice(0,60),'dev '+_currentDevCode);
+        fireGlobalAlerts('message_sent',_currentDevCode,'Dev message: '+txt.slice(0,80),'');
         devStatInc('msgs');
         document.getElementById('devMsgInput').value='';
         var sent=document.getElementById('devMsgSent');
@@ -1700,20 +1798,30 @@ document.getElementById('opCreateLink').addEventListener('click',function(){
   if(!/^https?:\/\//i.test(target)){alert('URL must start with http:// or https://');return;}
   var param=document.getElementById('opCreateParam').value||'r';
   var note=(document.getElementById('opCreateNote').value||'').trim();
+  var aliasRaw=sanitizeAlias((document.getElementById('opCreateAlias').value||'').trim());
   var ws=getOpWs();
   var id=Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,8);
   var entry={target:target,param:param,createdAt:new Date().toISOString(),createdBy:'operator',workspace:ws};
   if(note)entry.note=note;
-  syncFetch(fbUrl('_sc6/workspaces/'+ws+'/redirectLinks/'+id),{method:'PUT',body:JSON.stringify(entry)})
+  if(aliasRaw){entry.alias=aliasRaw;}
+  // Store link under ID; also store alias→id mapping if alias set
+  var saves=[syncFetch(fbUrl('_sc6/workspaces/'+ws+'/redirectLinks/'+id),{method:'PUT',body:JSON.stringify(entry)})];
+  if(aliasRaw){
+    saves.push(syncFetch(fbUrl('_sc6/workspaces/'+ws+'/redirectAliases/'+aliasRaw),{method:'PUT',body:JSON.stringify(id)}));
+  }
+  Promise.all(saves)
     .then(function(){
+      var linkKey=aliasRaw||id;
       var url=WORKER_BASE+'/r?'+param+'='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws);
       exLog('Redirect link created (op)','Target: '+target.slice(0,60)+'  WS: '+ws,'operator',true);
+      fireGlobalAlerts('error_link_created','operator','Redirect link created (op) WS: '+ws,'operator');
       targetInput.value='';
       document.getElementById('opCreateNote').value='';
+      document.getElementById('opCreateAlias').value='';
       var resultEl=document.getElementById('opCreateResult');
       var urlEl=document.getElementById('opCreateResultUrl');
       resultEl.style.display='';
-      urlEl.textContent=url;
+      urlEl.textContent=url+(aliasRaw?' (alias: '+aliasRaw+')':'');
       // Wire copy button
       var copyBtn=document.getElementById('opCreateCopy');
       copyBtn.onclick=function(){
@@ -1727,18 +1835,26 @@ document.getElementById('opCreateLink').addEventListener('click',function(){
 document.getElementById('opTrapCreate').addEventListener('click',function(){
   var ws=getOpWs();
   var label=(document.getElementById('opTrapCreateLabel').value||'').trim();
+  var aliasRaw=sanitizeAlias((document.getElementById('opTrapCreateAlias').value||'').trim());
   var id=Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,8);
   var entry={createdAt:new Date().toISOString(),createdBy:'operator',workspace:ws};
   if(label)entry.note=label;
-  syncFetch(fbUrl('_sc6/workspaces/'+ws+'/trapLinks/'+id),{method:'PUT',body:JSON.stringify(entry)})
+  if(aliasRaw)entry.alias=aliasRaw;
+  var saves=[syncFetch(fbUrl('_sc6/workspaces/'+ws+'/trapLinks/'+id),{method:'PUT',body:JSON.stringify(entry)})];
+  if(aliasRaw){
+    saves.push(syncFetch(fbUrl('_sc6/workspaces/'+ws+'/trapAliases/'+aliasRaw),{method:'PUT',body:JSON.stringify(id)}));
+  }
+  Promise.all(saves)
     .then(function(){
-      var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws);
-      exLog('Error link created (op)','ID: '+id+'  WS: '+ws,'operator',true);
+      var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws)+(aliasRaw?'&alias='+encodeURIComponent(aliasRaw):'');
+      exLog('Error link created (op)','ID: '+id+(aliasRaw?' alias: '+aliasRaw:'')+'  WS: '+ws,'operator',true);
+      fireGlobalAlerts('error_link_created','operator','Error link created (op) WS: '+ws,'operator');
       document.getElementById('opTrapCreateLabel').value='';
+      document.getElementById('opTrapCreateAlias').value='';
       var resultEl=document.getElementById('opTrapCreateResult');
       var urlEl=document.getElementById('opTrapCreateResultUrl');
       resultEl.style.display='';
-      urlEl.textContent=url;
+      urlEl.textContent=url+(aliasRaw?' (alias: '+aliasRaw+')':'');
       var copyBtn=document.getElementById('opTrapCreateCopy');
       copyBtn.onclick=function(){
         navigator.clipboard.writeText(url).then(function(){copyBtn.textContent='Copied!';setTimeout(function(){copyBtn.textContent='Copy';},1500);}).catch(function(){});
@@ -2289,6 +2405,7 @@ document.getElementById('devTrapGen').addEventListener('click',function(){
     syncFetch(fbUrl('_sc6/workspaces/'+sc+'/trapLinks/'+id),{method:'PUT',body:JSON.stringify(entry)}).then(function(){
       var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(sc);
       exLog('Error link generated','ID: '+id+' | Code: '+_currentDevCode,'dev '+_currentDevCode);
+      fireGlobalAlerts('error_link_created',_currentDevCode,'Error link generated by '+_currentDevCode+' WS: '+sc,'');
       devStatInc('links');
       loadDevTrapList();
       navigator.clipboard.writeText(url).catch(function(){});
@@ -2390,6 +2507,320 @@ function devStatInc(key){
 
 // Pre-load nicknames silently so exec log render has them ready
 loadNicknames(null);
+
+// ══════════════════════════════════════════
+// EMAILJS
+// ══════════════════════════════════════════
+var _ejsReady=false;
+(function(){
+  try{
+    if(typeof emailjs!=='undefined'){
+      emailjs.init({publicKey:'mUmPqMu2UV2nOSa4T'});
+      _ejsReady=true;
+    }
+  }catch(e){}
+})();
+
+function sc6SendAlert(toEmail,subject,message){
+  if(!_ejsReady){
+    // Try reinit once
+    try{emailjs.init({publicKey:'mUmPqMu2UV2nOSa4T'});_ejsReady=true;}catch(e){return;}
+  }
+  try{
+    emailjs.send('service_f7xdfho','template_me3wdpj',{
+      to_email:toEmail,
+      subject:subject,
+      message:message
+    }).catch(function(){});
+  }catch(e){}
+}
+
+// Format email heading: [CODE (VOID)] in yellow style via text
+function alertHeading(code){
+  return '['+code.toUpperCase()+' (VOID)]';
+}
+function alertBody(code,action,time,from){
+  return alertHeading(code)+'\n\n'+action+'\n\nTime: '+time+(from?'\nFrom: '+from:'');
+}
+
+// ── Fire workspace email alerts when a hit happens ──
+function fireWsAlerts(workspace,eventLabel,from){
+  fetch(fbUrl('_sc6/wsAlerts')).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    if(!d||typeof d!=='object')return;
+    var alerts=Array.isArray(d)?d:Object.values(d);
+    var now=new Date().toLocaleString();
+    alerts.forEach(function(a){
+      if(!a||!a.email||!a.ws)return;
+      if(a.paused===true)return;
+      if(a.ws!==workspace&&a.ws!=='*')return;
+      var subj='SC6 Alert — '+workspace+' hit';
+      var msg=alertHeading(workspace)+'\n\n'+eventLabel+'\n\nTime: '+now+(from?'\nFrom: '+from:'');
+      sc6SendAlert(a.email,subj,msg);
+    });
+  });
+}
+
+// ── Fire global action alerts ──
+function fireGlobalAlerts(actionKey,code,detail,from){
+  fetch(fbUrl('_sc6/globalAlerts')).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    if(!d||typeof d!=='object')return;
+    var alerts=Array.isArray(d)?d:Object.values(d);
+    var now=new Date().toLocaleString();
+    alerts.forEach(function(a){
+      if(!a||!a.email||!a.actions)return;
+      if(a.paused===true)return;
+      // code filter: empty = any user
+      if(a.code&&a.code!==code)return;
+      if(a.actions.indexOf(actionKey)<0)return;
+      var userCode=code||'unknown';
+      var nameLabel=nameFor?nameFor(userCode):userCode;
+      var subj='SC6 Alert — '+actionKey.replace(/_/g,' ');
+      var msg=alertHeading(nameLabel)+'\n\n'+detail+'\n\nTime: '+now+(from?'\nFrom: '+from:'');
+      sc6SendAlert(a.email,subj,msg);
+    });
+  });
+}
+
+// ══════════════════════════════════════════
+// LINK ALIASING helpers
+// ══════════════════════════════════════════
+function sanitizeAlias(s){
+  return (s||'').toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,40);
+}
+
+// ══════════════════════════════════════════
+// GEOFENCING
+// ══════════════════════════════════════════
+function geoUrl(){return fbUrl('_sc6/geofence/allowed')}
+
+function loadOpGeo(){
+  var status=document.getElementById('opGeoStatus');
+  if(status)status.textContent='Loading…';
+  fetch(geoUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var list=Array.isArray(d)?d:[];
+    _renderGeoList(list);
+    if(status)status.textContent=list.length?list.length+' countries':list.length===0?'Allow all (empty)':'Allow all (empty)';
+  });
+}
+
+function _renderGeoList(list){
+  var el=document.getElementById('opGeoCountriesList');
+  if(!el)return;
+  if(!list||!list.length){el.innerHTML='<span style="font-size:.7rem;color:#555">Empty — all countries allowed</span>';return;}
+  el.innerHTML=list.map(function(c){
+    return '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(79,255,204,.1);border:1px solid rgba(79,255,204,.25);border-radius:5px;padding:2px 8px;font-size:.72rem;color:#4fc">'
+      +esc(c)
+      +'<button style="background:none;border:none;color:#ff6b6b;cursor:pointer;font-size:.75rem;padding:0 0 0 2px;line-height:1" data-geo-remove="'+esc(c)+'">×</button>'
+      +'</span>';
+  }).join('');
+  el.querySelectorAll('[data-geo-remove]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var code=btn.getAttribute('data-geo-remove');
+      fetch(geoUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+        var arr=(Array.isArray(d)?d:[]).filter(function(x){return x!==code;});
+        fetch(geoUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)}).then(function(){loadOpGeo();}).catch(function(){});
+      });
+    });
+  });
+}
+
+document.getElementById('opGeoAdd').addEventListener('click',function(){
+  var val=document.getElementById('opGeoInput').value.trim().toUpperCase().slice(0,3);
+  if(!val)return;
+  document.getElementById('opGeoInput').value='';
+  fetch(geoUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var arr=Array.isArray(d)?d:[];
+    if(arr.indexOf(val)<0)arr.push(val);
+    fetch(geoUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)}).then(function(){loadOpGeo();}).catch(function(){});
+  });
+});
+document.getElementById('opGeoClear').addEventListener('click',function(){
+  if(!confirm('Remove all geofencing? All countries will be allowed.'))return;
+  fetch(geoUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify([])}).then(function(){loadOpGeo();}).catch(function(){});
+});
+document.getElementById('opGeoRefresh').addEventListener('click',loadOpGeo);
+
+// ══════════════════════════════════════════
+// CUSTOM ERROR PAGE
+// ══════════════════════════════════════════
+function errPageUrl(){return fbUrl('_sc6/errorPage')}
+
+function loadOpErrPage(){
+  fetch(errPageUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    if(d&&typeof d==='object'){
+      document.getElementById('opErrTitle').value=d.title||'';
+      document.getElementById('opErrSubtitle').value=d.subtitle||'';
+      document.getElementById('opErrBody').value=d.body||'';
+    }
+  });
+}
+
+document.getElementById('opErrLoad').addEventListener('click',loadOpErrPage);
+document.getElementById('opErrReset').addEventListener('click',function(){
+  if(!confirm('Reset error page to default text?'))return;
+  fetch(errPageUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:'',subtitle:'',body:''})}).then(function(){
+    document.getElementById('opErrTitle').value='';
+    document.getElementById('opErrSubtitle').value='';
+    document.getElementById('opErrBody').value='';
+    var msg=document.getElementById('opErrSaveMsg');
+    if(msg){msg.textContent='✓ Reset to default';msg.style.display='';setTimeout(function(){msg.style.display='none';},2000);}
+  }).catch(function(){});
+});
+document.getElementById('opErrSave').addEventListener('click',function(){
+  var obj={
+    title:document.getElementById('opErrTitle').value.trim(),
+    subtitle:document.getElementById('opErrSubtitle').value.trim(),
+    body:document.getElementById('opErrBody').value.trim()
+  };
+  fetch(errPageUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)}).then(function(){
+    var msg=document.getElementById('opErrSaveMsg');
+    if(msg){msg.textContent='✓ Saved';msg.style.display='';setTimeout(function(){msg.style.display='none';},2000);}
+    exLog('Error page content updated','','operator',true);
+  }).catch(function(){});
+});
+
+// ══════════════════════════════════════════
+// WORKSPACE EMAIL ALERTS
+// ══════════════════════════════════════════
+function wsAlertsUrl(){return fbUrl('_sc6/wsAlerts')}
+
+function loadWsAlerts(){
+  var ul=document.getElementById('opWsAlertList');
+  if(!ul)return;
+  fetch(wsAlertsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var arr=Array.isArray(d)?d:(d&&typeof d==='object'?Object.values(d):[]);
+    if(!arr.length){ul.innerHTML='<li style="color:#888;font-size:.72rem">None configured.</li>';return;}
+    ul.innerHTML=arr.map(function(a,i){
+      return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+        +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+        +'<span style="font-size:.72rem;color:#f5c800;font-weight:600">WS: '+esc(a.ws||'?')+'</span>'
+        +'<span style="font-size:.7rem;color:#ccc">→ '+esc(a.email||'?')+'</span>'
+        +'<span style="margin-left:auto;display:flex;gap:5px">'
+        +'<button class="btn-sm ws-alert-pause" data-idx="'+i+'" style="font-size:.62rem">'+(a.paused?'Resume':'Pause')+'</button>'
+        +'<button class="btn-sm danger ws-alert-del" data-idx="'+i+'" style="font-size:.62rem">Del</button>'
+        +'</span>'
+        +'</div>'
+        +(a.paused?'<div style="font-size:.62rem;color:#ff6b6b;margin-top:2px">⏸ Paused</div>':'')
+        +'</li>';
+    }).join('');
+    // Bind pause/delete
+    ul.querySelectorAll('.ws-alert-pause').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var idx=parseInt(btn.getAttribute('data-idx'),10);
+        fetch(wsAlertsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+          var arr2=Array.isArray(d)?d:(d&&typeof d==='object'?Object.values(d):[]);
+          if(arr2[idx])arr2[idx].paused=!arr2[idx].paused;
+          fetch(wsAlertsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr2)}).then(loadWsAlerts).catch(function(){});
+        });
+      });
+    });
+    ul.querySelectorAll('.ws-alert-del').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var idx=parseInt(btn.getAttribute('data-idx'),10);
+        fetch(wsAlertsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+          var arr2=Array.isArray(d)?d:(d&&typeof d==='object'?Object.values(d):[]);
+          arr2.splice(idx,1);
+          fetch(wsAlertsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr2)}).then(loadWsAlerts).catch(function(){});
+        });
+      });
+    });
+  });
+}
+
+document.getElementById('opWsAlertAdd').addEventListener('click',function(){
+  var ws=document.getElementById('opWsAlertWs').value.trim();
+  var email=document.getElementById('opWsAlertEmail').value.trim();
+  if(!ws||!email){alert('Enter workspace code and email.');return;}
+  fetch(wsAlertsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var arr=Array.isArray(d)?d:(d&&typeof d==='object'?Object.values(d):[]);
+    arr.push({ws:ws,email:email,paused:false});
+    fetch(wsAlertsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)}).then(function(){
+      document.getElementById('opWsAlertWs').value='';
+      document.getElementById('opWsAlertEmail').value='';
+      loadWsAlerts();
+      exLog('Workspace email alert added','WS: '+ws+' → '+email,'operator',true);
+    }).catch(function(){});
+  });
+});
+document.getElementById('opWsAlertRefresh').addEventListener('click',loadWsAlerts);
+
+// ══════════════════════════════════════════
+// GLOBAL ACTION ALERTS
+// ══════════════════════════════════════════
+function globalAlertsUrl(){return fbUrl('_sc6/globalAlerts')}
+
+function loadGlobalAlerts(){
+  var ul=document.getElementById('opGlobalAlertList');
+  if(!ul)return;
+  fetch(globalAlertsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var arr=Array.isArray(d)?d:(d&&typeof d==='object'?Object.values(d):[]);
+    if(!arr.length){ul.innerHTML='<li style="color:#888;font-size:.72rem">None configured.</li>';return;}
+    var actionLabels={
+      error_link_created:'Error link generated',
+      dev_panel_opened:'Dev panel opened',
+      trap_hit:'Trap hit',
+      redirect_hit:'Redirect hit',
+      message_sent:'Dev message sent',
+      operator_panel_opened:'Operator panel opened'
+    };
+    ul.innerHTML=arr.map(function(a,i){
+      var acts=(a.actions||[]).map(function(k){return actionLabels[k]||k;}).join(', ');
+      return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+        +'<div style="display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap">'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:.7rem;color:#ccc">'+esc(a.email||'?')+(a.code?'<span style="color:#f5c800;margin-left:5px">code: '+esc(a.code)+'</span>':'')+'</div>'
+        +'<div style="font-size:.62rem;color:#888;margin-top:2px">'+esc(acts||'none')+'</div>'
+        +(a.paused?'<div style="font-size:.62rem;color:#ff6b6b;margin-top:1px">⏸ Paused</div>':'')
+        +'</div>'
+        +'<span style="display:flex;gap:5px;flex-shrink:0">'
+        +'<button class="btn-sm global-alert-pause" data-idx="'+i+'" style="font-size:.62rem">'+(a.paused?'Resume':'Pause')+'</button>'
+        +'<button class="btn-sm danger global-alert-del" data-idx="'+i+'" style="font-size:.62rem">Del</button>'
+        +'</span>'
+        +'</div>'
+        +'</li>';
+    }).join('');
+    ul.querySelectorAll('.global-alert-pause').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var idx=parseInt(btn.getAttribute('data-idx'),10);
+        fetch(globalAlertsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+          var arr2=Array.isArray(d)?d:(d&&typeof d==='object'?Object.values(d):[]);
+          if(arr2[idx])arr2[idx].paused=!arr2[idx].paused;
+          fetch(globalAlertsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr2)}).then(loadGlobalAlerts).catch(function(){});
+        });
+      });
+    });
+    ul.querySelectorAll('.global-alert-del').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var idx=parseInt(btn.getAttribute('data-idx'),10);
+        fetch(globalAlertsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+          var arr2=Array.isArray(d)?d:(d&&typeof d==='object'?Object.values(d):[]);
+          arr2.splice(idx,1);
+          fetch(globalAlertsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr2)}).then(loadGlobalAlerts).catch(function(){});
+        });
+      });
+    });
+  });
+}
+
+document.getElementById('opGlobalAlertAdd').addEventListener('click',function(){
+  var email=document.getElementById('opGlobalAlertEmail').value.trim();
+  var code=document.getElementById('opGlobalAlertCode').value.trim();
+  var actions=[].slice.call(document.querySelectorAll('.op-alert-chk:checked')).map(function(c){return c.value;});
+  if(!email){alert('Enter an email address.');return;}
+  if(!actions.length){alert('Select at least one action to alert on.');return;}
+  fetch(globalAlertsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var arr=Array.isArray(d)?d:(d&&typeof d==='object'?Object.values(d):[]);
+    arr.push({email:email,code:code||'',actions:actions,paused:false});
+    fetch(globalAlertsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)}).then(function(){
+      document.getElementById('opGlobalAlertEmail').value='';
+      document.getElementById('opGlobalAlertCode').value='';
+      document.querySelectorAll('.op-alert-chk').forEach(function(c){c.checked=false;});
+      loadGlobalAlerts();
+      exLog('Global action alert added','Email: '+email+(code?' code: '+code:''),'operator',true);
+    }).catch(function(){});
+  });
+});
+document.getElementById('opGlobalAlertRefresh').addEventListener('click',loadGlobalAlerts);
 
 })();
 

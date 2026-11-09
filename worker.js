@@ -1,4 +1,4 @@
-// SC6 Redirect Tracker Worker
+// SC6 Redirect Tracker Worker — v1.8.0
 // Deploy at: media.sharelink-1.workers.dev
 
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
@@ -34,8 +34,7 @@ function getDeviceType(ua) {
 }
 
 async function writeLog(ws, linkId, entry) {
-  // Use POST to Firebase (generates a unique push key) — avoids read-modify-write
-  // race when multiple visitors hit the link simultaneously
+  // POST to Firebase for atomic push key — race-free
   const logUrl = `${FIREBASE}/_sc6/workspaces/${encodeURIComponent(ws)}/redirectLogs/${encodeURIComponent(linkId)}.json`;
   try {
     await fetch(logUrl, {
@@ -47,7 +46,6 @@ async function writeLog(ws, linkId, entry) {
 }
 
 async function writeExecLog(entry) {
-  // Same: POST to let Firebase assign a unique key — no more last-writer-wins race
   const execUrl = `${FIREBASE}/_sc6/execLog.json`;
   try {
     await fetch(execUrl, {
@@ -66,7 +64,7 @@ export default {
       return new Response('Not found', { status: 404 });
     }
 
-    // Find link ID from param
+    // Find link ID or alias from param
     let linkId = null, param = null;
     for (const p of PARAMS) {
       const v = url.searchParams.get(p);
@@ -76,10 +74,25 @@ export default {
 
     if (!linkId) return new Response('Not found', { status: 404 });
 
-    // Fetch redirect target
+    // ── Alias resolution: if linkId doesn't match a direct link, try alias lookup ──
+    let resolvedId = linkId;
+    try {
+      const directRes = await fetch(`${FIREBASE}/_sc6/workspaces/${encodeURIComponent(ws)}/redirectLinks/${encodeURIComponent(linkId)}.json`);
+      const directData = directRes.ok ? await directRes.json() : null;
+      if (!directData || !directData.target) {
+        // Not a direct ID — try alias
+        const aliasRes = await fetch(`${FIREBASE}/_sc6/workspaces/${encodeURIComponent(ws)}/redirectAliases/${encodeURIComponent(linkId)}.json`);
+        const aliasData = aliasRes.ok ? await aliasRes.json() : null;
+        if (aliasData && typeof aliasData === 'string') {
+          resolvedId = aliasData;
+        }
+      }
+    } catch(e) {}
+
+    // Fetch redirect target using resolved ID
     let target = null;
     try {
-      const res = await fetch(`${FIREBASE}/_sc6/workspaces/${encodeURIComponent(ws)}/redirectLinks/${encodeURIComponent(linkId)}.json`);
+      const res = await fetch(`${FIREBASE}/_sc6/workspaces/${encodeURIComponent(ws)}/redirectLinks/${encodeURIComponent(resolvedId)}.json`);
       const data = res.ok ? await res.json() : null;
       target = data && data.target ? data.target : null;
     } catch(e) {}
@@ -98,32 +111,47 @@ export default {
     const lang      = (request.headers.get('Accept-Language') || '?').split(',')[0];
     const referer   = request.headers.get('Referer') || '?';
 
+    // ── Geofencing check ──
+    let geoBlocked = false;
+    try {
+      const geoRes = await fetch(`${FIREBASE}/_sc6/geofence/allowed.json`);
+      const allowList = geoRes.ok ? await geoRes.json() : null;
+      if (Array.isArray(allowList) && allowList.length > 0) {
+        if (!allowList.includes(country) && country !== '?') {
+          geoBlocked = true;
+        }
+      }
+    } catch(e) {}
+
+    if (geoBlocked) {
+      // Log the blocked attempt then return expired
+      const blockedEntry = {
+        time: new Date().toISOString(),
+        ip, country, city, region, ua,
+        os: getOS(ua), browser: getBrowser(ua), device: getDeviceType(ua),
+        lang, referer, linkId: resolvedId, param, geoBlocked: true
+      };
+      ctx.waitUntil(writeLog(ws, resolvedId, blockedEntry));
+      return new Response('Link expired', { status: 410 });
+    }
+
     const entry = {
       time: new Date().toISOString(),
-      ip,
-      country,
-      city,
-      region,
-      timezone,
-      isp,
-      asn,
-      os: getOS(ua),
-      browser: getBrowser(ua),
-      device: getDeviceType(ua),
-      lang,
-      referer,
-      ua,
-      linkId,
-      param
+      ip, country, city, region, timezone, isp, asn,
+      os: getOS(ua), browser: getBrowser(ua), device: getDeviceType(ua),
+      lang, referer, ua, linkId: resolvedId, param,
+      originalParam: linkId !== resolvedId ? linkId : undefined
     };
 
     const execEntry = {
       t: entry.time,
       action: 'Visitor hit redirect link',
-      detail: 'Link: ' + linkId + ' → ' + target.slice(0, 50)
+      detail: 'Link: ' + resolvedId + ' → ' + target.slice(0, 50)
         + (city !== '?' ? ' | ' + city : '')
         + (country !== '?' ? ', ' + country : '')
-        + (ip !== '?' ? ' | ' + ip : ''),
+        + (ip !== '?' ? ' | ' + ip : '')
+        + (referer && referer !== '?' ? ' | ref: ' + referer.slice(0, 40) : '')
+        + ' WS:' + ws,
       who: 'visitor',
       tag: '?',
       ip, country, region,
@@ -131,7 +159,7 @@ export default {
     };
 
     ctx.waitUntil(Promise.all([
-      writeLog(ws, linkId, entry),
+      writeLog(ws, resolvedId, entry),
       writeExecLog(execEntry)
     ]));
 
