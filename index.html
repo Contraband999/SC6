@@ -143,7 +143,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.3</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.4</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1024,10 +1024,10 @@ document.getElementById('opBack').addEventListener('click',function(){
 // ══════════════════════════════════════════
 // DEV PANEL AUTH
 // ══════════════════════════════════════════
-function openDev(whichCode,whichLabel){
+function openDev(whichCode){
   _currentDevCode=whichCode||'?';
   var nick=nickFor(_currentDevCode);
-  var codeDisplay=_currentDevCode+(whichLabel&&whichLabel!==_currentDevCode?' ('+whichLabel+')':nick?' ('+nick+')':'');
+  var codeDisplay=_currentDevCode+(nick?' ('+nick+')':'');
   document.getElementById('devGate').style.display='none';
   document.getElementById('devContent').style.display='';
   exLog('Dev panel opened','Code: '+codeDisplay,'dev '+_currentDevCode);
@@ -1173,9 +1173,9 @@ function tryDevCode(){
       var arr=extrasFromRaw(d);
       var match=arr.find(function(e){return e.code===val;});
       if(match){
-        if(match.disabled===true){_loginFail(inp);}
-        else{_loginSuccess();logOpAccess(match.label||'dev');openDev(match.code||val,match.label);}
-      }else{exLog('Dev login failed','Wrong code','unknown');_loginFail(inp);}
+        if(match.disabled===true){shake(inp);inp.value='';}
+        else{logOpAccess('extra ('+val+')');openDev(val);}
+      }else{exLog('Dev login failed','Wrong code entered','unknown');shake(inp);inp.value='';}
     });
   });
 }
@@ -1330,7 +1330,7 @@ function loadOpAll(){
   loadOpMsgPreview();
   loadOpAnnouncementPreview();
   loadOpWsStats();
-  // New v1.9.3 panels
+  // New v1.9.4 panels
   loadOpGeo();
   loadOpErrPage();
   loadWsAlerts();
@@ -1925,7 +1925,6 @@ document.getElementById('opTrapCreate').addEventListener('click',function(){
 
 // ── Passwords ──
 // extras stored as [{code,plain,label,disabled},...] in Firebase
-// `code` = SHA-256 hash used for auth; `plain` = actual password shown to operator
 function extrasFromRaw(d){
   if(!Array.isArray(d))return[];
   return d.map(function(e){return typeof e==='object'&&e?e:{code:String(e),disabled:false};});
@@ -1940,72 +1939,32 @@ function loadOpPasswords(){
     var mainOff=res[1]===true;
     var altOff=res[2]===true;
 
-    function builtInRow(label,off,toggleId,savedPlain){
+    function builtInRow(label,off,toggleId){
       var col=off?'#ff6b6b':'#4eff8a';
       var btnCol=off?'rgba(78,255,138,.3)':'rgba(255,107,107,.4)';
-      var revealId='reveal-builtin-'+label;
-      return '<div style="border-bottom:1px solid rgba(255,255,255,.07);padding:6px 0">'
-        +'<div style="display:flex;align-items:center;gap:6px">'
-          +'<span style="font-family:monospace;font-size:.8rem;color:'+col+'">'
-            +(savedPlain
-              ?'<span id="'+revealId+'-mask" style="letter-spacing:.12em">••••••••</span>'
-               +'<span id="'+revealId+'-plain" style="display:none">'+esc(savedPlain)+'</span>'
-              :'<span style="color:#555;font-size:.7rem">not saved</span>')
-          +'</span>'
-          +(savedPlain?'<button data-reveal-builtin="1" data-reveal-id="'+revealId+'" title="Show/hide" style="background:none;border:none;color:#555;font-size:.75rem;cursor:pointer;padding:0 2px;line-height:1">👁</button>':'')
-          +'<span style="flex:1"></span>'
-          +'<span style="font-size:.62rem;color:#555">'+label+'</span>'
-          +'<span style="font-size:.62rem;color:'+col+'">'+( off?'Disabled':'Active')+'</span>'
-          +'<button id="'+toggleId+'" style="background:none;border:1px solid '+btnCol+';border-radius:5px;color:'+(off?'#4eff8a':'#ff6b6b')+';font-size:.68rem;padding:2px 9px;cursor:pointer;font-family:Manrope,sans-serif">'+(off?'Enable':'Disable')+'</button>'
-        +'</div>'
-        +(savedPlain?'':
-          '<div style="display:flex;gap:4px;margin-top:4px">'
-          +'<input id="save-builtin-plain-'+label+'" type="text" maxlength="32" placeholder="Save password here to reveal later…" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);border-radius:4px;color:#ccc;font-size:.7rem;padding:2px 7px;flex:1;font-family:Manrope,sans-serif">'
-          +'<button data-builtin-save-plain="'+label+'" style="background:none;border:1px solid rgba(78,255,138,.3);border-radius:5px;color:#4eff8a;font-size:.68rem;padding:2px 9px;cursor:pointer;font-family:Manrope,sans-serif">Save</button>'
-          +'</div>')
+      return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+        +'<span style="font-family:monospace;font-size:.8rem;color:'+col+';flex:1">'+esc(label)+'</span>'
+        +'<span style="font-size:.62rem;color:#555">'+label+'</span>'
+        +'<span style="font-size:.62rem;color:'+col+'">'+( off?'Disabled':'Active')+'</span>'
+        +'<button id="'+toggleId+'" style="background:none;border:1px solid '+btnCol+';border-radius:5px;color:'+(off?'#4eff8a':'#ff6b6b')+';font-size:.68rem;padding:2px 9px;cursor:pointer;font-family:Manrope,sans-serif">'+(off?'Enable':'Disable')+'</button>'
         +'</div>';
     }
 
-    // Load saved plain texts for built-in codes from Firebase
-    Promise.all([
-      fetch(fbUrl('_sc6/devBuiltInPlain/main')).then(function(r){return r.ok?r.json():null}).catch(function(){return null}),
-      fetch(fbUrl('_sc6/devBuiltInPlain/alt')).then(function(r){return r.ok?r.json():null}).catch(function(){return null})
-    ]).then(function(plains){
-      var mainPlain=(typeof plains[0]==='string'&&plains[0])||'';
-      var altPlain=(typeof plains[1]==='string'&&plains[1])||'';
-
-      var html='<div style="margin-bottom:8px">'
-        +builtInRow('main',mainOff,'toggleMainCode',mainPlain)
-        +'</div>';
+    var html='<div style="margin-bottom:8px">'
+      +builtInRow('main',mainOff,'toggleMainCode')
+      +builtInRow('alt',altOff,'toggleAltCode')
+      +'</div>';
 
     if(extras.length){
       html+=extras.map(function(e,i){
         var off=e.disabled===true;
         var col=off?'#ff6b6b':'#4eff8a';
         var btnCol=off?'rgba(78,255,138,.3)':'rgba(255,107,107,.4)';
-        var label=e.label||('Code '+(i+1));
-        var hasPlain=!!e.plain;
-        var revealId='reveal-extra-'+i;
-        return '<div style="border-bottom:1px solid rgba(255,255,255,.07);padding:6px 0">'
-          +'<div style="display:flex;align-items:center;gap:6px">'
-            +'<span style="font-family:monospace;font-size:.8rem;color:'+col+'">'
-              +(hasPlain
-                ?'<span id="'+revealId+'-mask" style="letter-spacing:.12em">••••••••</span>'
-                 +'<span id="'+revealId+'-plain" style="display:none">'+esc(e.plain)+'</span>'
-                :'<span style="letter-spacing:.12em">••••••••</span>')
-            +'</span>'
-            +(hasPlain?'<button data-reveal-extra="'+i+'" data-reveal-id="'+revealId+'" title="Show/hide" style="background:none;border:none;color:#555;font-size:.75rem;cursor:pointer;padding:0 2px;line-height:1">👁</button>':'')
-            +'<span style="flex:1"></span>'
-            +'<span id="label-display-'+i+'" style="font-size:.62rem;color:#888;cursor:pointer;text-decoration:underline;text-decoration-style:dotted" data-pass-rename="'+i+'" title="Click to rename">'+esc(label)+'</span>'
-            +'<span style="font-size:.62rem;color:'+col+'">'+( off?'Disabled':'Active')+'</span>'
-            +'<button data-pass-toggle="'+i+'" style="background:none;border:1px solid '+btnCol+';border-radius:5px;color:'+(off?'#4eff8a':'#ff6b6b')+';font-size:.68rem;padding:2px 9px;cursor:pointer;font-family:Manrope,sans-serif">'+(off?'Enable':'Disable')+'</button>'
-            +'<button data-pass-rm="'+i+'" style="background:none;border:1px solid rgba(255,107,107,.35);border-radius:5px;color:#ff6b6b;font-size:.68rem;padding:2px 9px;cursor:pointer;font-family:Manrope,sans-serif">Erase</button>'
-          +'</div>'
-          +'<div id="rename-row-'+i+'" style="display:none;margin-top:4px;display:none;gap:4px;align-items:center">'
-            +'<input id="rename-inp-'+i+'" type="text" maxlength="24" value="'+esc(label)+'" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);border-radius:4px;color:#ccc;font-size:.72rem;padding:2px 7px;flex:1;font-family:Manrope,sans-serif">'
-            +'<button data-pass-rename-save="'+i+'" style="background:none;border:1px solid rgba(78,255,138,.3);border-radius:5px;color:#4eff8a;font-size:.68rem;padding:2px 9px;cursor:pointer;font-family:Manrope,sans-serif">Save</button>'
-            +'<button data-pass-rename-cancel="'+i+'" style="background:none;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#888;font-size:.68rem;padding:2px 9px;cursor:pointer;font-family:Manrope,sans-serif">Cancel</button>'
-          +'</div>'
+        return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+          +'<span style="font-family:monospace;font-size:.8rem;color:'+col+';flex:1">'+esc(e.code)+'</span>'
+          +'<span style="font-size:.62rem;color:'+col+'">'+( off?'Disabled':'Active')+'</span>'
+          +'<button data-pass-toggle="'+i+'" style="background:none;border:1px solid '+btnCol+';border-radius:5px;color:'+(off?'#4eff8a':'#ff6b6b')+';font-size:.68rem;padding:2px 9px;cursor:pointer;font-family:Manrope,sans-serif">'+(off?'Enable':'Disable')+'</button>'
+          +'<button data-pass-rm="'+i+'" style="background:none;border:1px solid rgba(255,107,107,.35);border-radius:5px;color:#ff6b6b;font-size:.68rem;padding:2px 9px;cursor:pointer;font-family:Manrope,sans-serif">Erase</button>'
           +'</div>';
       }).join('');
     }else{
@@ -2020,32 +1979,6 @@ function loadOpPasswords(){
       d.textContent='Error: '+msg;
       setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d);},6000);
     }
-
-    // Built-in reveal toggles
-    document.querySelectorAll('[data-reveal-builtin]').forEach(function(btn){
-      var id=btn.getAttribute('data-reveal-id');
-      var showing=false;
-      btn.addEventListener('click',function(){
-        showing=!showing;
-        document.getElementById(id+'-mask').style.display=showing?'none':'';
-        document.getElementById(id+'-plain').style.display=showing?'':'none';
-        btn.style.color=showing?'#4fc':'#555';
-      });
-    });
-
-    // Extra reveal toggles
-    document.querySelectorAll('[data-reveal-extra]').forEach(function(btn){
-      var id=btn.getAttribute('data-reveal-id');
-      var showing=false;
-      btn.addEventListener('click',function(){
-        showing=!showing;
-        var mask=document.getElementById(id+'-mask');
-        var plain=document.getElementById(id+'-plain');
-        if(mask)mask.style.display=showing?'none':'';
-        if(plain)plain.style.display=showing?'':'none';
-        btn.style.color=showing?'#4fc':'#555';
-      });
-    });
 
     // Built-in toggles — write to Firebase then reload
     var tmBtn=document.getElementById('toggleMainCode');
@@ -2075,43 +2008,14 @@ function loadOpPasswords(){
     document.querySelectorAll('[data-pass-toggle]').forEach(function(btn){
       btn.addEventListener('click',function(){
         var idx=parseInt(btn.getAttribute('data-pass-toggle'));
-        var arr=extras.map(function(e){return{code:e.code,plain:e.plain||'',label:e.label||'',disabled:e.disabled};});
+        var arr=extras.map(function(e){return{code:e.code,disabled:e.disabled};});
+        var targetCode=arr[idx].code;
         arr[idx].disabled=!arr[idx].disabled;
         var nowDisabled=arr[idx].disabled;
         btn.disabled=true;
         fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
           .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-          .then(function(){exLog('Password '+(nowDisabled?'disabled':'enabled'),arr[idx].label||('Code '+(idx+1)),'operator',true);loadOpPasswords();})
-          .catch(function(e){btn.disabled=false;fbPutError(e.message);});
-      });
-    });
-
-    // Extra — rename (click label to open inline editor)
-    document.querySelectorAll('[data-pass-rename]').forEach(function(lbl){
-      lbl.addEventListener('click',function(){
-        var idx=parseInt(lbl.getAttribute('data-pass-rename'));
-        var row=document.getElementById('rename-row-'+idx);
-        if(row){row.style.display='flex';}
-      });
-    });
-    document.querySelectorAll('[data-pass-rename-cancel]').forEach(function(btn){
-      btn.addEventListener('click',function(){
-        var idx=parseInt(btn.getAttribute('data-pass-rename-cancel'));
-        var row=document.getElementById('rename-row-'+idx);
-        if(row)row.style.display='none';
-      });
-    });
-    document.querySelectorAll('[data-pass-rename-save]').forEach(function(btn){
-      btn.addEventListener('click',function(){
-        var idx=parseInt(btn.getAttribute('data-pass-rename-save'));
-        var inp=document.getElementById('rename-inp-'+idx);
-        var newLabel=(inp&&inp.value.trim())||('Code '+(idx+1));
-        var arr=extras.map(function(e){return{code:e.code,plain:e.plain||'',label:e.label||'',disabled:e.disabled};});
-        arr[idx].label=newLabel;
-        btn.disabled=true;
-        fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
-          .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-          .then(function(){exLog('Password renamed',newLabel,'operator',true);loadOpPasswords();})
+          .then(function(){exLog('Password '+(nowDisabled?'disabled':'enabled'),'Code: '+targetCode,'operator',true);loadOpPasswords();})
           .catch(function(e){btn.disabled=false;fbPutError(e.message);});
       });
     });
@@ -2133,33 +2037,17 @@ function loadOpPasswords(){
         }
         clearTimeout(armTimer);
         var idx=parseInt(btn.getAttribute('data-pass-rm'));
-        var arr=extras.map(function(e){return{code:e.code,plain:e.plain||'',label:e.label||'',disabled:e.disabled};});
+        var arr=extras.map(function(e){return{code:e.code,disabled:e.disabled};});
+        var removedCode=arr[idx].code;
         arr.splice(idx,1);
         btn.disabled=true;
         fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
           .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-          .then(function(){exLog('Password deleted','','operator',true);loadOpPasswords();})
+          .then(function(){exLog('Password deleted','Code: '+removedCode,'operator',true);loadOpPasswords();})
           .catch(function(e){btn.disabled=false;fbPutError(e.message);});
       });
     });
-
-    // Built-in — save plain text to Firebase (operator types it in once)
-    document.querySelectorAll('[data-builtin-save-plain]').forEach(function(btn){
-      btn.addEventListener('click',function(){
-        var key=btn.getAttribute('data-builtin-save-plain');
-        var inp=document.getElementById('save-builtin-plain-'+key);
-        var val=inp&&inp.value.trim();
-        if(!val)return;
-        btn.disabled=true;btn.textContent='…';
-        fetch(fbUrl('_sc6/devBuiltInPlain/'+key),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(val)})
-          .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-          .then(function(){exLog('Built-in password saved to operator view',key,'operator',true);loadOpPasswords();})
-          .catch(function(e){btn.disabled=false;btn.textContent='Save';fbPutError(e.message);});
-      });
-    });
-
-    }); // end inner Promise.all (built-in plains)
-  }); // end outer Promise.all (passwords/disabled)
+  }); // end Promise.all
 }
 document.getElementById('opPassAdd').addEventListener('click',function(){
   var inp=document.getElementById('opPassNew');
@@ -2168,10 +2056,10 @@ document.getElementById('opPassAdd').addEventListener('click',function(){
   fetch(devPasswordsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
     var arr=extrasFromRaw(d);
     if(arr.some(function(e){return e.code===val;})){alert('Already exists.');return;}
-    arr.push({code:val,plain:val,label:'Code '+(arr.length+1),disabled:false});
+    arr.push({code:val,disabled:false});
     fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
       .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-      .then(function(){exLog('Password added','','operator',true);inp.value='';loadOpPasswords();})
+      .then(function(){exLog('Password added',val,'operator',true);inp.value='';loadOpPasswords();})
       .catch(function(e){alert('Failed: '+e.message);});
   });
 });
