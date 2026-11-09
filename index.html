@@ -2423,9 +2423,13 @@ loadNicknames(null);
 var _liveStreamTimer=null;
 var _liveStreamLastKey='';
 var _liveStreamEntries=[];
+var _liveStreamStartTime=''; // only show entries from when stream was started
 
 function liveStreamStart(){
   if(_liveStreamTimer)return;
+  _liveStreamStartTime=new Date().toISOString(); // mark start time
+  _liveStreamEntries=[];
+  _liveStreamLastKey='';
   document.getElementById('liveStreamStatus').textContent='Running…';
   document.getElementById('liveStreamToggle').textContent='Stop';
   document.getElementById('liveStreamDot').style.background='#4fc';
@@ -2448,8 +2452,13 @@ function _liveStreamPoll(){
       if(!e.time&&e.t)e.time=e.t;
       return e;
     });
-    // Filter to visitor entries only, sort newest first
-    var visitors=raw.filter(function(e){return e&&(e.who==='visitor'||String(e.who||'').startsWith('visitor'));});
+    // Filter to visitor entries only, only since stream started
+    var visitors=raw.filter(function(e){
+      if(!e)return false;
+      if(!(e.who==='visitor'||String(e.who||'').startsWith('visitor')))return false;
+      if(_liveStreamStartTime&&e.time&&e.time<_liveStreamStartTime)return false;
+      return true;
+    });
     if(!visitors.length)return;
     // Find new entries since last poll using time
     var maxSeen=_liveStreamLastKey;
