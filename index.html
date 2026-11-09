@@ -2541,9 +2541,9 @@ function sc6SendAlert(toEmail,subject,message){
   }catch(e){}
 }
 
-// Format email heading: [CODE (VOID)] in yellow style via text
+// Format email heading: [CODE]
 function alertHeading(code){
-  return '['+code.toUpperCase()+' (VOID)]';
+  return '['+code.toUpperCase()+']';
 }
 function alertBody(code,action,time,from){
   return alertHeading(code)+'\n\n'+action+'\n\nTime: '+time+(from?'\nFrom: '+from:'');

@@ -66,7 +66,7 @@ function sendWsAlerts(ws,eventLabel,from){
     alerts.forEach(function(a){
       if(!a||!a.email||!a.ws||a.paused===true)return;
       if(a.ws!==ws&&a.ws!=='*')return;
-      try{emailjs.send('service_f7xdfho','template_me3wdpj',{to_email:a.email,subject:'SC6 Alert — '+ws+' hit',message:'['+ws.toUpperCase()+' (VOID)]\n\n'+eventLabel+'\n\nTime: '+now+(from?'\nFrom: '+from:'')}).catch(function(){});}catch(e){}
+      try{emailjs.send('service_f7xdfho','template_me3wdpj',{to_email:a.email,subject:'SC6 Alert — '+ws+' hit',message:'['+ws.toUpperCase()+']\n\n'+eventLabel+'\n\nTime: '+now+(from?'\nFrom: '+from:'')}).catch(function(){});}catch(e){}
     });
   });
 }
@@ -79,7 +79,7 @@ function sendGlobalAlerts(actionKey,ws,detail,from){
       if(!a||!a.email||!a.actions||a.paused===true)return;
       if(a.code&&a.code!==ws)return;
       if(a.actions.indexOf(actionKey)<0)return;
-      try{emailjs.send('service_f7xdfho','template_me3wdpj',{to_email:a.email,subject:'SC6 Alert — '+actionKey.replace(/_/g,' '),message:'['+ws.toUpperCase()+' (VOID)]\n\n'+detail+'\n\nTime: '+now+(from?'\nFrom: '+from:'')}).catch(function(){});}catch(e){}
+      try{emailjs.send('service_f7xdfho','template_me3wdpj',{to_email:a.email,subject:'SC6 Alert — '+actionKey.replace(/_/g,' '),message:'['+ws.toUpperCase()+']\n\n'+detail+'\n\nTime: '+now+(from?'\nFrom: '+from:'')}).catch(function(){});}catch(e){}
     });
   });
 }
