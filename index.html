@@ -143,7 +143,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.4</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.5</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1258,6 +1258,7 @@ function loadOpWsOverview(){
         +'<code style="font-size:.75rem;color:'+(isCurrent?'#f5c800':'#ccc')+';flex:1;cursor:pointer;text-decoration:underline;text-decoration-style:dotted" data-ws-switch="'+esc(ws)+'">'+esc(ws)+(isCurrent?' ◀':'')+'</code>'
         +(redirectCount?'<span style="font-size:.65rem;color:#9f7aea">'+redirectCount+' tracker</span>':'')
         +(trapCount?'<span style="font-size:.65rem;color:#f5c800">'+trapCount+' error</span>':'')
+        +'<button data-ws-delete="'+esc(ws)+'" style="background:none;border:1px solid rgba(255,107,107,.35);border-radius:5px;color:#ff6b6b;font-size:.65rem;padding:2px 8px;cursor:pointer;font-family:Manrope,sans-serif">Delete</button>'
         +'</li>';
     }).join('');
     list.querySelectorAll('[data-ws-switch]').forEach(function(el){
@@ -1269,7 +1270,29 @@ function loadOpWsOverview(){
         loadOpTrapList();
         loadOpRedirectList();
         loadOpWsStats();
-        loadOpWsOverview();// re-render to update ◀
+        loadOpWsOverview();
+      });
+    });
+    list.querySelectorAll('[data-ws-delete]').forEach(function(btn){
+      var armed=false,armTimer=null;
+      btn.addEventListener('click',function(){
+        if(!armed){
+          armed=true;
+          btn.textContent='Sure?';
+          btn.style.background='rgba(192,0,14,.25)';
+          btn.style.borderColor='rgba(192,0,14,.7)';
+          btn.style.color='#ff4444';
+          armTimer=setTimeout(function(){
+            armed=false;btn.textContent='Delete';btn.style.background='';btn.style.borderColor='rgba(255,107,107,.35)';btn.style.color='#ff6b6b';
+          },3000);
+          return;
+        }
+        clearTimeout(armTimer);
+        var ws=btn.getAttribute('data-ws-delete');
+        btn.disabled=true;btn.textContent='…';
+        fetch(fbUrl('_sc6/workspaces/'+ws),{method:'DELETE'})
+          .then(function(){exLog('Workspace deleted',ws,'operator',true);loadOpWsOverview();})
+          .catch(function(e){btn.disabled=false;btn.textContent='Delete';alert('Failed: '+e.message);});
       });
     });
   });
@@ -1330,7 +1353,7 @@ function loadOpAll(){
   loadOpMsgPreview();
   loadOpAnnouncementPreview();
   loadOpWsStats();
-  // New v1.9.4 panels
+  // New v1.9.5 panels
   loadOpGeo();
   loadOpErrPage();
   loadWsAlerts();
