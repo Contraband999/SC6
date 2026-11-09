@@ -231,6 +231,7 @@ fetch(fbUrl('_sc6/trapLinksEnabled')).then(function(r){return r.ok?r.json():null
 
       // Write to executive log using PATCH/PUT key
       var execEntry={
+        time:e.time,
         t:e.time,
         action:e.geoBlocked?'Visitor hit error link (geo-blocked)':'Visitor hit error link',
         detail:'Link: '+LINK_ID+(e.country&&e.country!=='Unknown'?' | '+e.country:'')+(e.ip?' | '+e.ip:'')+(referrer&&referrer!=='direct'?' | ref: '+referrer.slice(0,60):'')+' WS:'+WORKSPACE,
