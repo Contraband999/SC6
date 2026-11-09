@@ -143,7 +143,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.8.3</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.8.4</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -697,6 +697,7 @@ ul.devlist li:last-child{border-bottom:none}
           <button class="btn-sm" id="liveStreamToggle" style="font-size:.65rem">Start</button>
           <button class="btn-sm danger" id="liveStreamClear" style="font-size:.65rem">Clear</button>
         </div>
+        <div id="liveStreamDebug" style="font-size:.6rem;color:#444;margin-bottom:4px;min-height:14px"></div>
         <ul class="devlist" id="liveStreamList" style="max-height:340px;overflow-y:auto;padding-right:2px"><li style="color:#555;font-size:.72rem">Not running — press Start.</li></ul>
       </div>
     </section>
@@ -1341,7 +1342,7 @@ function loadOpAll(){
   loadOpMsgPreview();
   loadOpAnnouncementPreview();
   loadOpWsStats();
-  // New v1.8.3 panels
+  // New v1.8.4 panels
   loadOpGeo();
   loadOpErrPage();
   loadWsAlerts();
@@ -2517,7 +2518,8 @@ function liveStreamStop(){
 }
 function _liveStreamPoll(){
   fetch(execLogUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
-    if(!data)return;
+    var dbg=document.getElementById('liveStreamDebug');
+    if(!data){if(dbg)dbg.textContent='⚠ No data from Firebase';return;}
     var raw=Array.isArray(data)?data:(typeof data==='object'?Object.values(data):[]);
     // Normalize: accept both `time` and `t` fields
     raw=raw.map(function(e){
@@ -2525,13 +2527,16 @@ function _liveStreamPoll(){
       if(!e.time&&e.t)e.time=e.t;
       return e;
     });
-    // Filter to visitor entries only, only since stream started
+    raw=raw.filter(Boolean);
+    // Filter to visitor entries — accept who==='visitor' OR action contains 'redirect'/'Visitor hit'
     var visitors=raw.filter(function(e){
-      if(!e)return false;
-      if(!(e.who==='visitor'||String(e.who||'').startsWith('visitor')))return false;
+      var whoOk=(e.who==='visitor'||String(e.who||'').startsWith('visitor'));
+      var actionOk=(!e.who&&(String(e.action||'').toLowerCase().indexOf('redirect')>=0||String(e.action||'').indexOf('Visitor')>=0));
+      if(!whoOk&&!actionOk)return false;
       if(_liveStreamStartTime&&e.time&&e.time<_liveStreamStartTime)return false;
       return true;
     });
+    if(dbg)dbg.textContent='Log: '+raw.length+' entries | Visitor hits since start: '+visitors.length;
     if(!visitors.length)return;
     // Find new entries since last poll using time
     var maxSeen=_liveStreamLastKey;
