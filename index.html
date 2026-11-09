@@ -659,6 +659,7 @@ ul.devlist li:last-child{border-bottom:none}
           <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="redirect_hit"> Redirect / tracker hit</label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="message_sent"> Dev message sent</label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="operator_panel_opened"> Operator panel opened</label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="brute_force_attempt"> 🚨 Brute-force attempt (5 wrong logins from same source)</label>
         </div>
         <div class="row" style="margin-top:8px">
           <button class="btn-sm" id="opGlobalAlertAdd" style="font-weight:600">Add alert rule</button>
@@ -667,6 +668,19 @@ ul.devlist li:last-child{border-bottom:none}
         <div class="row" style="margin-top:4px">
           <button class="btn-sm" id="opGlobalAlertRefresh" style="font-size:.65rem">Refresh</button>
         </div>
+      </div>
+    </section>
+
+    <!-- ── Failed login attempts ── -->
+    <section>
+      <div class="sec-head">
+        <h3>Failed login attempts</h3>
+        <p class="note" style="margin:4px 0 0">Every wrong password attempt logged here with IP and time. Brute-force triggers after 5 consecutive fails from the same source.</p>
+      </div>
+      <ul class="devlist" id="opFailedLoginList" style="max-height:280px;overflow-y:auto;padding-right:2px"><li style="color:#888;font-size:.72rem">Loading…</li></ul>
+      <div class="row" style="margin-top:4px">
+        <button class="btn-sm" id="opFailedLoginRefresh" style="font-size:.65rem">Refresh</button>
+        <button class="btn-sm danger" id="opFailedLoginClear" style="font-size:.65rem">Clear all</button>
       </div>
     </section>
 
@@ -737,7 +751,26 @@ function _loginAllowed(){
 }
 function _loginFail(inp){
   _loginAttempts++;
-  if(_loginAttempts>=5){
+  var isBrute=(_loginAttempts>=5);
+  // Fetch IP and log the attempt
+  fetch('https://ipapi.co/json/').then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(geo){
+    var entry={
+      time:new Date().toISOString(),
+      ip:(geo&&geo.ip)||'unknown',
+      country:(geo&&geo.country_name)||'?',
+      city:(geo&&geo.city)||'?',
+      isp:(geo&&geo.org)||'?',
+      panel:inp&&inp.id==='opCodeInput'?'operator':'dev',
+      brute:isBrute
+    };
+    // POST = atomic push key, no race
+    fetch(FIREBASE_BASE+'_sc6/failedLogins.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)}).catch(function(){});
+    exLog('Login failed',(isBrute?'🚨 BRUTE FORCE — ':'')+'IP: '+(entry.ip)+' | '+entry.city+', '+entry.country+' | Panel: '+entry.panel,'unknown');
+    if(isBrute){
+      fireGlobalAlerts('brute_force_attempt','unknown','🚨 Brute-force on '+entry.panel+' panel — IP: '+entry.ip+' | '+entry.city+', '+entry.country+' | ISP: '+entry.isp,entry.ip);
+    }
+  });
+  if(isBrute){
     _loginLockedUntil=Date.now()+30000;
     _loginAttempts=0;
     if(inp){inp.placeholder='Too many attempts — wait 30s';setTimeout(function(){inp.placeholder=inp===document.getElementById('devCodeInput')?'Access code…':'Operator code…';},30000);}
@@ -1329,6 +1362,7 @@ function loadOpAll(){
   loadOpErrPage();
   loadWsAlerts();
   loadGlobalAlerts();
+  loadFailedLogins();
 }
 
 // ── Op log ──
@@ -2831,7 +2865,8 @@ function loadGlobalAlerts(){
       trap_hit:'Trap hit',
       redirect_hit:'Redirect hit',
       message_sent:'Dev message sent',
-      operator_panel_opened:'Operator panel opened'
+      operator_panel_opened:'Operator panel opened',
+      brute_force_attempt:'🚨 Brute-force attempt'
     };
     ul.innerHTML=arr.map(function(a,i){
       var acts=(a.actions||[]).map(function(k){return actionLabels[k]||k;}).join(', ');
@@ -2891,6 +2926,47 @@ document.getElementById('opGlobalAlertAdd').addEventListener('click',function(){
   });
 });
 document.getElementById('opGlobalAlertRefresh').addEventListener('click',loadGlobalAlerts);
+
+// ══════════════════════════════════════════
+// FAILED LOGIN ATTEMPTS
+// ══════════════════════════════════════════
+function failedLoginsUrl(){return FIREBASE_BASE+'_sc6/failedLogins.json';}
+
+function loadFailedLogins(){
+  var ul=document.getElementById('opFailedLoginList');
+  if(!ul)return;
+  fetch(failedLoginsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var arr=d&&typeof d==='object'?(Array.isArray(d)?d:Object.values(d)):[];
+    arr.sort(function(a,b){return (b.time||'').localeCompare(a.time||'');});
+    if(!arr.length){ul.innerHTML='<li style="color:#888;font-size:.72rem">No failed attempts recorded.</li>';return;}
+    ul.innerHTML=arr.map(function(e){
+      var t=e.time?new Date(e.time).toLocaleString():'?';
+      var isBrute=e.brute===true;
+      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+        +'<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">'
+        +(isBrute?'<span style="font-size:.65rem;background:#ff2222;color:#fff;border-radius:4px;padding:1px 6px;font-weight:700">BRUTE FORCE</span>':'')
+        +'<span style="font-size:.7rem;color:#ccc;font-weight:600">'+esc(t)+'</span>'
+        +'<span style="font-size:.68rem;color:#ff6b6b;font-family:monospace">'+esc(e.ip||'?')+'</span>'
+        +(e.panel?'<span style="font-size:.62rem;color:#f5c800;background:rgba(245,200,0,.1);border-radius:3px;padding:1px 5px">'+esc(e.panel)+'</span>':'')
+        +'</div>'
+        +(e.city||e.country?'<div style="font-size:.68rem;color:#4fc;margin-top:1px">📍 '+esc([e.city,e.country].filter(Boolean).join(', '))+'</div>':'')
+        +(e.isp&&e.isp!=='?'?'<div style="font-size:.62rem;color:#888;margin-top:1px">🌐 '+esc(e.isp)+'</div>':'')
+        +'</li>';
+    }).join('');
+  });
+}
+
+document.getElementById('opFailedLoginRefresh').addEventListener('click',loadFailedLogins);
+document.getElementById('opFailedLoginClear').addEventListener('click',function(){
+  if(!confirm('Clear all failed login records?'))return;
+  fetch(failedLoginsUrl(),{method:'DELETE'}).then(function(){
+    document.getElementById('opFailedLoginList').innerHTML='<li style="color:#888;font-size:.72rem">Cleared.</li>';
+    exLog('Failed logins cleared','','operator',true);
+  }).catch(function(e){alert('Failed: '+e.message);});
+});
+
+// Add brute_force_attempt to action labels map
+var _extraActionLabels={'brute_force_attempt':'🚨 Brute-force attempt'};
 
 })();
 
