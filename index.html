@@ -142,7 +142,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.5.0</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.7.0</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -168,6 +168,11 @@ ul.devlist li:last-child{border-bottom:none}
       <div style="font-size:.88rem;font-weight:700;color:#ff6b6b;margin-bottom:4px">Dev Panel Disabled</div>
       <div style="font-size:.72rem;color:rgba(255,107,107,.7)">Under maintenance — check back later.</div>
     </div>
+    <!-- Operator announcement (shown before login if set) -->
+    <div id="devAnnouncementBanner" style="display:none;margin:0 0 10px;background:rgba(245,200,0,.1);border:1px solid rgba(245,200,0,.35);border-radius:10px;padding:11px 14px">
+      <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;color:#f5c800;opacity:.7;margin-bottom:4px">ANNOUNCEMENT</div>
+      <p style="font-size:.82rem;color:#f5c800;font-weight:600;line-height:1.5;margin:0" id="devAnnouncementText"></p>
+    </div>
     <section id="devGateSection">
       <div class="sec-head"><h3>Dev panel</h3><p class="note" style="margin:4px 0 0">Enter access code.</p></div>
       <div class="sec-body">
@@ -186,8 +191,27 @@ ul.devlist li:last-child{border-bottom:none}
     <section>
       <div class="sec-head"><h3>Workspace</h3><p class="note" style="margin:4px 0 0">Your workspace determines which error links you see. Each workspace is isolated.</p></div>
       <div class="sec-body">
-        <div class="row">
-          <span class="label">Current: <code id="devSyncDisplay" style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 6px;border-radius:3px;font-size:.78rem">—</code></span>
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <span class="label">Current: <code id="devSyncDisplay" style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 6px;border-radius:3px;font-size:.78rem">—</code> <span id="devSyncNickname" style="display:none;font-size:.7rem;color:#9f7aea;font-style:italic;margin-left:4px"></span></span>
+        </div>
+        <!-- Session stats bar -->
+        <div id="devSessionStats" style="display:flex;gap:12px;margin-top:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;flex-wrap:wrap">
+          <div style="display:flex;flex-direction:column;align-items:center;min-width:52px">
+            <div id="devStatHits" style="font-size:1.1rem;font-weight:800;color:#4fc;line-height:1">0</div>
+            <div style="font-size:.58rem;color:#555;margin-top:2px;letter-spacing:.05em">TRAP HITS</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;min-width:52px">
+            <div id="devStatTracker" style="font-size:1.1rem;font-weight:800;color:#9f7aea;line-height:1">0</div>
+            <div style="font-size:.58rem;color:#555;margin-top:2px;letter-spacing:.05em">TRACK HITS</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;min-width:52px">
+            <div id="devStatMsgs" style="font-size:1.1rem;font-weight:800;color:#f5c800;line-height:1">0</div>
+            <div style="font-size:.58rem;color:#555;margin-top:2px;letter-spacing:.05em">MSGS SENT</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;min-width:52px">
+            <div id="devStatLinks" style="font-size:1.1rem;font-weight:800;color:#ff6b6b;line-height:1">0</div>
+            <div style="font-size:.58rem;color:#555;margin-top:2px;letter-spacing:.05em">LINKS MADE</div>
+          </div>
         </div>
         <div class="row">
           <input type="text" id="devSyncInput" maxlength="40" placeholder="Enter workspace code…" style="flex:1">
@@ -267,7 +291,56 @@ ul.devlist li:last-child{border-bottom:none}
   <!-- Op content -->
   <div id="opContent" style="display:none">
 
-    <!-- Access log -->
+    <!-- ── Operator workspace selector ── -->
+    <section>
+      <div class="sec-head"><h3>Workspace</h3><p class="note" style="margin:4px 0 0">View tracker links and visitor logs for a specific workspace.</p></div>
+      <div class="sec-body">
+        <div class="row">
+          <span class="label">Viewing: <code id="opWsDisplay" style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 6px;border-radius:3px;font-size:.78rem">void-alpha</code></span>
+        </div>
+        <div class="row">
+          <input type="text" id="opWsInput" maxlength="40" placeholder="Workspace code…" style="flex:1">
+          <button class="btn-sm" id="opWsApply">View</button>
+          <button class="btn-sm danger" id="opWsReset" style="font-size:.65rem">Default</button>
+        </div>
+        <!-- Quick stats row -->
+        <div id="opWsStats" style="display:none;margin-top:10px;background:rgba(255,255,255,.04);border:1px solid var(--faint);border-radius:8px;padding:9px 12px">
+          <div style="font-size:.6rem;color:#555;letter-spacing:.08em;margin-bottom:7px;text-transform:uppercase">Workspace stats</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="text-align:center">
+              <div style="font-size:1.2rem;font-weight:800;color:#f5c800;line-height:1" id="opStatsTrapLinks">—</div>
+              <div style="font-size:.6rem;color:#666;margin-top:2px">error links</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:1.2rem;font-weight:800;color:#4fc;line-height:1" id="opStatsRedirectLinks">—</div>
+              <div style="font-size:.6rem;color:#666;margin-top:2px">tracker links</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:1.2rem;font-weight:800;color:#aaa;line-height:1" id="opStatsTrapVisitors">—</div>
+              <div style="font-size:.6rem;color:#666;margin-top:2px">error hits</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:1.2rem;font-weight:800;color:#9f7aea;line-height:1" id="opStatsRedirectHits">—</div>
+              <div style="font-size:.6rem;color:#666;margin-top:2px">tracker hits</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Workspace overview ── -->
+    <section>
+      <div class="sec-head"><h3>All workspaces</h3><p class="note" style="margin:4px 0 0">All workspaces that have tracker or error links — click any to switch to it.</p></div>
+      <div class="sec-body">
+        <div class="row" style="margin-bottom:6px">
+          <button class="btn-sm" id="opWsOverviewRefresh" style="font-size:.65rem">Scan</button>
+          <span class="label" id="opWsOverviewStatus" style="font-size:.68rem;color:#555">Not loaded</span>
+        </div>
+        <ul class="devlist" id="opWsOverviewList"></ul>
+      </div>
+    </section>
+
+    <!-- ── Access log ── -->
     <section>
       <div class="sec-head">
         <h3>Dev panel access log</h3>
@@ -281,7 +354,24 @@ ul.devlist li:last-child{border-bottom:none}
       </div>
     </section>
 
-    <!-- Error links -->
+    <!-- ── Redirect links (tracker) ── -->
+    <section>
+      <div class="sec-head">
+        <h3>Tracker links</h3>
+        <p class="note" style="margin:4px 0 0">Redirect links created by dev users. Each hit is logged with full visitor info.</p>
+      </div>
+      <div class="sec-body">
+        <div class="row" style="margin-bottom:10px">
+          <span class="label" id="opRedirectCount" style="font-size:.7rem;color:#888">Loading…</span>
+          <button class="btn-sm" id="opRedirectRefresh" style="font-size:.65rem">Refresh</button>
+          <button class="btn-sm" id="opRedirectExport" style="font-size:.65rem">Export CSV</button>
+          <button class="btn-sm danger" id="opRedirectClearAll" style="font-size:.65rem">Delete all</button>
+        </div>
+        <ul class="devlist" id="opRedirectList"><li style="color:#888">Loading…</li></ul>
+      </div>
+    </section>
+
+    <!-- ── Error links ── -->
     <section>
       <div class="sec-head"><h3>Error links</h3></div>
       <div class="sec-body">
@@ -301,7 +391,25 @@ ul.devlist li:last-child{border-bottom:none}
       </div>
     </section>
 
-    <!-- Panel lock -->
+    <!-- ── Operator-side error link creator ── -->
+    <section>
+      <div class="sec-head"><h3>Create error link</h3><p class="note" style="margin:4px 0 0">Generate a fake 404 trap link directly — no dev panel needed. Logged to current workspace above.</p></div>
+      <div class="sec-body">
+        <div class="row">
+          <input type="text" id="opTrapCreateLabel" maxlength="80" placeholder="Label / note (optional)…" style="flex:1">
+          <button class="btn-sm" id="opTrapCreate" style="font-weight:600;white-space:nowrap">Generate</button>
+        </div>
+        <div id="opTrapCreateResult" style="display:none;margin-top:8px;background:rgba(192,0,14,.07);border:1px solid rgba(192,0,14,.3);border-radius:7px;padding:9px 11px">
+          <div style="font-size:.62rem;color:#ff6b6b;font-weight:700;letter-spacing:.06em;margin-bottom:4px">ERROR LINK CREATED</div>
+          <code id="opTrapCreateResultUrl" style="font-size:.7rem;color:#ff6b6b;word-break:break-all;line-height:1.5"></code>
+          <div class="row" style="margin-top:7px;gap:6px">
+            <button class="btn-sm" id="opTrapCreateCopy" style="font-size:.65rem">Copy</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Panel lock ── -->
     <section>
       <div class="sec-head"><h3>Dev panel access</h3></div>
       <div class="sec-body">
@@ -312,29 +420,90 @@ ul.devlist li:last-child{border-bottom:none}
       </div>
     </section>
 
-    <!-- Message -->
+    <!-- ── Operator-side link creator ── -->
     <section>
-      <div class="sec-head"><h3>Message to dev panel</h3><p class="note" style="margin:4px 0 0">Shown to the next person who opens the Dev panel.</p></div>
+      <div class="sec-head"><h3>Create tracker link</h3><p class="note" style="margin:4px 0 0">Create a redirect/tracker link directly — no dev panel needed. Link is added to the workspace shown above.</p></div>
       <div class="sec-body">
         <div class="row">
-          <button class="btn-sm" id="opMsgLeave">Set message</button>
-          <button class="btn-sm danger" id="opMsgDelete">Delete message</button>
+          <input type="url" id="opCreateTarget" maxlength="400" placeholder="Destination URL…" style="flex:1">
+        </div>
+        <div class="row" style="margin-top:6px">
+          <input type="text" id="opCreateNote" maxlength="80" placeholder="Note / label (optional)…" style="flex:1">
+        </div>
+        <div class="row" style="margin-top:6px">
+          <select id="opCreateParam" style="background:rgba(255,255,255,.07);border:1px solid var(--faint);border-radius:6px;color:inherit;padding:5px 8px;font-size:.75rem">
+            <option value="r">Generic (r)</option>
+            <option value="yt">YouTube (yt)</option>
+            <option value="ig">Instagram (ig)</option>
+            <option value="tt">TikTok (tt)</option>
+            <option value="tw">Twitter/X (tw)</option>
+            <option value="fb">Facebook (fb)</option>
+            <option value="dc">Discord (dc)</option>
+            <option value="tg">Telegram (tg)</option>
+            <option value="wa">WhatsApp (wa)</option>
+            <option value="sc">Snapchat (sc)</option>
+            <option value="rd">Reddit (rd)</option>
+          </select>
+          <button class="btn-sm" id="opCreateLink" style="font-weight:600">Create</button>
+        </div>
+        <div id="opCreateResult" style="display:none;margin-top:8px;background:rgba(79,255,204,.07);border:1px solid rgba(79,255,204,.2);border-radius:7px;padding:9px 11px">
+          <div style="font-size:.62rem;color:#555;margin-bottom:3px;letter-spacing:.05em">LINK CREATED</div>
+          <code id="opCreateResultUrl" style="font-size:.7rem;color:#4fc;word-break:break-all;line-height:1.5"></code>
+          <div class="row" style="margin-top:7px;gap:6px">
+            <button class="btn-sm" id="opCreateCopy" style="font-size:.65rem">Copy</button>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Dev inbox -->
+    <!-- ── Announcement (shown on Dev panel before login) ── -->
     <section>
-      <div class="sec-head"><h3>Dev inbox</h3><p class="note" style="margin:4px 0 0">Messages sent to you from the dev panel. Reply privately per message.</p></div>
+      <div class="sec-head"><h3>Announcement</h3><p class="note" style="margin:4px 0 0">Shown prominently on the Dev panel to ALL users before they log in.</p></div>
+      <div class="sec-body">
+        <div id="opAnnouncementPreview" style="display:none;margin-bottom:8px;background:rgba(245,200,0,.07);border:1px solid rgba(245,200,0,.2);border-radius:7px;padding:9px 11px">
+          <div style="font-size:.62rem;color:#888;margin-bottom:3px;letter-spacing:.05em">CURRENT ANNOUNCEMENT</div>
+          <p style="font-size:.78rem;color:#f5c800;line-height:1.5;font-weight:600" id="opAnnouncementPreviewText"></p>
+        </div>
+        <div class="row">
+          <input type="text" id="opAnnouncementText" maxlength="300" placeholder="Announcement for all dev users…" style="flex:1">
+          <button class="btn-sm" id="opAnnouncementSet" style="font-weight:600;color:#f5c800">Set</button>
+          <button class="btn-sm danger" id="opAnnouncementClear">Clear</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Message to dev ── -->
+    <section>
+      <div class="sec-head"><h3>Message to dev panel</h3><p class="note" style="margin:4px 0 0">Shown to the next person who opens the Dev panel.</p></div>
+      <div class="sec-body">
+        <div id="opMsgPreview" style="display:none;margin-bottom:8px;background:rgba(255,255,255,.04);border:1px solid var(--faint);border-radius:7px;padding:9px 11px">
+          <div style="font-size:.62rem;color:#555;margin-bottom:3px;letter-spacing:.05em">CURRENT MESSAGE</div>
+          <p style="font-size:.78rem;color:#ccc;line-height:1.5" id="opMsgPreviewText"></p>
+        </div>
+        <div class="row">
+          <input type="text" id="opMsgNewText" maxlength="200" placeholder="Type message…" style="flex:1">
+          <button class="btn-sm" id="opMsgLeave">Set</button>
+          <button class="btn-sm danger" id="opMsgDelete">Clear</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Dev inbox ── -->
+    <section>
+      <div class="sec-head">
+        <h3>Dev inbox <span id="opInboxUnreadBadge" style="display:none;background:#c0000e;color:#fff;font-size:.6rem;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:5px;vertical-align:middle">●</span></h3>
+        <p class="note" style="margin:4px 0 0">Messages sent from the dev panel. Reply privately per message.</p>
+      </div>
       <div class="sec-body">
         <ul class="devlist" id="opDevInbox"><li style="color:#888">Loading…</li></ul>
         <div class="row" style="margin-top:8px">
+          <button class="btn-sm" id="opDevInboxRefresh">Refresh</button>
           <button class="btn-sm danger" id="opDevInboxClearAll">Clear all</button>
         </div>
       </div>
     </section>
 
-    <!-- Passwords -->
+    <!-- ── Passwords ── -->
     <section>
       <div class="sec-head"><h3>Dev panel passwords</h3><p class="note" style="margin:4px 0 0">Anyone with one of these can open the Dev panel.</p></div>
       <div class="sec-body">
@@ -346,7 +515,7 @@ ul.devlist li:last-child{border-bottom:none}
       </div>
     </section>
 
-    <!-- Banned devices -->
+    <!-- ── Banned devices ── -->
     <section>
       <div class="sec-head"><h3>Banned devices</h3><p class="note" style="margin:4px 0 0">Devices on this list are blocked from the Dev panel.</p></div>
       <div class="sec-body">
@@ -359,7 +528,7 @@ ul.devlist li:last-child{border-bottom:none}
       </div>
     </section>
 
-    <!-- Code nicknames -->
+    <!-- ── Code nicknames ── -->
     <section>
       <div class="sec-head"><h3>Code nicknames</h3><p class="note" style="margin:4px 0 0">Give each dev code a name — shown in the executive log.</p></div>
       <div class="sec-body">
@@ -372,7 +541,7 @@ ul.devlist li:last-child{border-bottom:none}
       </div>
     </section>
 
-    <!-- Workspace log -->
+    <!-- ── Workspace log ── -->
     <section>
       <div class="sec-head"><h3>Workspace log</h3><p class="note" style="margin:4px 0 0">Every time a dev user sets or generates a workspace code.</p></div>
       <div class="sec-body">
@@ -383,7 +552,7 @@ ul.devlist li:last-child{border-bottom:none}
       </div>
     </section>
 
-    <!-- Executive log -->
+    <!-- ── Executive log ── -->
     <section>
       <div class="sec-head">
         <h3>Executive log</h3>
@@ -397,7 +566,34 @@ ul.devlist li:last-child{border-bottom:none}
           <button class="btn-sm" id="execLogPause" style="font-size:.65rem">Pause</button>
           <button class="btn-sm danger" id="execLogClear" style="font-size:.65rem">Clear</button>
         </div>
+        <!-- Filter bar -->
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+          <input type="text" id="execLogSearch" placeholder="Search actions…" maxlength="80" style="flex:1;min-width:120px;font-size:.72rem;padding:4px 8px;background:rgba(255,255,255,.06);border:1px solid var(--faint);border-radius:6px;color:inherit;outline:none">
+          <div style="display:flex;gap:4px">
+            <button class="btn-sm exec-filter-who" data-who="all" style="font-size:.6rem;padding:2px 7px;background:rgba(255,255,255,.18);color:#fff;font-weight:700;opacity:1">All</button>
+            <button class="btn-sm exec-filter-who" data-who="operator" style="font-size:.6rem;padding:2px 7px;background:rgba(255,107,107,.12);color:#ff6b6b;opacity:.45">Op</button>
+            <button class="btn-sm exec-filter-who" data-who="dev" style="font-size:.6rem;padding:2px 7px;background:rgba(245,200,0,.08);color:#f5c800;opacity:.45">Dev</button>
+            <button class="btn-sm exec-filter-who" data-who="visitor" style="font-size:.6rem;padding:2px 7px;background:rgba(79,255,204,.08);color:#4fc;opacity:.45">Visit</button>
+          </div>
+        </div>
         <ul class="devlist" id="execLogList" style="max-height:420px;overflow-y:auto;padding-right:2px"><li style="color:#888">Loading…</li></ul>
+      </div>
+    </section>
+
+    <!-- ── Live visitor stream ── -->
+    <section>
+      <div class="sec-head">
+        <h3>Live visitor stream <span id="liveStreamDot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#333;margin-left:6px;vertical-align:middle;transition:background .3s"></span></h3>
+        <p class="note" style="margin:4px 0 0">Real-time feed of visitor hits across ALL workspaces. Updates every 5 s.</p>
+      </div>
+      <div class="sec-body">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span id="liveStreamStatus" style="font-size:.65rem;color:#555">Idle</span>
+          <span style="flex:1"></span>
+          <button class="btn-sm" id="liveStreamToggle" style="font-size:.65rem">Start</button>
+          <button class="btn-sm danger" id="liveStreamClear" style="font-size:.65rem">Clear</button>
+        </div>
+        <ul class="devlist" id="liveStreamList" style="max-height:340px;overflow-y:auto;padding-right:2px"><li style="color:#555;font-size:.72rem">Not running — press Start.</li></ul>
       </div>
     </section>
 
@@ -469,8 +665,12 @@ function devLockedUrl(){return fbUrl('_sc6/devLocked')}
 function devMainDisabledUrl(){return fbUrl('_sc6/devMainDisabled')}
 function devAltDisabledUrl(){return fbUrl('_sc6/devAltDisabled')}
 function devMessageUrl(){return fbUrl('_sc6/devMessage')}
+function announcementUrl(){return fbUrl('_sc6/announcement')}
 function trapLinksUrl(){return fbUrl('_sc6/workspaces/'+getSyncCode()+'/trapLinks')}
 function trapLogsUrl(id){return fbUrl('_sc6/workspaces/'+getSyncCode()+'/trapLogs'+(id?'/'+id:''))}
+// Operator versions — use the operator's selected workspace (getOpWs), not the dev workspace
+function opTrapLinksUrl(){return fbUrl('_sc6/workspaces/'+getOpWs()+'/trapLinks')}
+function opTrapLogsUrl(id){return fbUrl('_sc6/workspaces/'+getOpWs()+'/trapLogs'+(id?'/'+id:''))}
 function trapGenEnabledUrl(){return fbUrl('_sc6/trapGenEnabled')}
 function trapLinksEnabledUrl(){return fbUrl('_sc6/trapLinksEnabled')}
 function redirectLinksUrl(){return fbUrl('_sc6/workspaces/'+getSyncCode()+'/redirectLinks')}
@@ -525,32 +725,52 @@ function exLog(action,detail,who,noGeo){
       os:(function(){if(/Windows/.test(ua))return'Win';if(/Android/.test(ua))return'Android';if(/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))return'iOS';if(/Mac/.test(ua))return'Mac';if(/Linux/.test(ua))return'Linux';return'?';}()),
       br:(function(){var m;if(m=ua.match(/Edg\/([\d.]+)/))return'Edge '+m[1].split('.')[0];if(m=ua.match(/OPR\/([\d.]+)/))return'Opera '+m[1].split('.')[0];if(m=ua.match(/(?:Chrome|CriOS)\/([\d.]+)/))return'Chrome '+m[1].split('.')[0];if(m=ua.match(/(?:Firefox|FxiOS)\/([\d.]+)/))return'FF '+m[1].split('.')[0];if(m=ua.match(/Version\/([\d.]+).*Safari/))return'Safari '+m[1].split('.')[0];return'?';}())
     };
-    var url=execLogUrl();
-    fetch(url).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
-      var list=Array.isArray(d)?d:[];
-      list.push(entry);
-      if(list.length>2000)list=list.slice(-2000);
-      fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(list)}).catch(function(){});
-    });
+    // Use PATCH to a unique push key — avoids read-modify-write race when multiple
+    // events fire in rapid succession (each gets its own key, nothing overwrites)
+    var pushKey=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    var patchUrl=FIREBASE_BASE+'_sc6/execLog/'+pushKey+'.json';
+    fetch(patchUrl,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)}).catch(function(){});
   };
   if(noGeo){doLog({ip:'?',country:'?',region:''});}else{getIpInfo(doLog);}
 }
 
 var _execLogLastCount=0;
+var _execLogFilterWho='all';
+var _execLogFilterSearch='';
 function renderExLog(){
   if(_execLogPaused)return;
   var ul=document.getElementById('execLogList');
   if(!ul)return;
   fetch(execLogUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
     if(_execLogPaused)return;
-    var arr=Array.isArray(data)?data:[];
-    var count=document.getElementById('execLogCount');
-    if(count)count.textContent=arr.length+' events';
+    // Data may be an object (keyed by push IDs) or legacy array — normalise to array
+    var arr=Array.isArray(data)?data:(data&&typeof data==='object'?Object.values(data):[]);
+    arr.sort(function(a,b){return (a.t||'').localeCompare(b.t||'');});
+    var totalCount=arr.length;
     var status=document.getElementById('execLogStatus');
-    if(arr.length!==_execLogLastCount){if(status)status.style.color='#f5c800';}
+    if(totalCount!==_execLogLastCount){if(status)status.style.color='#f5c800';}
     else{if(status)status.style.color='#555';}
-    _execLogLastCount=arr.length;
-    if(!arr.length){ul.innerHTML='<li style="color:#666">No events yet.</li>';return;}
+    _execLogLastCount=totalCount;
+    // Apply filter
+    var who=_execLogFilterWho;
+    var srch=(_execLogFilterSearch||'').toLowerCase();
+    if(who!=='all'){
+      arr=arr.filter(function(e){
+        var w=e.who||'?';
+        if(who==='dev')return w.startsWith('dev ');
+        return w===who;
+      });
+    }
+    if(srch){
+      arr=arr.filter(function(e){
+        return (e.action||'').toLowerCase().indexOf(srch)>=0
+          ||(e.detail||'').toLowerCase().indexOf(srch)>=0
+          ||(e.who||'').toLowerCase().indexOf(srch)>=0;
+      });
+    }
+    var count=document.getElementById('execLogCount');
+    if(count)count.textContent=(who==='all'&&!srch?'':arr.length+' / ')+totalCount+' events'+(who!=='all'||srch?' (filtered)':'');
+    if(!arr.length){ul.innerHTML='<li style="color:#666">'+(totalCount?'No matches for filter.':'No events yet.')+'</li>';return;}
     var rev=arr.slice().reverse();
     var wasAtBottom=ul.scrollTop+ul.clientHeight>=ul.scrollHeight-10;
     ul.innerHTML=rev.map(function(e){
@@ -623,6 +843,7 @@ function show(id){
 }
 document.getElementById('btnDev').addEventListener('click',function(){
   show('devView');
+  loadDevAnnouncement();
   fetch(devLockedUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(locked){
     var banner=document.getElementById('devLockedBanner');
     var section=document.getElementById('devGateSection');
@@ -655,26 +876,83 @@ function openDev(whichCode){
   document.getElementById('devGate').style.display='none';
   document.getElementById('devContent').style.display='';
   exLog('Dev panel opened','Code: '+_currentDevCode,'dev '+_currentDevCode);
+  _devSessionStats={hits:0,tracker:0,msgs:0,links:0};
   renderDevSync();
   loadDevTrapList();
   loadDevRedirectList();
   loadDevMessage();
   loadDevReply();
   refreshDevTrapStatus();
+  // Load nicknames then refresh the workspace nickname display
+  loadNicknames(function(){updateDevSyncNickname();});
+  // Count existing hits for session stats
+  _countDevSessionHits();
+}
+function _countDevSessionHits(){
+  var sc=getSyncCode();
+  // Trap hits
+  fetch(trapLinksUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(links){
+    if(!links||typeof links!=='object')return;
+    var ids=Object.keys(links);
+    var total=0;
+    var done=0;
+    if(!ids.length){document.getElementById('devStatHits').textContent='0';return;}
+    ids.forEach(function(id){
+      fetch(trapLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
+        if(logs)total+=Array.isArray(logs)?logs.length:Object.keys(logs).length;
+        done++;
+        if(done===ids.length){
+          _devSessionStats.hits=total;
+          var el=document.getElementById('devStatHits');
+          if(el)el.textContent=total;
+        }
+      });
+    });
+  });
+  // Tracker hits
+  fetch(redirectLinksUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(links){
+    if(!links||typeof links!=='object')return;
+    var ids=Object.keys(links);
+    var total=0;
+    var done=0;
+    if(!ids.length){document.getElementById('devStatTracker').textContent='0';return;}
+    ids.forEach(function(id){
+      fetch(redirectLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
+        if(logs)total+=Array.isArray(logs)?logs.length:Object.keys(logs).length;
+        done++;
+        if(done===ids.length){
+          _devSessionStats.tracker=total;
+          var el=document.getElementById('devStatTracker');
+          if(el)el.textContent=total;
+        }
+      });
+    });
+  });
 }
 function renderDevSync(){
   var sc=getSyncCode();
   document.getElementById('devSyncDisplay').textContent=sc;
   document.getElementById('devSyncInput').value=(sc===DEFAULT_SYNC?'':sc);
+  // Show nickname if available (may be called before nicknames load — that's fine, it'll show on next render)
+  updateDevSyncNickname();
+}
+function updateDevSyncNickname(){
+  var sc=getSyncCode();
+  var nm=nickFor(sc);
+  var el=document.getElementById('devSyncNickname');
+  if(!el)return;
+  if(nm){el.textContent='('+nm+')';el.style.display='';}
+  else{el.style.display='none';}
 }
 
 document.getElementById('devSyncApply').addEventListener('click',function(){
   var val=document.getElementById('devSyncInput').value.trim();
   if(!val){alert('Enter a workspace code first.');return;}
   setSyncCode(val,true);
-  exLog('Workspace applied','Code set to: '+val,'dev '+_currentDevCode);
+  exLog('Workspace applied','Code set to: '+val,'dev '+_currentDevCode,true);
   renderDevSync();
   loadDevTrapList();
+  loadDevRedirectList();
   alert('Workspace set to: '+val);
 });
 
@@ -682,9 +960,10 @@ document.getElementById('devSyncGenerate').addEventListener('click',function(){
   var words=['alpha','beta','gamma','delta','echo','foxtrot','zeta','nova','cipher','phantom','solar','neon','void','static','flux','arc'];
   var code=words[Math.floor(Math.random()*words.length)]+'-'+Math.random().toString(36).slice(2,6)+'-'+Math.random().toString(36).slice(2,5);
   setSyncCode(code,true);
-  exLog('Workspace generated','New code: '+code,'dev '+_currentDevCode);
+  exLog('Workspace generated','New code: '+code,'dev '+_currentDevCode,true);
   renderDevSync();
   loadDevTrapList();
+  loadDevRedirectList();
   navigator.clipboard.writeText(code).catch(function(){});
   alert('New workspace code generated:\n'+code+'\n\n(Copied to clipboard)');
 });
@@ -692,9 +971,10 @@ document.getElementById('devSyncGenerate').addEventListener('click',function(){
 document.getElementById('devSyncReset').addEventListener('click',function(){
   if(!confirm('Reset workspace to default ('+DEFAULT_SYNC+')?\nYou will see the default shared links.'))return;
   setSyncCode(DEFAULT_SYNC,false);
-  exLog('Workspace reset','Back to default: '+DEFAULT_SYNC,'dev '+_currentDevCode);
+  exLog('Workspace reset','Back to default: '+DEFAULT_SYNC,'dev '+_currentDevCode,true);
   renderDevSync();
   loadDevTrapList();
+  loadDevRedirectList();
 });
 
 function loadDevMessage(){
@@ -702,6 +982,22 @@ function loadDevMessage(){
     var box=document.getElementById('devMsgBox'),txt=document.getElementById('devMsgText');
     if(d&&d.text){box.style.display='';txt.textContent=d.text+(d.time?' — '+new Date(d.time).toLocaleString():'');}
     else{box.style.display='none';}
+  });
+}
+function loadDevAnnouncement(){
+  fetch(announcementUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var banner=document.getElementById('devAnnouncementBanner');
+    var txt=document.getElementById('devAnnouncementText');
+    if(d&&d.text){banner.style.display='';txt.textContent=d.text;}
+    else{banner.style.display='none';}
+  });
+}
+function loadOpAnnouncementPreview(){
+  fetch(announcementUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var prev=document.getElementById('opAnnouncementPreview');
+    var txt=document.getElementById('opAnnouncementPreviewText');
+    if(d&&d.text){prev.style.display='';txt.textContent=d.text+(d.time?' — '+new Date(d.time).toLocaleString():'');}
+    else{prev.style.display='none';}
   });
 }
 
@@ -762,7 +1058,113 @@ function tryOpCode(){
   }
 }
 
+// ── Operator workspace ──
+var _opWs=DEFAULT_SYNC;
+function getOpWs(){return _opWs;}
+function setOpWs(code){
+  _opWs=code||DEFAULT_SYNC;
+  document.getElementById('opWsDisplay').textContent=_opWs;
+  document.getElementById('opWsInput').value=(_opWs===DEFAULT_SYNC?'':_opWs);
+}
+document.getElementById('opWsOverviewRefresh').addEventListener('click',function(){loadOpWsOverview();});
+
+document.getElementById('opWsApply').addEventListener('click',function(){
+  var val=document.getElementById('opWsInput').value.trim();
+  if(!val){alert('Enter a workspace code.');return;}
+  setOpWs(val);
+  exLog('Operator viewing workspace','Code: '+val,'operator',true);
+  loadOpTrapList();
+  loadOpRedirectList();
+  loadOpWsStats();
+});
+document.getElementById('opWsReset').addEventListener('click',function(){
+  setOpWs(DEFAULT_SYNC);
+  loadOpTrapList();
+  loadOpRedirectList();
+  loadOpWsStats();
+});
+
+function loadOpWsOverview(){
+  var list=document.getElementById('opWsOverviewList');
+  var status=document.getElementById('opWsOverviewStatus');
+  if(!list)return;
+  list.innerHTML='<li style="color:#888">Scanning…</li>';
+  if(status)status.textContent='Scanning…';
+  // Fetch all workspaces
+  fetch(fbUrl('_sc6/workspaces')).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
+    if(!data||typeof data!=='object'){
+      list.innerHTML='<li style="color:#888">No workspaces found.</li>';
+      if(status)status.textContent='No workspaces';
+      return;
+    }
+    var wsCodes=Object.keys(data);
+    if(status)status.textContent=wsCodes.length+' workspace'+(wsCodes.length===1?'':'s');
+    if(!wsCodes.length){list.innerHTML='<li style="color:#888">No workspaces yet.</li>';return;}
+    list.innerHTML=wsCodes.map(function(ws){
+      var trapCount=data[ws].trapLinks?Object.keys(data[ws].trapLinks).length:0;
+      var redirectCount=data[ws].redirectLinks?Object.keys(data[ws].redirectLinks).length:0;
+      var isCurrent=ws===getOpWs();
+      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+        +'<code style="font-size:.75rem;color:'+(isCurrent?'#f5c800':'#ccc')+';flex:1;cursor:pointer;text-decoration:underline;text-decoration-style:dotted" data-ws-switch="'+esc(ws)+'">'+esc(ws)+(isCurrent?' ◀':'')+'</code>'
+        +(redirectCount?'<span style="font-size:.65rem;color:#9f7aea">'+redirectCount+' tracker</span>':'')
+        +(trapCount?'<span style="font-size:.65rem;color:#f5c800">'+trapCount+' error</span>':'')
+        +'</li>';
+    }).join('');
+    list.querySelectorAll('[data-ws-switch]').forEach(function(el){
+      el.addEventListener('click',function(){
+        var ws=el.getAttribute('data-ws-switch');
+        setOpWs(ws);
+        document.getElementById('opWsInput').value=ws;
+        exLog('Operator viewing workspace','Code: '+ws,'operator',true);
+        loadOpTrapList();
+        loadOpRedirectList();
+        loadOpWsStats();
+        loadOpWsOverview();// re-render to update ◀
+      });
+    });
+  });
+}
+
+function loadOpWsStats(){
+  var ws=getOpWs();
+  document.getElementById('opWsStats').style.display='';
+  document.getElementById('opStatsTrapLinks').textContent='…';
+  document.getElementById('opStatsRedirectLinks').textContent='…';
+  document.getElementById('opStatsTrapVisitors').textContent='…';
+  document.getElementById('opStatsRedirectHits').textContent='…';
+  // Fetch trap links count
+  fetch(opTrapLinksUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var trapKeys=d&&typeof d==='object'&&!Array.isArray(d)?Object.keys(d):[];
+    document.getElementById('opStatsTrapLinks').textContent=trapKeys.length;
+    // For each trap link, count total visitors
+    if(!trapKeys.length){document.getElementById('opStatsTrapVisitors').textContent='0';return;}
+    var total=0,done=0;
+    trapKeys.forEach(function(id){
+      fetch(opTrapLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
+        var n=logs?(Array.isArray(logs)?logs.length:Object.keys(logs).length):0;
+        total+=n;done++;
+        if(done===trapKeys.length)document.getElementById('opStatsTrapVisitors').textContent=total;
+      });
+    });
+  });
+  // Fetch redirect links count + total hits
+  fetch(opRedirectLinksUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var rKeys=d&&typeof d==='object'&&!Array.isArray(d)?Object.keys(d):[];
+    document.getElementById('opStatsRedirectLinks').textContent=rKeys.length;
+    if(!rKeys.length){document.getElementById('opStatsRedirectHits').textContent='0';return;}
+    var total=0,done=0;
+    rKeys.forEach(function(id){
+      fetch(opRedirectLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
+        var n=logs?(Array.isArray(logs)?logs.length:Object.keys(logs).length):0;
+        total+=n;done++;
+        if(done===rKeys.length)document.getElementById('opStatsRedirectHits').textContent=total;
+      });
+    });
+  });
+}
+
 function loadOpAll(){
+  setOpWs(DEFAULT_SYNC);
   renderOpLog();
   renderOpSyncLog();
   loadOpNicknames();
@@ -771,9 +1173,13 @@ function loadOpAll(){
   refreshOpTrapGenStatus();
   refreshOpTrapLinksStatus();
   loadOpTrapList();
+  loadOpRedirectList();
   refreshOpLock();
   loadOpPasswords();
   loadOpBans();
+  loadOpMsgPreview();
+  loadOpAnnouncementPreview();
+  loadOpWsStats();
 }
 
 // ── Op log ──
@@ -813,6 +1219,156 @@ document.getElementById('opLogClear').addEventListener('click',function(){
   syncFetch(operatorLogUrl(),{method:'DELETE'}).then(function(){exLog('Access log cleared','','operator',true);renderOpLog();}).catch(function(e){alert('Failed: '+e.message);});
 });
 
+// ── Operator redirect list ──
+function opRedirectLinksUrl(){return fbUrl('_sc6/workspaces/'+getOpWs()+'/redirectLinks')}
+function opRedirectLogsUrl(id){return fbUrl('_sc6/workspaces/'+getOpWs()+'/redirectLogs'+(id?'/'+id:''))}
+
+function loadOpRedirectList(){
+  var list=document.getElementById('opRedirectList');
+  var countEl=document.getElementById('opRedirectCount');
+  if(!list)return;
+  list.innerHTML='<li style="color:#888">Loading…</li>';
+  if(countEl)countEl.textContent='Loading…';
+  fetch(opRedirectLinksUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
+    var obj=data&&typeof data==='object'&&!Array.isArray(data)?data:{};
+    var keys=Object.keys(obj).sort(function(a,b){
+      return ((obj[b]&&obj[b].createdAt)||'').localeCompare((obj[a]&&obj[a].createdAt)||'');
+    });
+    if(countEl)countEl.textContent=keys.length+' link'+(keys.length===1?'':'s')+' · workspace: '+getOpWs();
+    if(!keys.length){list.innerHTML='<li style="color:#888">No redirect links in this workspace.</li>';return;}
+    list.innerHTML=keys.map(function(id){
+      var e=obj[id];
+      var param=e.param||'r';
+      var ws=e.workspace||getOpWs();
+      var url=WORKER_BASE+'/r?'+param+'='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws);
+      var dest=e.target?e.target.slice(0,45)+'…':'?';
+      var created=e.createdAt?new Date(e.createdAt).toLocaleString():'?';
+      var creator=e.createdBy?esc(e.createdBy):'?';
+      var note=e.note?esc(e.note):'';
+      return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+        +'<div style="font-size:.62rem;color:#555;margin-bottom:2px">'+esc(created)+' · by '+creator+'</div>'
+        +(note?'<div style="font-size:.7rem;color:#9f7aea;margin-bottom:3px;font-style:italic">🏷 '+note+'</div>':'')
+        +'<div style="font-size:.68rem;color:#aaa;margin-bottom:3px">→ '+esc(dest)+'</div>'
+        +'<code style="font-size:.62rem;color:#f5c800;background:rgba(255,200,0,.08);padding:1px 5px;border-radius:3px;word-break:break-all;display:block;margin-bottom:5px">'+esc(url)+'</code>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+        +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" data-op-redir-copy="'+esc(url)+'">Copy</button>'
+        +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" id="oprhitbtn-'+esc(id)+'" data-op-redir-hits="'+esc(id)+'">Hits</button>'
+        +'<button class="btn-sm danger" style="font-size:.65rem;padding:2px 7px" data-op-redir-del="'+esc(id)+'">Delete</button>'
+        +'</div>'
+        +'<ul class="devlist" id="oprhits-'+esc(id)+'" style="display:none;margin-top:5px"></ul>'
+        +'</li>';
+    }).join('');
+
+    // Async: show hit counts on buttons
+    keys.forEach(function(id){
+      fetch(opRedirectLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
+        var n=logs?(Array.isArray(logs)?logs.length:Object.keys(logs).length):0;
+        var btn=document.getElementById('oprhitbtn-'+id);
+        if(btn)btn.textContent='Hits'+(n>0?' ('+n+')':'');
+      });
+    });
+
+    list.querySelectorAll('[data-op-redir-copy]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        navigator.clipboard.writeText(btn.getAttribute('data-op-redir-copy')).catch(function(){});
+        btn.textContent='✓';setTimeout(function(){btn.textContent='Copy';},1500);
+      });
+    });
+
+    list.querySelectorAll('[data-op-redir-hits]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var id=btn.getAttribute('data-op-redir-hits');
+        var sub=document.getElementById('oprhits-'+id);
+        if(sub.style.display!=='none'){sub.style.display='none';btn.textContent='Hits';return;}
+        btn.textContent='Hide';sub.style.display='';
+        sub.innerHTML='<li style="color:#888">Loading…</li>';
+        fetch(opRedirectLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
+          var arr=Array.isArray(logs)?logs.slice().reverse():(logs&&typeof logs==='object'?Object.values(logs).reverse():[]);
+          if(!arr.length){sub.innerHTML='<li style="color:#888;font-size:.7rem">No hits yet.</li>';return;}
+          sub.innerHTML='<li style="color:#4fc;font-size:.65rem;padding:3px 0">'+arr.length+' hit'+(arr.length===1?'':'s')+'</li>'+arr.map(function(h){
+            var loc=[h.city,h.region,h.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
+            var dev=[h.device,h.os,h.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
+            var isp=h.isp&&h.isp!=='?'?h.isp:'';
+            var tz=h.timezone&&h.timezone!=='?'?h.timezone:'';
+            var lang=h.lang&&h.lang!=='?'?h.lang:'';
+            var referer=h.referer&&h.referer!=='?'?h.referer:'';
+            return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+              +'<div style="font-size:.72rem;color:#4fc;font-weight:600">📍 '+esc(loc)+'</div>'
+              +'<div style="font-size:.68rem;color:#ccc;margin-top:2px">🖥 '+esc(dev)+'</div>'
+              +(h.ip&&h.ip!=='?'?'<div style="font-size:.68rem;color:#f5c800;margin-top:2px">🌐 '+esc(h.ip)+'</div>':'')
+              +(isp?'<div style="font-size:.65rem;color:#aaa;margin-top:1px">📡 '+esc(isp)+'</div>':'')
+              +(tz?'<div style="font-size:.65rem;color:#aaa;margin-top:1px">🕐 '+esc(tz)+'</div>':'')
+              +(lang?'<div style="font-size:.65rem;color:#aaa;margin-top:1px">🗣 '+esc(lang)+'</div>':'')
+              +(referer&&referer!=='?'?'<div style="font-size:.6rem;color:#666;margin-top:1px;word-break:break-all">🔗 '+esc(referer)+'</div>':'')
+              +'<div style="font-size:.6rem;color:#555;margin-top:3px">'+esc(new Date(h.time).toLocaleString())+'</div>'
+              +'</li>';
+          }).join('');
+        });
+      });
+    });
+
+    list.querySelectorAll('[data-op-redir-del]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var id=btn.getAttribute('data-op-redir-del');
+        if(!confirm('Delete this redirect link and all its hits?'))return;
+        Promise.all([
+          fetch(fbUrl('_sc6/workspaces/'+getOpWs()+'/redirectLinks/'+id),{method:'DELETE'}),
+          fetch(opRedirectLogsUrl(id),{method:'DELETE'})
+        ]).then(function(){exLog('Redirect link deleted (op)','ID: '+id,'operator',true);loadOpRedirectList();}).catch(function(e){alert('Failed: '+e.message);});
+      });
+    });
+  });
+}
+
+document.getElementById('opRedirectRefresh').addEventListener('click',function(){loadOpRedirectList();});
+document.getElementById('opRedirectExport').addEventListener('click',function(){
+  var ws=getOpWs();
+  var btn=this;btn.textContent='Exporting…';btn.disabled=true;
+  // Fetch all links then fan out for all logs, merge, and export
+  fetch(opRedirectLinksUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(links){
+    var obj=links&&typeof links==='object'&&!Array.isArray(links)?links:{};
+    var keys=Object.keys(obj);
+    if(!keys.length){btn.textContent='Export CSV';btn.disabled=false;alert('No redirect links to export.');return;}
+    var proms=keys.map(function(id){
+      return fetch(opRedirectLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
+        var raw=Array.isArray(logs)?logs:(logs&&typeof logs==='object'?Object.values(logs):[]);
+        return raw.map(function(h){return Object.assign({linkId:id,linkTarget:obj[id].target||'',linkNote:obj[id].note||''},h);});
+      });
+    });
+    Promise.all(proms).then(function(nested){
+      var rows=[].concat.apply([],nested).sort(function(a,b){return (b.time||'').localeCompare(a.time||'');});
+      var cols=['time','linkId','linkTarget','linkNote','ip','country','region','city','isp','timezone','os','browser','screen','lang','tag'];
+      var csv=cols.join(',')+'\n'+rows.map(function(r){
+        return cols.map(function(c){var v=String(r[c]||'');return '"'+v.replace(/"/g,'""')+'"';}).join(',');
+      }).join('\n');
+      var blob=new Blob([csv],{type:'text/csv'});
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='tracker-hits-'+ws+'-'+new Date().toISOString().slice(0,10)+'.csv';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      btn.textContent='Export CSV';btn.disabled=false;
+      exLog('Redirect hits exported','Workspace: '+ws+' ('+rows.length+' rows)','operator',true);
+    });
+  });
+});
+document.getElementById('opRedirectClearAll').addEventListener('click',function(){
+  if(!confirm('Delete ALL redirect links and their hit logs for workspace "'+getOpWs()+'"?\nThis cannot be undone.'))return;
+  Promise.all([
+    fetch(opRedirectLinksUrl(),{method:'DELETE'}),
+    fetch(opRedirectLogsUrl(),{method:'DELETE'})
+  ]).then(function(){exLog('All redirect links deleted (op)','Workspace: '+getOpWs(),'operator',true);loadOpRedirectList();}).catch(function(e){alert('Failed: '+e.message);});
+});
+
+// ── Message preview (live display of current message) ──
+function loadOpMsgPreview(){
+  fetch(devMessageUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var prev=document.getElementById('opMsgPreview');
+    var txt=document.getElementById('opMsgPreviewText');
+    if(d&&d.text){prev.style.display='';txt.textContent=d.text+(d.time?' — '+new Date(d.time).toLocaleString():'');}
+    else{prev.style.display='none';}
+  });
+}
+
 // ── Code nicknames ──
 var _nicknames={}; // {code: name} — loaded from Firebase + cached in memory
 
@@ -828,6 +1384,9 @@ function loadNicknames(cb){
 function nameFor(code){
   var n=_nicknames[code];
   return n?code+' ('+n+')':code;
+}
+function nickFor(code){
+  return _nicknames[code]||null;
 }
 
 function loadOpNicknames(){
@@ -913,6 +1472,23 @@ document.getElementById('execLogClear').addEventListener('click',function(){
   },800);
 });
 
+// ── Exec log filters ──
+document.getElementById('execLogSearch').addEventListener('input',function(){
+  _execLogFilterSearch=this.value;
+  renderExLog();
+});
+document.querySelectorAll('.exec-filter-who').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    _execLogFilterWho=btn.getAttribute('data-who');
+    // Update active state
+    document.querySelectorAll('.exec-filter-who').forEach(function(b){
+      b.style.opacity=b===btn?'1':'0.45';
+      b.style.fontWeight=b===btn?'700':'400';
+    });
+    renderExLog();
+  });
+});
+
 // ── Lock ──
 function refreshOpLock(){
   fetch(devLockedUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
@@ -943,18 +1519,21 @@ document.getElementById('devMsgSend').addEventListener('click',function(){
   function _os(u){if(/Windows/.test(u))return'Windows';if(/Android/.test(u))return'Android';if(/iPhone|iPad|iPod/.test(u)||(n.platform==='MacIntel'&&n.maxTouchPoints>1))return'iOS';if(/Mac/.test(u))return'macOS';if(/Linux/.test(u))return'Linux';return'?';}
   function _br(u){var m;if(m=u.match(/Edg\/([\d.]+)/))return'Edge '+m[1].split('.')[0];if(m=u.match(/(?:Chrome|CriOS)\/([\d.]+)/))return'Chrome '+m[1].split('.')[0];if(m=u.match(/(?:Firefox|FxiOS)\/([\d.]+)/))return'FF '+m[1].split('.')[0];if(m=u.match(/Version\/([\d.]+).*Safari/))return'Safari '+m[1].split('.')[0];return'?';}
   var entry={code:_currentDevCode,tag:tag,text:txt,time:new Date().toISOString(),read:false,os:_os(ua),browser:_br(ua),screen:screen.width+'×'+screen.height,lang:n.language||'?',tz:Intl&&Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:'?',ip:null,country:null,region:null};
-  // Attach IP/geo then send
-  fetch('https://ipapi.co/json/',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(j){
-    if(j){entry.ip=j.ip||null;entry.country=j.country_name||null;entry.region=j.region||null;}
-    return fetch(fbUrl('_sc6/devMessages/'+tag),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)});
-  })
-    .then(function(){
-      exLog('Dev sent message to operator',txt.slice(0,60),'dev '+_currentDevCode);
-      document.getElementById('devMsgInput').value='';
-      var sent=document.getElementById('devMsgSent');
-      sent.style.display='';
-      setTimeout(function(){sent.style.display='none';},3000);
-    }).catch(function(e){alert('Failed: '+e.message);});
+  // Attach IP/geo then send — reuse cached geo so we don't make a redundant ipapi.co call
+  getIpInfo(function(geo){
+    entry.ip=geo.ip!=='?'?geo.ip:null;
+    entry.country=geo.country!=='?'?geo.country:null;
+    entry.region=geo.region||null;
+    fetch(fbUrl('_sc6/devMessages/'+tag),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)})
+      .then(function(){
+        exLog('Dev sent message to operator',txt.slice(0,60),'dev '+_currentDevCode);
+        devStatInc('msgs');
+        document.getElementById('devMsgInput').value='';
+        var sent=document.getElementById('devMsgSent');
+        sent.style.display='';
+        setTimeout(function(){sent.style.display='none';},3000);
+      }).catch(function(e){alert('Failed: '+e.message);});
+  });
 });
 
 // Dev panel: check for operator reply & load it
@@ -983,17 +1562,36 @@ function loadOpDevInbox(){
   ul.innerHTML='<li style="color:#888">Loading…</li>';
   fetch(devMessagesUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
     var obj=data&&typeof data==='object'&&!Array.isArray(data)?data:{};
-    var entries=Object.values(obj);
-    if(!entries.length){ul.innerHTML='<li style="color:#666">No messages yet.</li>';return;}
+    var keys=Object.keys(obj);
+    var entries=keys.map(function(k){return Object.assign({_key:k},obj[k]);});
+    if(!entries.length){ul.innerHTML='<li style="color:#666">No messages yet.</li>';var b=document.getElementById('opInboxUnreadBadge');if(b)b.style.display='none';return;}
     entries.sort(function(a,b){return (b.time||'').localeCompare(a.time||'');});
+
+    // Count unread and show badge
+    var unread=entries.filter(function(e){return e.read===false;}).length;
+    var badge=document.getElementById('opInboxUnreadBadge');
+    if(badge){badge.style.display=unread>0?'':'none';badge.textContent=unread>0?unread+' unread':'';}
+
+    // Mark all unread as read in Firebase (batch)
+    entries.forEach(function(e){
+      if(e.read===false){
+        fetch(fbUrl('_sc6/devMessages/'+encodeURIComponent(e._key)+'/read'),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(true)}).catch(function(){});
+      }
+    });
+
     ul.innerHTML=entries.map(function(e){
       var who=e.code?nameFor(e.code):e.tag||'?';
       var ts=e.time?new Date(e.time).toLocaleString():'?';
-      var safeTag=encodeURIComponent(e.tag||'');
+      var rawTag=e.tag||'';
+      var safeTag=encodeURIComponent(rawTag);
+      // DOM-safe ID: encode the tag so it contains no special chars forbidden in IDs
+      var domId='inbox-reply-'+safeTag;
       var geo=[(e.country||''),(e.region||'')].filter(Boolean).join(', ');
       var deviceInfo=[e.os,e.browser,e.screen].filter(Boolean).join(' · ');
-      return '<li style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+      var isUnread=e.read===false;
+      return '<li style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07)'+(isUnread?';background:rgba(245,200,0,.03)':'')+'">'
         +'<div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">'
+        +(isUnread?'<span style="font-size:.58rem;color:#f5c800;font-weight:700;letter-spacing:.06em">NEW</span>':'')
         +'<span style="color:#f5c800;font-size:.72rem;font-weight:700">'+esc(who)+'</span>'
         +'<span style="color:#555;font-size:.62rem">'+esc(ts)+'</span>'
         +(geo?'<span style="font-size:.62rem;color:#f5c800;opacity:.7">'+esc(geo)+'</span>':'')
@@ -1005,37 +1603,39 @@ function loadOpDevInbox(){
         +'<button class="btn-sm" data-inbox-reply="'+safeTag+'" style="color:#4fc;border-color:rgba(79,255,160,.25)">↩ Reply privately</button>'
         +'<button class="btn-sm danger" data-inbox-del="'+safeTag+'">Delete</button>'
         +'</div>'
-        +'<div id="inbox-reply-'+esc(e.tag||'')+'" style="display:none;margin-top:6px">'
-        +'<div class="row"><input type="text" class="inbox-reply-input" maxlength="200" placeholder="Private reply to '+esc(who)+'…" style="flex:1"><button class="btn-sm inbox-reply-send" style="color:#4fc;border-color:rgba(79,255,160,.3)">Send</button></div>'
+        +'<div id="'+esc(domId)+'" style="display:none;margin-top:6px">'
+        +'<div class="row"><input type="text" class="inbox-reply-input" maxlength="200" placeholder="Private reply to '+esc(who)+'…" style="flex:1"><button class="btn-sm inbox-reply-send inbox-reply-tag" data-tag="'+safeTag+'" style="color:#4fc;border-color:rgba(79,255,160,.3)">Send</button></div>'
         +'</div>'
         +'</li>';
     }).join('');
 
-    // Reply buttons
+    // Reply buttons — use encodeURIComponent-based box ID to match what we set above
     ul.querySelectorAll('[data-inbox-reply]').forEach(function(btn){
       btn.addEventListener('click',function(){
-        var tag=decodeURIComponent(btn.getAttribute('data-inbox-reply'));
-        var box=document.getElementById('inbox-reply-'+tag);
+        var safeTag=btn.getAttribute('data-inbox-reply'); // already URI-encoded
+        var boxId='inbox-reply-'+safeTag;
+        var box=document.getElementById(boxId);
         if(box)box.style.display=box.style.display==='none'?'':'none';
       });
     });
 
-    // Send reply
-    ul.querySelectorAll('.inbox-reply-send').forEach(function(btn){
+    // Send reply — read raw tag from data-tag attribute on the send button
+    ul.querySelectorAll('.inbox-reply-tag').forEach(function(btn){
       btn.addEventListener('click',function(){
-        var row=btn.closest('[id^="inbox-reply-"]');
-        var tag=row?row.id.replace('inbox-reply-',''):'';
+        var tag=decodeURIComponent(btn.getAttribute('data-tag')||'');
+        var row=btn.closest('div[id^="inbox-reply-"]');
         var inp=row?row.querySelector('.inbox-reply-input'):null;
         if(!inp||!tag)return;
         var txt=inp.value.trim();
         if(!txt)return;
+        btn.disabled=true;btn.textContent='Sending…';
         fetch(devReplyUrl(tag),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt,time:new Date().toISOString(),from:'operator'})})
           .then(function(){
             exLog('Operator replied to dev','Tag: '+tag+' | '+txt.slice(0,60),'operator',true);
             inp.value='';
-            row.style.display='none';
-            alert('Reply sent.');
-          }).catch(function(e){alert('Failed: '+e.message);});
+            if(row)row.style.display='none';
+            btn.disabled=false;btn.textContent='Send';
+          }).catch(function(e){btn.disabled=false;btn.textContent='Send';alert('Failed: '+e.message);});
       });
     });
 
@@ -1052,6 +1652,7 @@ function loadOpDevInbox(){
   });
 }
 
+document.getElementById('opDevInboxRefresh').addEventListener('click',function(){loadOpDevInbox();});
 document.getElementById('opDevInboxClearAll').addEventListener('click',function(){
   if(!confirm('Delete all dev messages?'))return;
   fetch(devMessagesUrl(),{method:'DELETE',headers:{'Content-Type':'application/json'}})
@@ -1061,12 +1662,89 @@ document.getElementById('opDevInboxClearAll').addEventListener('click',function(
 
 // ── Message ──
 document.getElementById('opMsgLeave').addEventListener('click',function(){
-  var txt=prompt('Message for the Dev panel (shown on next login):');
-  if(!txt||!txt.trim())return;
-  syncFetch(devMessageUrl(),{method:'PUT',body:JSON.stringify({text:txt.trim(),time:new Date().toISOString()})}).then(function(){exLog('Dev message set',txt.trim().slice(0,80),'operator',true);alert('Message saved.');}).catch(function(e){alert('Failed: '+e.message);});
+  var inp=document.getElementById('opMsgNewText');
+  var txt=inp.value.trim();
+  if(!txt){alert('Type a message first.');return;}
+  syncFetch(devMessageUrl(),{method:'PUT',body:JSON.stringify({text:txt,time:new Date().toISOString()})})
+    .then(function(){exLog('Dev message set',txt.slice(0,80),'operator',true);inp.value='';loadOpMsgPreview();})
+    .catch(function(e){alert('Failed: '+e.message);});
 });
 document.getElementById('opMsgDelete').addEventListener('click',function(){
-  syncFetch(devMessageUrl(),{method:'DELETE'}).then(function(){exLog('Dev message deleted','','operator',true);alert('Message deleted.');}).catch(function(e){alert('Failed: '+e.message);});
+  if(!confirm('Remove the message shown to dev panel users?'))return;
+  syncFetch(devMessageUrl(),{method:'DELETE'})
+    .then(function(){exLog('Dev message deleted','','operator',true);loadOpMsgPreview();})
+    .catch(function(e){alert('Failed: '+e.message);});
+});
+
+// ── Announcement ──
+document.getElementById('opAnnouncementSet').addEventListener('click',function(){
+  var inp=document.getElementById('opAnnouncementText');
+  var txt=inp.value.trim();
+  if(!txt){alert('Type an announcement first.');return;}
+  syncFetch(announcementUrl(),{method:'PUT',body:JSON.stringify({text:txt,time:new Date().toISOString()})})
+    .then(function(){exLog('Announcement set',txt.slice(0,80),'operator',true);inp.value='';loadOpAnnouncementPreview();})
+    .catch(function(e){alert('Failed: '+e.message);});
+});
+document.getElementById('opAnnouncementClear').addEventListener('click',function(){
+  if(!confirm('Remove the announcement?'))return;
+  syncFetch(announcementUrl(),{method:'DELETE'})
+    .then(function(){exLog('Announcement cleared','','operator',true);loadOpAnnouncementPreview();})
+    .catch(function(e){alert('Failed: '+e.message);});
+});
+
+// ── Operator link creator ──
+document.getElementById('opCreateLink').addEventListener('click',function(){
+  var targetInput=document.getElementById('opCreateTarget');
+  var target=targetInput.value.trim();
+  if(!target){alert('Enter a destination URL.');return;}
+  if(!/^https?:\/\//i.test(target)){alert('URL must start with http:// or https://');return;}
+  var param=document.getElementById('opCreateParam').value||'r';
+  var note=(document.getElementById('opCreateNote').value||'').trim();
+  var ws=getOpWs();
+  var id=Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,8);
+  var entry={target:target,param:param,createdAt:new Date().toISOString(),createdBy:'operator',workspace:ws};
+  if(note)entry.note=note;
+  syncFetch(fbUrl('_sc6/workspaces/'+ws+'/redirectLinks/'+id),{method:'PUT',body:JSON.stringify(entry)})
+    .then(function(){
+      var url=WORKER_BASE+'/r?'+param+'='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws);
+      exLog('Redirect link created (op)','Target: '+target.slice(0,60)+'  WS: '+ws,'operator',true);
+      targetInput.value='';
+      document.getElementById('opCreateNote').value='';
+      var resultEl=document.getElementById('opCreateResult');
+      var urlEl=document.getElementById('opCreateResultUrl');
+      resultEl.style.display='';
+      urlEl.textContent=url;
+      // Wire copy button
+      var copyBtn=document.getElementById('opCreateCopy');
+      copyBtn.onclick=function(){
+        navigator.clipboard.writeText(url).then(function(){copyBtn.textContent='Copied!';setTimeout(function(){copyBtn.textContent='Copy';},1500);}).catch(function(){});
+      };
+      loadOpRedirectList();
+    }).catch(function(e){alert('Failed: '+e.message);});
+});
+
+// ── Operator error/trap link creator ──
+document.getElementById('opTrapCreate').addEventListener('click',function(){
+  var ws=getOpWs();
+  var label=(document.getElementById('opTrapCreateLabel').value||'').trim();
+  var id=Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,8);
+  var entry={createdAt:new Date().toISOString(),createdBy:'operator',workspace:ws};
+  if(label)entry.note=label;
+  syncFetch(fbUrl('_sc6/workspaces/'+ws+'/trapLinks/'+id),{method:'PUT',body:JSON.stringify(entry)})
+    .then(function(){
+      var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws);
+      exLog('Error link created (op)','ID: '+id+'  WS: '+ws,'operator',true);
+      document.getElementById('opTrapCreateLabel').value='';
+      var resultEl=document.getElementById('opTrapCreateResult');
+      var urlEl=document.getElementById('opTrapCreateResultUrl');
+      resultEl.style.display='';
+      urlEl.textContent=url;
+      var copyBtn=document.getElementById('opTrapCreateCopy');
+      copyBtn.onclick=function(){
+        navigator.clipboard.writeText(url).then(function(){copyBtn.textContent='Copied!';setTimeout(function(){copyBtn.textContent='Copy';},1500);}).catch(function(){});
+      };
+      loadOpTrapList();
+    }).catch(function(e){alert('Failed: '+e.message);});
 });
 
 // ── Passwords ──
@@ -1305,36 +1983,55 @@ document.getElementById('opTrapToggleLinks').addEventListener('click',function()
 });
 document.getElementById('opTrapRefresh').addEventListener('click',function(){loadOpTrapList();});
 document.getElementById('opTrapClearAll').addEventListener('click',function(){
-  if(!confirm('Delete ALL error links and visitor logs?'))return;
+  if(!confirm('Delete ALL error links and visitor logs for workspace "'+getOpWs()+'"?'))return;
   Promise.all([
-    fetch(trapLinksUrl(),{method:'DELETE'}),
-    fetch(trapLogsUrl(),{method:'DELETE'})
-  ]).then(function(){exLog('All error links deleted','','operator',true);loadOpTrapList();}).catch(function(e){alert('Failed: '+e.message);});
+    fetch(opTrapLinksUrl(),{method:'DELETE'}),
+    fetch(opTrapLogsUrl(),{method:'DELETE'})
+  ]).then(function(){exLog('All error links deleted','Workspace: '+getOpWs(),'operator',true);loadOpTrapList();}).catch(function(e){alert('Failed: '+e.message);});
 });
 
 function loadOpTrapList(){
   var list=document.getElementById('opTrapList');
   list.innerHTML='<li style="color:#888">Loading…</li>';
-  fetch(trapLinksUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
+  fetch(opTrapLinksUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
     var obj=data&&typeof data==='object'&&!Array.isArray(data)?data:{};
-    var keys=Object.keys(obj);
-    if(!keys.length){list.innerHTML='<li style="color:#888">No error links yet.</li>';return;}
+    var keys=Object.keys(obj).sort(function(a,b){
+      return ((obj[b]&&obj[b].createdAt)||'').localeCompare((obj[a]&&obj[a].createdAt)||'');
+    });
+    if(!keys.length){list.innerHTML='<li style="color:#888">No error links in workspace "'+esc(getOpWs())+'".</li>';return;}
     list.style.listStyle='none';
     list.innerHTML=keys.map(function(id){
       var link=obj[id];
       var created=link.createdAt?new Date(link.createdAt).toLocaleString():'?';
-      var ws=link.workspace||getSyncCode();
+      var ws=link.workspace||getOpWs();
       var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws);
+      var trapNote=link.note?esc(link.note):'';
       return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
         +'<div style="font-size:.7rem;color:#888">'+esc(created)+'</div>'
+        +(trapNote?'<div style="font-size:.7rem;color:#9f7aea;margin:2px 0;font-style:italic">🏷 '+trapNote+'</div>':'')
         +'<div style="font-size:.72rem;color:#ccc;word-break:break-all;margin:2px 0">'+esc(url)+'</div>'
         +'<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">'
-        +'<button class="btn-sm" style="font-size:.68rem;padding:2px 8px" data-trap-view="'+esc(id)+'">Visitors</button>'
+        +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" data-trap-copy="'+esc(url)+'">Copy</button>'
+        +'<button class="btn-sm" style="font-size:.68rem;padding:2px 8px" id="optrapvisbtn-'+esc(id)+'" data-trap-view="'+esc(id)+'">Visitors</button>'
         +'<button class="btn-sm danger" style="font-size:.68rem;padding:2px 8px" data-trap-del="'+esc(id)+'">Delete</button>'
         +'</div>'
         +'<ul class="devlist" id="opvis-'+esc(id)+'" style="display:none;margin-top:6px"></ul>'
         +'</li>';
     }).join('');
+    // Async: show visitor counts on buttons
+    keys.forEach(function(id){
+      fetch(opTrapLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
+        var n=logs?(Array.isArray(logs)?logs.length:Object.keys(logs).length):0;
+        var btn=document.getElementById('optrapvisbtn-'+id);
+        if(btn)btn.textContent='Visitors'+(n>0?' ('+n+')':'');
+      });
+    });
+    list.querySelectorAll('[data-trap-copy]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        navigator.clipboard.writeText(btn.getAttribute('data-trap-copy')).catch(function(){});
+        btn.textContent='✓';setTimeout(function(){btn.textContent='Copy';},1500);
+      });
+    });
     list.querySelectorAll('[data-trap-view]').forEach(function(btn){
       btn.addEventListener('click',function(){
         var id=btn.getAttribute('data-trap-view');
@@ -1342,8 +2039,9 @@ function loadOpTrapList(){
         if(sub.style.display!=='none'){sub.style.display='none';btn.textContent='Visitors';return;}
         btn.textContent='Hide';sub.style.display='';
         sub.innerHTML='<li style="color:#888">Loading…</li>';
-        fetch(trapLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
-          var arr=Array.isArray(logs)?logs.slice().reverse():[];
+        fetch(opTrapLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
+          var raw=Array.isArray(logs)?logs:(logs&&typeof logs==='object'?Object.values(logs):[]);
+          var arr=raw.slice().sort(function(a,b){return (b.time||'').localeCompare(a.time||'');});
           if(!arr.length){sub.innerHTML='<li style="color:#888">No visitors.</li>';return;}
           sub.innerHTML=arr.map(function(e,idx){
             var t=e.time?new Date(e.time).toLocaleString():'?';
@@ -1373,8 +2071,8 @@ function loadOpTrapList(){
         var id=btn.getAttribute('data-trap-del');
         if(!confirm('Delete this link and all its visitor logs?'))return;
         Promise.all([
-          fetch(fbUrl('_sc6/workspaces/'+getSyncCode()+'/trapLinks/'+id),{method:'DELETE'}),
-          fetch(trapLogsUrl(id),{method:'DELETE'})
+          fetch(fbUrl('_sc6/workspaces/'+getOpWs()+'/trapLinks/'+id),{method:'DELETE'}),
+          fetch(opTrapLogsUrl(id),{method:'DELETE'})
         ]).then(function(){exLog('Error link deleted','ID: '+id,'operator',true);loadOpTrapList();}).catch(function(e){alert('Failed: '+e.message);});
       });
     });
@@ -1425,7 +2123,8 @@ function loadDevTrapList(){
         btn.textContent='Hide';sub.style.display='';
         sub.innerHTML='<li style="color:#888">Loading…</li>';
         fetch(trapLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
-          var arr=Array.isArray(logs)?logs.slice().reverse():[];
+          var raw=Array.isArray(logs)?logs:(logs&&typeof logs==='object'?Object.values(logs):[]);
+          var arr=raw.slice().sort(function(a,b){return (b.time||'').localeCompare(a.time||'');});
           if(!arr.length){sub.innerHTML='<li style="color:#888">No visitors.</li>';return;}
           sub.innerHTML=arr.map(function(e,idx){
             var t=e.time?new Date(e.time).toLocaleString():'?';
@@ -1484,17 +2183,26 @@ function loadDevRedirectList(){
       var param=e.param||'r';
       var url=WORKER_BASE+'/r?'+param+'='+encodeURIComponent(id)+'&ws='+encodeURIComponent(sc);
       var dest=e.target?e.target.slice(0,40)+'…':'?';
+      var created=e.createdAt?new Date(e.createdAt).toLocaleString():'';
       return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
-        +'<div style="font-size:.65rem;color:#888;margin-bottom:2px">→ '+esc(dest)+'</div>'
+        +'<div style="font-size:.65rem;color:#888;margin-bottom:2px">→ '+esc(dest)+(created?' · '+esc(created):'')+'</div>'
         +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
         +'<code style="font-size:.65rem;color:#f5c800;background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;word-break:break-all;flex:1">'+esc(url)+'</code>'
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" data-redir-copy="'+esc(url)+'">Copy</button>'
-        +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" data-redir-hits="'+esc(id)+'">Hits</button>'
+        +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" id="devrhitbtn-'+esc(id)+'" data-redir-hits="'+esc(id)+'">Hits</button>'
         +'<button class="btn-sm danger" style="font-size:.65rem;padding:2px 7px" data-redir-del="'+esc(id)+'">Del</button>'
         +'</div>'
         +'<ul class="devlist" id="devrhits-'+esc(id)+'" style="display:none;margin-top:5px"></ul>'
         +'</li>';
     }).join('');
+    // Async: fetch hit counts and update button labels
+    keys.forEach(function(id){
+      fetch(redirectLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
+        var n=logs?(Array.isArray(logs)?logs.length:Object.keys(logs).length):0;
+        var btn=document.getElementById('devrhitbtn-'+id);
+        if(btn)btn.textContent='Hits'+(n>0?' ('+n+')':'');
+      });
+    });
     list.querySelectorAll('[data-redir-copy]').forEach(function(btn){
       btn.addEventListener('click',function(){
         navigator.clipboard.writeText(btn.getAttribute('data-redir-copy')).catch(function(){});
@@ -1509,15 +2217,24 @@ function loadDevRedirectList(){
         btn.textContent='Hide';sub.style.display='';
         sub.innerHTML='<li style="color:#888">Loading…</li>';
         fetch(redirectLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
-          var arr=Array.isArray(logs)?logs.slice().reverse():[];
+          // Logs may be a Firebase push-keyed object or legacy array
+          var raw=Array.isArray(logs)?logs:(logs&&typeof logs==='object'?Object.values(logs):[]);
+          var arr=raw.slice().sort(function(a,b){return (b.time||'').localeCompare(a.time||'');});
           if(!arr.length){sub.innerHTML='<li style="color:#888;font-size:.7rem">No hits yet.</li>';return;}
           sub.innerHTML=arr.map(function(h){
-            var geo=[h.country,h.region].filter(Boolean).join(', ')||'Unknown';
-            var dev=[h.os,h.browser].filter(Boolean).join(' · ')||'?';
-            return '<li style="padding:4px 0;font-size:.68rem;color:#ccc;border-bottom:1px solid rgba(255,255,255,.05)">'
-              +'<div style="color:#4fc">'+esc(geo)+'</div>'
-              +'<div style="color:#aaa">'+esc(dev)+(h.ip?' · '+esc(h.ip):'')+'</div>'
-              +'<div style="color:#666;font-size:.6rem">'+esc(new Date(h.time).toLocaleString())+'</div>'
+            var loc=[h.city,h.region,h.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
+            var dev=[h.device,h.os,h.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
+            var isp=h.isp&&h.isp!=='?'?h.isp:'';
+            var tz=h.timezone&&h.timezone!=='?'?h.timezone:'';
+            var lang=h.lang&&h.lang!=='?'?h.lang:'';
+            return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+              +'<div style="font-size:.72rem;color:#4fc;font-weight:600">📍 '+esc(loc)+'</div>'
+              +'<div style="font-size:.68rem;color:#ccc;margin-top:2px">🖥 '+esc(dev)+'</div>'
+              +(h.ip&&h.ip!=='?'?'<div style="font-size:.68rem;color:#f5c800;margin-top:2px">🌐 '+esc(h.ip)+'</div>':'')
+              +(isp?'<div style="font-size:.65rem;color:#aaa;margin-top:1px">📡 '+esc(isp)+'</div>':'')
+              +(tz?'<div style="font-size:.65rem;color:#aaa;margin-top:1px">🕐 '+esc(tz)+'</div>':'')
+              +(lang?'<div style="font-size:.65rem;color:#aaa;margin-top:1px">🗣 '+esc(lang)+'</div>':'')
+              +'<div style="font-size:.6rem;color:#555;margin-top:3px">'+esc(new Date(h.time).toLocaleString())+'</div>'
               +'</li>';
           }).join('');
         });
@@ -1528,7 +2245,7 @@ function loadDevRedirectList(){
         var id=btn.getAttribute('data-redir-del');
         if(!confirm('Delete this redirect link?'))return;
         fetch(fbUrl('_sc6/workspaces/'+getSyncCode()+'/redirectLinks/'+id),{method:'DELETE'}).then(function(){
-          exLog('Redirect link deleted','ID: '+id,'dev '+_currentDevCode);
+          exLog('Redirect link deleted','ID: '+id,'dev '+_currentDevCode,true);
           loadDevRedirectList();
         }).catch(function(e){alert('Failed: '+e.message);});
       });
@@ -1548,7 +2265,8 @@ document.getElementById('devConvertBtn').addEventListener('click',function(){
   var entry={target:target,param:param,createdAt:new Date().toISOString(),createdBy:deviceTag(),workspace:sc};
   syncFetch(fbUrl('_sc6/workspaces/'+sc+'/redirectLinks/'+id),{method:'PUT',body:JSON.stringify(entry)}).then(function(){
     var url=WORKER_BASE+'/r?'+param+'='+encodeURIComponent(id)+'&ws='+encodeURIComponent(sc);
-    exLog('Redirect link created','Target: '+target.slice(0,60),'dev '+_currentDevCode);
+    exLog('Redirect link created','Target: '+target.slice(0,60),'dev '+_currentDevCode,true);
+    devStatInc('links');
     document.getElementById('devConvertUrl').textContent=url;
     document.getElementById('devConvertResult').style.display='';
     document.getElementById('devConvertInput').value='';
@@ -1571,12 +2289,104 @@ document.getElementById('devTrapGen').addEventListener('click',function(){
     syncFetch(fbUrl('_sc6/workspaces/'+sc+'/trapLinks/'+id),{method:'PUT',body:JSON.stringify(entry)}).then(function(){
       var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(sc);
       exLog('Error link generated','ID: '+id+' | Code: '+_currentDevCode,'dev '+_currentDevCode);
+      devStatInc('links');
       loadDevTrapList();
       navigator.clipboard.writeText(url).catch(function(){});
       alert('Link generated:\n'+url);
     }).catch(function(e){alert('Failed: '+e.message);});
   });
 });
+
+// Pre-load nicknames silently so exec log render has them ready
+loadNicknames(null);
+
+// ══════════════════════════════════════════
+// LIVE VISITOR STREAM
+// ══════════════════════════════════════════
+var _liveStreamTimer=null;
+var _liveStreamLastKey='';
+var _liveStreamEntries=[];
+
+function liveStreamStart(){
+  if(_liveStreamTimer)return;
+  document.getElementById('liveStreamStatus').textContent='Running…';
+  document.getElementById('liveStreamToggle').textContent='Stop';
+  document.getElementById('liveStreamDot').style.background='#4fc';
+  _liveStreamPoll();
+  _liveStreamTimer=setInterval(_liveStreamPoll,5000);
+}
+function liveStreamStop(){
+  if(_liveStreamTimer){clearInterval(_liveStreamTimer);_liveStreamTimer=null;}
+  document.getElementById('liveStreamStatus').textContent='Stopped';
+  document.getElementById('liveStreamToggle').textContent='Start';
+  document.getElementById('liveStreamDot').style.background='#555';
+}
+function _liveStreamPoll(){
+  fetch(execLogUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
+    if(!data)return;
+    var raw=Array.isArray(data)?data:(typeof data==='object'?Object.values(data):[]);
+    // Filter to visitor entries only, sort newest first
+    var visitors=raw.filter(function(e){return e&&(e.who==='visitor'||String(e.who||'').startsWith('visitor'));});
+    if(!visitors.length)return;
+    // Find new entries since last poll using time
+    var maxSeen=_liveStreamLastKey;
+    var newEntries=visitors.filter(function(e){return e.time&&e.time>maxSeen;});
+    if(!newEntries.length){
+      // Flash dot to show we polled
+      var dot=document.getElementById('liveStreamDot');
+      dot.style.background='#fff';setTimeout(function(){dot.style.background='#4fc';},150);
+      return;
+    }
+    newEntries.sort(function(a,b){return (b.time||'').localeCompare(a.time||'');});
+    // Update last seen key
+    _liveStreamLastKey=newEntries[0].time;
+    // Prepend to entries list (keep latest 100)
+    _liveStreamEntries=newEntries.concat(_liveStreamEntries).slice(0,100);
+    _renderLiveStream();
+    // Flash dot on new hit
+    var dot=document.getElementById('liveStreamDot');
+    dot.style.background='#ff6b6b';setTimeout(function(){dot.style.background='#4fc';},400);
+  });
+}
+function _renderLiveStream(){
+  var ul=document.getElementById('liveStreamList');
+  if(!ul)return;
+  if(!_liveStreamEntries.length){ul.innerHTML='<li style="color:#555;font-size:.72rem">No visitor hits yet.</li>';return;}
+  ul.innerHTML=_liveStreamEntries.map(function(e){
+    var t=e.time?new Date(e.time).toLocaleString():'?';
+    var loc=[e.city,e.region,e.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
+    var dev=[e.device,e.os,e.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
+    var ws=e.detail&&e.detail.match(/WS:([\S]+)/)?e.detail.match(/WS:([\S]+)/)[1]:(e.action||'');
+    return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+      +'<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">'
+      +'<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#4fc;flex-shrink:0"></span>'
+      +'<span style="font-size:.7rem;color:#ccc;font-weight:600">'+esc(t)+'</span>'
+      +(e.country&&e.country!=='?'?'<span style="font-size:.68rem;color:#f5c800">'+esc(e.country)+'</span>':'')
+      +'</div>'
+      +'<div style="font-size:.72rem;color:#4fc;margin-top:2px">📍 '+esc(loc)+'</div>'
+      +'<div style="font-size:.68rem;color:#888;margin-top:1px">🖥 '+esc(dev)+'</div>'
+      +(e.ip&&e.ip!=='?'?'<div style="font-size:.65rem;color:#f5c800;margin-top:1px">🌐 '+esc(e.ip)+'</div>':'')
+      +(ws?'<div style="font-size:.62rem;color:#555;margin-top:1px">'+esc(e.action||'')+'</div>':'')
+      +'</li>';
+  }).join('');
+}
+document.getElementById('liveStreamToggle').addEventListener('click',function(){
+  if(_liveStreamTimer)liveStreamStop();else liveStreamStart();
+});
+document.getElementById('liveStreamClear').addEventListener('click',function(){
+  _liveStreamEntries=[];_liveStreamLastKey='';
+  document.getElementById('liveStreamList').innerHTML='<li style="color:#555;font-size:.72rem">Cleared.</li>';
+});
+
+// ══════════════════════════════════════════
+// DEV PANEL SESSION STATS
+// ══════════════════════════════════════════
+var _devSessionStats={hits:0,tracker:0,msgs:0,links:0};
+function devStatInc(key){
+  _devSessionStats[key]=(_devSessionStats[key]||0)+1;
+  var el=document.getElementById('devStat'+key.charAt(0).toUpperCase()+key.slice(1));
+  if(el)el.textContent=_devSessionStats[key];
+}
 
 // Pre-load nicknames silently so exec log render has them ready
 loadNicknames(null);
