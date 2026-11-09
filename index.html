@@ -143,7 +143,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.8.8</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.8.9</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -732,7 +732,7 @@ var APP_ID='sc6';  // isolated from SC4/SC5 (sc3)
 
 // ── Auth: codes stored as SHA-256 hashes only — never plain text in source ──
 var _H={
-  d1:'99f4f9d8b5b4fdfb1b6141fe6c4cfff15532006b13f4ef1bbde1c8dd7dc80a14',
+  d1:'',
   d2:'',
   op:'99f4f9d8b5b4fdfb1b6141fe6c4cfff15532006b13f4ef1bbde1c8dd7dc80a14'
 };
@@ -1167,25 +1167,13 @@ function tryDevCode(){
     // Check lock
     fetch(devLockedUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(locked){
       if(locked===true){exLog('Dev login blocked','Panel is locked','unknown');shake(inp);inp.value='';return;}
-      if(h===_H.d1){
-        fetch(devMainDisabledUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
-          if(v===true){_loginFail(inp);}
-          else{_loginSuccess();logOpAccess('main');openDev('main');}
-        });return;
-      }
-      if(_H.d2&&h===_H.d2){
-        fetch(devAltDisabledUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
-          if(v===true){_loginFail(inp);}
-          else{_loginSuccess();logOpAccess('alt');openDev('alt');}
-        });return;
-      }
-      // Check extra passwords (stored as hashes in Firebase)
+      // Check passwords stored in Firebase
       fetch(devPasswordsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
         var arr=extrasFromRaw(d);
-        var match=arr.find(function(e){return e.code===h||e.code===val;});
+        var match=arr.find(function(e){return e.code===h;});
         if(match){
           if(match.disabled===true){_loginFail(inp);}
-          else{_loginSuccess();logOpAccess('extra');openDev(val);}
+          else{_loginSuccess();logOpAccess(match.label||'dev');openDev(match.label||val);}
         }else{exLog('Dev login failed','Wrong code','unknown');_loginFail(inp);}
       });
     });
@@ -1342,7 +1330,7 @@ function loadOpAll(){
   loadOpMsgPreview();
   loadOpAnnouncementPreview();
   loadOpWsStats();
-  // New v1.8.8 panels
+  // New v1.8.9 panels
   loadOpGeo();
   loadOpErrPage();
   loadWsAlerts();
@@ -2178,7 +2166,6 @@ document.getElementById('opPassAdd').addEventListener('click',function(){
   if(!val)return;
   // Store hash for auth + plain text for operator visibility
   sc6Hash(val).then(function(h){
-    if(h===_H.d1||h===_H.d2){alert('That is a built-in code.');return;}
     fetch(devPasswordsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
       var arr=extrasFromRaw(d);
       if(arr.some(function(e){return e.code===h;})){alert('Already exists.');return;}
