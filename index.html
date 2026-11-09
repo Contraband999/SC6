@@ -2442,6 +2442,12 @@ function _liveStreamPoll(){
   fetch(execLogUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
     if(!data)return;
     var raw=Array.isArray(data)?data:(typeof data==='object'?Object.values(data):[]);
+    // Normalize: accept both `time` and `t` fields
+    raw=raw.map(function(e){
+      if(!e)return e;
+      if(!e.time&&e.t)e.time=e.t;
+      return e;
+    });
     // Filter to visitor entries only, sort newest first
     var visitors=raw.filter(function(e){return e&&(e.who==='visitor'||String(e.who||'').startsWith('visitor'));});
     if(!visitors.length)return;

@@ -144,6 +144,7 @@ export default {
     };
 
     const execEntry = {
+      time: entry.time,
       t: entry.time,
       action: 'Visitor hit redirect link',
       detail: 'Link: ' + resolvedId + ' → ' + target.slice(0, 50)
@@ -154,8 +155,9 @@ export default {
         + ' WS:' + ws,
       who: 'visitor',
       tag: '?',
-      ip, country, region,
-      os: entry.os, br: entry.browser
+      ip, country, city, region,
+      os: entry.os, browser: entry.browser, device: entry.device,
+      br: entry.browser
     };
 
     ctx.waitUntil(Promise.all([
