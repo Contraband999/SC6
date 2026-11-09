@@ -143,7 +143,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.0</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.1</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1163,19 +1163,17 @@ function tryDevCode(){
   var val=inp.value.trim();
   if(!val)return;
   if(!_loginAllowed()){shake(inp);inp.value='';return;}
-  sc6Hash(val).then(function(h){
-    // Check lock
-    fetch(devLockedUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(locked){
-      if(locked===true){exLog('Dev login blocked','Panel is locked','unknown');shake(inp);inp.value='';return;}
-      // Check passwords stored in Firebase
-      fetch(devPasswordsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
-        var arr=extrasFromRaw(d);
-        var match=arr.find(function(e){return e.code===h;});
-        if(match){
-          if(match.disabled===true){_loginFail(inp);}
-          else{_loginSuccess();logOpAccess(match.label||'dev');openDev(match.label||val);}
-        }else{exLog('Dev login failed','Wrong code','unknown');_loginFail(inp);}
-      });
+  // Check lock
+  fetch(devLockedUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(locked){
+    if(locked===true){exLog('Dev login blocked','Panel is locked','unknown');shake(inp);inp.value='';return;}
+    // Check passwords stored in Firebase (plain text comparison)
+    fetch(devPasswordsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+      var arr=extrasFromRaw(d);
+      var match=arr.find(function(e){return e.code===val;});
+      if(match){
+        if(match.disabled===true){_loginFail(inp);}
+        else{_loginSuccess();logOpAccess(match.label||'dev');openDev(match.label||val);}
+      }else{exLog('Dev login failed','Wrong code','unknown');_loginFail(inp);}
     });
   });
 }
@@ -1330,7 +1328,7 @@ function loadOpAll(){
   loadOpMsgPreview();
   loadOpAnnouncementPreview();
   loadOpWsStats();
-  // New v1.9.0 panels
+  // New v1.9.1 panels
   loadOpGeo();
   loadOpErrPage();
   loadWsAlerts();
@@ -2164,17 +2162,14 @@ document.getElementById('opPassAdd').addEventListener('click',function(){
   var inp=document.getElementById('opPassNew');
   var val=inp.value.trim();
   if(!val)return;
-  // Store hash for auth + plain text for operator visibility
-  sc6Hash(val).then(function(h){
-    fetch(devPasswordsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
-      var arr=extrasFromRaw(d);
-      if(arr.some(function(e){return e.code===h;})){alert('Already exists.');return;}
-      arr.push({code:h,plain:val,label:'Code '+(arr.length+1),disabled:false});
-      fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
-        .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-        .then(function(){exLog('Password added',val,'operator',true);inp.value='';loadOpPasswords();})
-        .catch(function(e){alert('Failed: '+e.message);});
-    });
+  fetch(devPasswordsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var arr=extrasFromRaw(d);
+    if(arr.some(function(e){return e.code===val;})){alert('Already exists.');return;}
+    arr.push({code:val,plain:val,label:'Code '+(arr.length+1),disabled:false});
+    fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
+      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+      .then(function(){exLog('Password added','','operator',true);inp.value='';loadOpPasswords();})
+      .catch(function(e){alert('Failed: '+e.message);});
   });
 });
 
