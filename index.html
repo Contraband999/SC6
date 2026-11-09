@@ -143,7 +143,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.5</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.6</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1353,7 +1353,7 @@ function loadOpAll(){
   loadOpMsgPreview();
   loadOpAnnouncementPreview();
   loadOpWsStats();
-  // New v1.9.5 panels
+  // New v1.9.6 panels
   loadOpGeo();
   loadOpErrPage();
   loadWsAlerts();
@@ -1466,19 +1466,36 @@ function loadOpRedirectList(){
           if(!arr.length){sub.innerHTML='<li style="color:#888;font-size:.7rem">No hits yet.</li>';return;}
           sub.innerHTML='<li style="color:#4fc;font-size:.65rem;padding:3px 0">'+arr.length+' hit'+(arr.length===1?'':'s')+'</li>'+arr.map(function(h){
             var loc=[h.city,h.region,h.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
+            var coordStr=(h.lat&&h.lat!=='?'&&h.lon&&h.lon!=='?')?' ('+h.lat+', '+h.lon+')':'';
             var dev=[h.device,h.os,h.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
             var isp=h.isp&&h.isp!=='?'?h.isp:'';
             var tz=h.timezone&&h.timezone!=='?'?h.timezone:'';
             var lang=h.lang&&h.lang!=='?'?h.lang:'';
-            var referer=h.referer&&h.referer!=='?'?h.referer:'';
+            var vpn=h.isVpn===true;
+            var dwellSec=typeof h.dwell==='number'&&h.dwell>=0?h.dwell:null;
+            var dwellStr=dwellSec===null?'':dwellSec<60?dwellSec+'s':(Math.floor(dwellSec/60)+'m '+(dwellSec%60)+'s');
+            var src=h.refSource&&h.refSource!=='?'?h.refSource:(h.referer&&h.referer!=='?'?null:null);
+            var openedFrom=src?src:(h.referer&&h.referer!=='?'?h.referer.slice(0,60):'Direct / unknown');
+            var sourceIcon={
+              'Instagram':'📸','Twitter/X':'🐦','Facebook':'👥','WhatsApp':'💬',
+              'Telegram':'✈️','Discord':'🎮','Reddit':'🔴','TikTok':'🎵',
+              'YouTube':'▶️','Snapchat':'👻','LinkedIn':'💼','Google':'🔍',
+              'Gmail':'📧','Outlook':'📧','Signal':'🔒','Spotify':'🎧','Twitch':'🟣'
+            };
+            var srcIcon=sourceIcon[src]||'🔗';
             return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
-              +'<div style="font-size:.72rem;color:#4fc;font-weight:600">📍 '+esc(loc)+'</div>'
+              // VPN badge — prominent if detected
+              +(vpn?'<div style="display:inline-block;font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px;margin-bottom:4px">⚠ VPN / PROXY</div>':'<div style="display:inline-block;font-size:.6rem;background:rgba(80,255,160,.12);color:#4fc;border:1px solid rgba(80,255,160,.3);border-radius:3px;padding:1px 5px;margin-bottom:4px">✓ Clean IP</div>')
+              +'<div style="font-size:.72rem;color:#4fc;font-weight:600">📍 '+esc(loc)+(coordStr?'<span style="color:#666;font-weight:400"> '+esc(coordStr)+'</span>':'')+'</div>'
               +'<div style="font-size:.68rem;color:#ccc;margin-top:2px">🖥 '+esc(dev)+'</div>'
               +(h.ip&&h.ip!=='?'?'<div style="font-size:.68rem;color:#f5c800;margin-top:2px">🌐 '+esc(h.ip)+'</div>':'')
               +(isp?'<div style="font-size:.65rem;color:#aaa;margin-top:1px">📡 '+esc(isp)+'</div>':'')
+              // Dwell time
+              +(dwellStr?'<div style="font-size:.65rem;color:#a0cfff;margin-top:2px">⏱ Stayed '+esc(dwellStr)+'</div>':'')
+              // Opened from
+              +'<div style="font-size:.65rem;color:#c8b8ff;margin-top:2px">'+srcIcon+' Opened from: '+esc(openedFrom)+'</div>'
               +(tz?'<div style="font-size:.65rem;color:#aaa;margin-top:1px">🕐 '+esc(tz)+'</div>':'')
               +(lang?'<div style="font-size:.65rem;color:#aaa;margin-top:1px">🗣 '+esc(lang)+'</div>':'')
-              +(referer&&referer!=='?'?'<div style="font-size:.6rem;color:#666;margin-top:1px;word-break:break-all">🔗 '+esc(referer)+'</div>':'')
               +'<div style="font-size:.6rem;color:#555;margin-top:3px">'+esc(new Date(h.time).toLocaleString())+'</div>'
               +'</li>';
           }).join('');

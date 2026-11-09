@@ -1,4 +1,4 @@
-// SC6 Redirect Tracker Worker — v1.8.2
+// SC6 Redirect Tracker Worker — v1.9.6
 // Deploy at: media.sharelink-1.workers.dev
 
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
@@ -33,8 +33,46 @@ function getDeviceType(ua) {
   return 'Desktop';
 }
 
+// Detect VPN/proxy/datacenter from ISP name or ASN org
+function detectVpn(isp, asn) {
+  if (!isp || isp === '?') return false;
+  const s = isp.toLowerCase();
+  const vpnKeywords = [
+    'nordvpn','expressvpn','mullvad','surfshark','protonvpn','cyberghost',
+    'ipvanish','hidemyass','purevpn','windscribe','pia ','private internet access',
+    'torguard','vpn','proxy','tor exit','hosting','digitalocean','linode','vultr',
+    'ovh','hetzner','leaseweb','choopa','psychz','quadranet','coresite','zenlayer',
+    'amazon','google cloud','microsoft azure','cloudflare','fastly','akamai',
+    'datacenter','data center','server','colocation','colo'
+  ];
+  return vpnKeywords.some(k => s.includes(k));
+}
+
+// Parse referer into a human-readable source
+function parseReferer(ref) {
+  if (!ref || ref === '?') return null;
+  try {
+    const u = new URL(ref);
+    const host = u.hostname.replace(/^www\./, '');
+    const sources = {
+      'instagram.com': 'Instagram', 't.co': 'Twitter/X', 'twitter.com': 'Twitter/X',
+      'x.com': 'Twitter/X', 'facebook.com': 'Facebook', 'fb.com': 'Facebook',
+      'wa.me': 'WhatsApp', 'web.whatsapp.com': 'WhatsApp', 't.me': 'Telegram',
+      'discord.com': 'Discord', 'discordapp.com': 'Discord',
+      'reddit.com': 'Reddit', 'tiktok.com': 'TikTok', 'youtube.com': 'YouTube',
+      'youtu.be': 'YouTube', 'snapchat.com': 'Snapchat', 'linkedin.com': 'LinkedIn',
+      'google.com': 'Google', 'bing.com': 'Bing', 'yahoo.com': 'Yahoo',
+      'mail.google.com': 'Gmail', 'outlook.live.com': 'Outlook', 'mail.yahoo.com': 'Yahoo Mail',
+      'telegram.org': 'Telegram', 'signal.org': 'Signal',
+      'spotify.com': 'Spotify', 'twitch.tv': 'Twitch'
+    };
+    return sources[host] || host;
+  } catch(e) {
+    return ref.slice(0, 60);
+  }
+}
+
 async function writeLog(ws, linkId, entry) {
-  // POST to Firebase for atomic push key — race-free
   const logUrl = `${FIREBASE}/_sc6/workspaces/${encodeURIComponent(ws)}/redirectLogs/${encodeURIComponent(linkId)}.json`;
   try {
     await fetch(logUrl, {
@@ -60,6 +98,24 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
+    // ── Dwell ping endpoint: POST /ping with JSON body ──
+    if (url.pathname === '/ping' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        const { ws, linkId, logKey, dwell } = body;
+        if (ws && linkId && logKey && typeof dwell === 'number') {
+          // Update the specific log entry with dwell time
+          const patchUrl = `${FIREBASE}/_sc6/workspaces/${encodeURIComponent(ws)}/redirectLogs/${encodeURIComponent(linkId)}/${encodeURIComponent(logKey)}/dwell.json`;
+          ctx.waitUntil(fetch(patchUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dwell)
+          }));
+        }
+      } catch(e) {}
+      return new Response('ok', { status: 200, headers: { 'Access-Control-Allow-Origin': '*' } });
+    }
+
     if (url.pathname !== '/r') {
       return new Response('Not found', { status: 404 });
     }
@@ -74,22 +130,19 @@ export default {
 
     if (!linkId) return new Response('Not found', { status: 404 });
 
-    // ── Alias resolution: if linkId doesn't match a direct link, try alias lookup ──
+    // ── Alias resolution ──
     let resolvedId = linkId;
     try {
       const directRes = await fetch(`${FIREBASE}/_sc6/workspaces/${encodeURIComponent(ws)}/redirectLinks/${encodeURIComponent(linkId)}.json`);
       const directData = directRes.ok ? await directRes.json() : null;
       if (!directData || !directData.target) {
-        // Not a direct ID — try alias
         const aliasRes = await fetch(`${FIREBASE}/_sc6/workspaces/${encodeURIComponent(ws)}/redirectAliases/${encodeURIComponent(linkId)}.json`);
         const aliasData = aliasRes.ok ? await aliasRes.json() : null;
-        if (aliasData && typeof aliasData === 'string') {
-          resolvedId = aliasData;
-        }
+        if (aliasData && typeof aliasData === 'string') resolvedId = aliasData;
       }
     } catch(e) {}
 
-    // Fetch redirect target using resolved ID
+    // Fetch redirect target
     let target = null;
     try {
       const res = await fetch(`${FIREBASE}/_sc6/workspaces/${encodeURIComponent(ws)}/redirectLinks/${encodeURIComponent(resolvedId)}.json`);
@@ -99,7 +152,7 @@ export default {
 
     if (!target) return new Response('Link expired', { status: 410 });
 
-    // Gather ALL available visitor info from Cloudflare headers
+    // Gather visitor info from Cloudflare headers
     const ip        = request.headers.get('CF-Connecting-IP') || '?';
     const country   = request.headers.get('CF-IPCountry') || '?';
     const city      = request.headers.get('CF-IPCity') || '?';
@@ -107,9 +160,13 @@ export default {
     const timezone  = request.headers.get('CF-Timezone') || '?';
     const asn       = request.headers.get('CF-ASN') || '?';
     const isp       = request.headers.get('CF-ISP') || request.headers.get('CF-AS-Organization') || '?';
+    const lat       = request.headers.get('CF-IPLatitude') || '?';
+    const lon       = request.headers.get('CF-IPLongitude') || '?';
     const ua        = request.headers.get('User-Agent') || '?';
     const lang      = (request.headers.get('Accept-Language') || '?').split(',')[0];
     const referer   = request.headers.get('Referer') || '?';
+    const isVpn     = detectVpn(isp, asn);
+    const refSource = parseReferer(referer);
 
     // ── Geofencing check ──
     let geoBlocked = false;
@@ -117,19 +174,17 @@ export default {
       const geoRes = await fetch(`${FIREBASE}/_sc6/geofence/allowed.json`);
       const allowList = geoRes.ok ? await geoRes.json() : null;
       if (Array.isArray(allowList) && allowList.length > 0) {
-        if (!allowList.includes(country) && country !== '?') {
-          geoBlocked = true;
-        }
+        if (!allowList.includes(country) && country !== '?') geoBlocked = true;
       }
     } catch(e) {}
 
     if (geoBlocked) {
-      // Log the blocked attempt then return expired
       const blockedEntry = {
         time: new Date().toISOString(),
         ip, country, city, region, ua,
         os: getOS(ua), browser: getBrowser(ua), device: getDeviceType(ua),
-        lang, referer, linkId: resolvedId, param, geoBlocked: true
+        lang, referer, refSource, linkId: resolvedId, param, geoBlocked: true,
+        isVpn, lat, lon, isp, asn
       };
       ctx.waitUntil(writeLog(ws, resolvedId, blockedEntry));
       return new Response('Link expired', { status: 410 });
@@ -138,9 +193,11 @@ export default {
     const entry = {
       time: new Date().toISOString(),
       ip, country, city, region, timezone, isp, asn,
+      lat, lon, isVpn,
       os: getOS(ua), browser: getBrowser(ua), device: getDeviceType(ua),
-      lang, referer, ua, linkId: resolvedId, param,
-      originalParam: linkId !== resolvedId ? linkId : undefined
+      lang, referer, refSource, ua, linkId: resolvedId, param,
+      originalParam: linkId !== resolvedId ? linkId : undefined,
+      dwell: null  // filled in later via /ping
     };
 
     const execEntry = {
@@ -151,7 +208,8 @@ export default {
         + (city !== '?' ? ' | ' + city : '')
         + (country !== '?' ? ', ' + country : '')
         + (ip !== '?' ? ' | ' + ip : '')
-        + (referer && referer !== '?' ? ' | ref: ' + referer.slice(0, 40) : '')
+        + (isVpn ? ' | ⚠ VPN' : '')
+        + (refSource ? ' | from: ' + refSource : '')
         + ' WS:' + ws,
       who: 'visitor',
       tag: '?',
@@ -160,11 +218,52 @@ export default {
       br: entry.browser
     };
 
-    ctx.waitUntil(Promise.all([
-      writeLog(ws, resolvedId, entry),
-      writeExecLog(execEntry)
-    ]));
+    // Write log first to get the Firebase push key back for dwell pinging
+    let logKey = null;
+    try {
+      const logUrl = `${FIREBASE}/_sc6/workspaces/${encodeURIComponent(ws)}/redirectLogs/${encodeURIComponent(resolvedId)}.json`;
+      const r = await fetch(logUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry)
+      });
+      if (r.ok) {
+        const j = await r.json();
+        logKey = j && j.name ? j.name : null;
+      }
+    } catch(e) {}
 
-    return Response.redirect(target, 302);
+    ctx.waitUntil(writeExecLog(execEntry));
+
+    // Serve an HTML bridge page that records dwell time then redirects
+    const pingUrl = 'https://media.sharelink-1.workers.dev/ping';
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh}</style>
+</head><body>
+<script>
+var _t=Date.now();
+var _ws=${JSON.stringify(ws)};
+var _id=${JSON.stringify(resolvedId)};
+var _key=${JSON.stringify(logKey)};
+var _target=${JSON.stringify(target)};
+function ping(dwell){
+  if(!_key)return;
+  try{fetch(${JSON.stringify(pingUrl)},{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ws:_ws,linkId:_id,logKey:_key,dwell:dwell})});}catch(e){}
+}
+// Redirect after a brief moment — ping with actual dwell on pagehide/beforeunload too
+setTimeout(function(){
+  window.location.replace(_target);
+},80);
+window.addEventListener('pagehide',function(){ping(Math.round((Date.now()-_t)/1000));},{capture:true});
+window.addEventListener('beforeunload',function(){ping(Math.round((Date.now()-_t)/1000));});
+</script>
+</body></html>`;
+
+    return new Response(html, {
+      status: 200,
+      headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store' }
+    });
   }
 };
