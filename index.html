@@ -143,7 +143,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.7</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.8</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1013,27 +1013,50 @@ function devBindingLockUrl(code){return fbUrl('_sc6/devBindings/'+encodeURICompo
 function checkDevBinding(code,onPass){
   var fp=devFingerprint();
   fetch(devBindingUrl(code)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(binding){
-    // No binding exists yet — create one (first login from this device)
+    // Binding disabled — skip check entirely
+    if(binding&&binding.enabled===false){onPass();return;}
+    // Binding locked — block
+    if(binding&&binding.locked===true){
+      _showViolation('This code is temporarily locked due to a security violation.');
+      return;
+    }
+    // No binding yet — register as PENDING (not auto-approved)
     if(!binding||!binding.fp){
       var newBinding={fp:fp,ua:navigator.userAgent,lang:navigator.language,
         tz:(Intl&&Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:'?'),
         screen:screen.width+'x'+screen.height,
-        boundAt:new Date().toISOString(),enabled:true,locked:false};
+        boundAt:new Date().toISOString(),enabled:true,locked:false,
+        status:'pending'};
       fetch(devBindingUrl(code),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(newBinding)})
         .catch(function(){});
+      // Alert operator — pending approval needed
+      var nick=nickFor(code);var nameLabel=nick?code+' ('+nick+')':code;
+      fireGlobalAlerts('device_pending',code,
+        '🔔 NEW DEVICE — APPROVAL NEEDED\n\nCode '+nameLabel+' was used from a new device for the first time.\n\nDevice: '+navigator.userAgent.slice(0,120)+'\n\nGo to Operator panel → Device Bindings to Approve or Reject this device.\n\nThe user has been let in for now — if you reject, the code will be locked.',
+        '');
+      exLog('Device binding pending approval','Code: '+code+' | fp: '+fp,'dev '+code);
+      onPass(); // let them in — operator decides after
+      return;
+    }
+    // Pending — still waiting for operator approval; let through but keep notifying
+    if(binding.status==='pending'){
       onPass();
       return;
     }
-    // Binding disabled — skip check, just pass through
-    if(binding.enabled===false){onPass();return;}
-    // Binding locked — block
-    if(binding.locked===true){
-      _showViolation('This code is temporarily locked due to a security violation.');
+    // Approved — check fingerprint
+    if(binding.status==='approved'){
+      if(binding.fp===fp){onPass();return;}
+      // Different device trying an approved binding — violation
+      _handleBindingViolation(code,fp,binding);
       return;
     }
-    // Fingerprint matches — pass
+    // Rejected — block
+    if(binding.status==='rejected'){
+      _showViolation('⚠️ Access Denied\n\nThis device has been rejected by the operator.\nYou have used an unauthorized device or shared this code.\n\nThe operator has been notified.');
+      return;
+    }
+    // Legacy binding (no status field) — treat as approved
     if(binding.fp===fp){onPass();return;}
-    // MISMATCH — violation
     _handleBindingViolation(code,fp,binding);
   });
 }
@@ -1073,31 +1096,63 @@ function loadOpBindings(){
     if(!data||typeof data!=='object'||!Object.keys(data).length){
       ul.innerHTML='<li style="color:#888;font-size:.7rem">No bindings yet. They are created automatically on first login.</li>';return;
     }
-    ul.innerHTML=Object.keys(data).map(function(code){
+    // Sort: pending first
+    var codes=Object.keys(data).sort(function(a,b){
+      var sa=data[a].status||'approved',sb=data[b].status||'approved';
+      return (sa==='pending'?0:1)-(sb==='pending'?0:1);
+    });
+    ul.innerHTML=codes.map(function(code){
       var b=data[code];
       var enabled=b.enabled!==false;
       var locked=b.locked===true;
+      var status=b.status||'approved';
       var nick=nickFor(code);
       var label=nick?code+' ('+nick+')':code;
       var boundAt=b.boundAt?new Date(b.boundAt).toLocaleString():'?';
-      var statusColor=locked?'#ff5050':enabled?'#4fc':'#f5c800';
-      var statusLabel=locked?'🔒 Locked':enabled?'✓ Active':'⊘ Disabled';
-      return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+      var statusColor=locked?'#ff5050':status==='pending'?'#f5c800':status==='rejected'?'#ff5050':enabled?'#4fc':'#aaa';
+      var statusLabel=locked?'🔒 Locked':status==='pending'?'⏳ Pending approval':status==='rejected'?'✗ Rejected':enabled?'✓ Approved':'⊘ Check disabled';
+      return '<li style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
         +'<span style="font-size:.72rem;color:#eee;font-weight:600;flex:1">'+esc(label)+'</span>'
-        +'<span style="font-size:.62rem;color:'+statusColor+'">'+statusLabel+'</span>'
+        +'<span style="font-size:.62rem;color:'+statusColor+';font-weight:700">'+statusLabel+'</span>'
         +'</div>'
-        +'<div style="font-size:.62rem;color:#666;margin-top:2px">Bound: '+esc(boundAt)+'</div>'
-        +(b.ua?'<div style="font-size:.6rem;color:#555;margin-top:1px;word-break:break-all">'+esc(b.ua.slice(0,80))+'</div>':'')
+        +'<div style="font-size:.62rem;color:#666;margin-top:2px">First seen: '+esc(boundAt)+'</div>'
+        +(b.ua?'<div style="font-size:.6rem;color:#555;margin-top:1px;word-break:break-all">'+esc(b.ua.slice(0,100))+'</div>':'')
         +'<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'
+        +(status==='pending'
+          ?'<button class="btn-sm" style="font-size:.62rem;background:rgba(79,255,160,.18);color:#4fc;border-color:#4fc" data-bind-approve="'+esc(code)+'">✓ Approve</button>'
+           +'<button class="btn-sm danger" style="font-size:.62rem" data-bind-reject="'+esc(code)+'">✗ Reject</button>'
+          :'')
         +(locked?'<button class="btn-sm" style="font-size:.62rem" data-bind-unlock="'+esc(code)+'">Unlock</button>':'')
-        +(enabled?'<button class="btn-sm" style="font-size:.62rem" data-bind-disable="'+esc(code)+'">Disable check</button>'
-                 :'<button class="btn-sm" style="font-size:.62rem" data-bind-enable="'+esc(code)+'">Enable check</button>')
-        +'<button class="btn-sm danger" style="font-size:.62rem" data-bind-reset="'+esc(code)+'">Reset binding</button>'
+        +(status!=='pending'?(enabled
+          ?'<button class="btn-sm" style="font-size:.62rem" data-bind-disable="'+esc(code)+'">Disable check</button>'
+          :'<button class="btn-sm" style="font-size:.62rem" data-bind-enable="'+esc(code)+'">Enable check</button>'):'')
+        +'<button class="btn-sm danger" style="font-size:.62rem" data-bind-reset="'+esc(code)+'">Reset</button>'
         +'</div>'
         +'</li>';
     }).join('');
     // Wire buttons
+    ul.querySelectorAll('[data-bind-approve]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var c=btn.getAttribute('data-bind-approve');
+        var url=fbUrl('_sc6/devBindings/'+encodeURIComponent(c)+'/status');
+        fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify('approved')})
+          .then(function(){exLog('Device binding approved','Code: '+c,'operator',true);loadOpBindings();})
+          .catch(function(e){alert('Failed: '+e.message);});
+      });
+    });
+    ul.querySelectorAll('[data-bind-reject]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var c=btn.getAttribute('data-bind-reject');
+        // Set status=rejected and locked=true so they can't get in
+        var pUrl=fbUrl('_sc6/devBindings/'+encodeURIComponent(c));
+        fetch(pUrl).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(b){
+          var updated=Object.assign({},b||{},{status:'rejected',locked:true});
+          return fetch(pUrl,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)});
+        }).then(function(){exLog('Device binding rejected','Code: '+c,'operator',true);loadOpBindings();})
+          .catch(function(e){alert('Failed: '+e.message);});
+      });
+    });
     ul.querySelectorAll('[data-bind-unlock]').forEach(function(btn){
       btn.addEventListener('click',function(){
         var c=btn.getAttribute('data-bind-unlock');
@@ -1535,7 +1590,7 @@ function loadOpAll(){
   loadOpMsgPreview();
   loadOpAnnouncementPreview();
   loadOpWsStats();
-  // New v1.9.7 panels
+  // New v1.9.8 panels
   loadOpGeo();
   loadOpErrPage();
   loadWsAlerts();
