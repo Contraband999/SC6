@@ -143,7 +143,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.8</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.9</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1020,7 +1020,7 @@ function checkDevBinding(code,onPass){
       _showViolation('This code is temporarily locked due to a security violation.');
       return;
     }
-    // No binding yet — register as PENDING (not auto-approved)
+    // No binding yet — register as PENDING, block until operator approves
     if(!binding||!binding.fp){
       var newBinding={fp:fp,ua:navigator.userAgent,lang:navigator.language,
         tz:(Intl&&Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:'?'),
@@ -1029,18 +1029,19 @@ function checkDevBinding(code,onPass){
         status:'pending'};
       fetch(devBindingUrl(code),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(newBinding)})
         .catch(function(){});
-      // Alert operator — pending approval needed
+      // Alert operator
       var nick=nickFor(code);var nameLabel=nick?code+' ('+nick+')':code;
       fireGlobalAlerts('device_pending',code,
-        '🔔 NEW DEVICE — APPROVAL NEEDED\n\nCode '+nameLabel+' was used from a new device for the first time.\n\nDevice: '+navigator.userAgent.slice(0,120)+'\n\nGo to Operator panel → Device Bindings to Approve or Reject this device.\n\nThe user has been let in for now — if you reject, the code will be locked.',
+        '🔔 NEW DEVICE — APPROVAL NEEDED\n\nCode '+nameLabel+' was used from a new device for the first time.\n\nDevice: '+navigator.userAgent.slice(0,120)+'\nLanguage: '+navigator.language+'\nTimezone: '+(Intl&&Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:'?')+'\nScreen: '+screen.width+'x'+screen.height+'\n\nGo to Operator panel → Device Bindings to Approve or Reject.\n\nAccess is BLOCKED until you approve.',
         '');
       exLog('Device binding pending approval','Code: '+code+' | fp: '+fp,'dev '+code);
-      onPass(); // let them in — operator decides after
+      _showPending();
       return;
     }
-    // Pending — still waiting for operator approval; let through but keep notifying
+    // Pending — still blocked, waiting for operator
     if(binding.status==='pending'){
-      onPass();
+      // If same fingerprint, just show pending screen again
+      _showPending();
       return;
     }
     // Approved — check fingerprint
@@ -1083,6 +1084,17 @@ function _showViolation(msg){
     +'<div style="font-size:2rem;margin-bottom:12px">🚫</div>'
     +'<div style="color:#ff5050;font-weight:700;font-size:.85rem;margin-bottom:10px">Access Denied</div>'
     +'<div style="color:#ccc;font-size:.72rem;line-height:1.6;white-space:pre-line">'+esc(msg)+'</div>'
+    +'</div>';
+  gate.style.display='';
+}
+
+function _showPending(){
+  var gate=document.getElementById('devGate');
+  if(!gate)return;
+  gate.innerHTML='<div style="text-align:center;padding:32px 20px;max-width:340px;margin:0 auto">'
+    +'<div style="font-size:2rem;margin-bottom:12px">⏳</div>'
+    +'<div style="color:#f5c800;font-weight:700;font-size:.85rem;margin-bottom:10px">Waiting for approval</div>'
+    +'<div style="color:#aaa;font-size:.72rem;line-height:1.6">Your device has been registered and is pending operator approval.<br><br>You will be able to access the panel once the operator approves your device.</div>'
     +'</div>';
   gate.style.display='';
 }
@@ -1590,7 +1602,7 @@ function loadOpAll(){
   loadOpMsgPreview();
   loadOpAnnouncementPreview();
   loadOpWsStats();
-  // New v1.9.8 panels
+  // New v1.9.9 panels
   loadOpGeo();
   loadOpErrPage();
   loadWsAlerts();
