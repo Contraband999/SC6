@@ -143,7 +143,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.6</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.7</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -522,6 +522,17 @@ ul.devlist li:last-child{border-bottom:none}
       </div>
     </section>
 
+    <!-- ── Device bindings ── -->
+    <section>
+      <div class="sec-head"><h3>Device bindings</h3><p class="note" style="margin:4px 0 0">Each dev code can only be used from its first trusted device. Violations trigger an emergency alert and temporary lock.</p></div>
+      <div class="sec-body">
+        <ul class="devlist" id="opBindingList"><li style="color:#888">Loading…</li></ul>
+        <div class="row" style="margin-top:8px">
+          <button class="btn-sm" id="opBindingRefresh" style="font-size:.65rem">Refresh</button>
+        </div>
+      </div>
+    </section>
+
     <!-- ── Banned devices ── -->
     <section>
       <div class="sec-head"><h3>Banned devices</h3><p class="note" style="margin:4px 0 0">Devices on this list are blocked from the Dev panel.</p></div>
@@ -561,11 +572,12 @@ ul.devlist li:last-child{border-bottom:none}
 
     <!-- ── Executive log ── -->
     <section>
-      <div class="sec-head">
-        <h3>Executive log</h3>
-        <p class="note" style="margin:4px 0 0">Every action by everyone — syncs every 3 seconds.</p>
+      <div class="sec-head" style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none" id="execLogToggleHead">
+        <h3 style="margin:0;flex:1">Executive log</h3>
+        <span id="execLogArrow" style="font-size:.8rem;color:#555;transition:transform .2s">▼</span>
       </div>
-      <div class="sec-body">
+      <p class="note" style="margin:4px 0 6px;padding:0 var(--ph,0)">Every action by everyone — syncs every 3 seconds.</p>
+      <div class="sec-body" id="execLogBody">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           <span id="execLogStatus" style="font-size:.65rem;color:#555">●</span>
           <span style="font-size:.65rem;color:#555" id="execLogCount"></span>
@@ -958,6 +970,176 @@ function stopExLogSync(){
   if(_execLogInterval){clearInterval(_execLogInterval);_execLogInterval=null;}
 }
 
+// ── Exec log collapse ──
+(function(){
+  var head=document.getElementById('execLogToggleHead');
+  var body=document.getElementById('execLogBody');
+  var arrow=document.getElementById('execLogArrow');
+  var collapsed=false;
+  if(head&&body&&arrow){
+    head.addEventListener('click',function(){
+      collapsed=!collapsed;
+      body.style.display=collapsed?'none':'';
+      arrow.style.transform=collapsed?'rotate(-90deg)':'';
+    });
+  }
+})();
+
+// ── Device fingerprint ──
+function devFingerprint(){
+  var n=navigator;
+  var parts=[n.userAgent,n.language,screen.width+'x'+screen.height,screen.colorDepth,
+    (Intl&&Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:'?'),
+    n.hardwareConcurrency||'?',n.platform||'?'];
+  // Simple canvas fingerprint
+  try{
+    var c=document.createElement('canvas');c.width=120;c.height=30;
+    var ctx=c.getContext('2d');
+    ctx.fillStyle='#f00';ctx.fillRect(0,0,30,20);
+    ctx.fillStyle='rgba(0,100,255,.5)';ctx.fillText('sc6fp',2,18);
+    parts.push(c.toDataURL().slice(-40));
+  }catch(e){}
+  // Hash: simple djb2
+  var str=parts.join('|');var h=5381;
+  for(var i=0;i<str.length;i++){h=((h<<5)+h)+str.charCodeAt(i);h=h&h;}
+  return 'fp_'+(h>>>0).toString(16);
+}
+
+function devBindingsUrl(){return fbUrl('_sc6/devBindings');}
+function devBindingUrl(code){return fbUrl('_sc6/devBindings/'+encodeURIComponent(code));}
+function devBindingLockUrl(code){return fbUrl('_sc6/devBindings/'+encodeURIComponent(code)+'/locked');}
+
+// Called from tryDevCode on successful match — checks/sets device binding
+function checkDevBinding(code,onPass){
+  var fp=devFingerprint();
+  fetch(devBindingUrl(code)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(binding){
+    // No binding exists yet — create one (first login from this device)
+    if(!binding||!binding.fp){
+      var newBinding={fp:fp,ua:navigator.userAgent,lang:navigator.language,
+        tz:(Intl&&Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:'?'),
+        screen:screen.width+'x'+screen.height,
+        boundAt:new Date().toISOString(),enabled:true,locked:false};
+      fetch(devBindingUrl(code),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(newBinding)})
+        .catch(function(){});
+      onPass();
+      return;
+    }
+    // Binding disabled — skip check, just pass through
+    if(binding.enabled===false){onPass();return;}
+    // Binding locked — block
+    if(binding.locked===true){
+      _showViolation('This code is temporarily locked due to a security violation.');
+      return;
+    }
+    // Fingerprint matches — pass
+    if(binding.fp===fp){onPass();return;}
+    // MISMATCH — violation
+    _handleBindingViolation(code,fp,binding);
+  });
+}
+
+function _handleBindingViolation(code,fp,binding){
+  // Lock the code
+  fetch(devBindingLockUrl(code),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(true)}).catch(function(){});
+  // Log it
+  exLog('⚠ DEVICE VIOLATION','Code '+code+' used from unrecognized device (fp: '+fp+')','unknown');
+  // Fire emergency alert
+  var nick=nickFor(code);
+  var nameLabel=nick?code+' ('+nick+')':code;
+  fireGlobalAlerts('device_violation',code,
+    '🚨 DEVICE VIOLATION\n\nCode '+nameLabel+' was used from an UNRECOGNIZED DEVICE.\n\nExpected fingerprint: '+binding.fp+'\nReceived fingerprint: '+fp+'\n\nCode has been temporarily locked. Unlock in operator panel → Device Bindings.',
+    '');
+  // Show violation screen
+  _showViolation('⚠️ Security Violation\n\nThis code has been used from an unrecognized device.\nYou have violated the rules by sharing this code or using an unauthorized device.\n\nAccess has been blocked and the operator has been notified.');
+}
+
+function _showViolation(msg){
+  var gate=document.getElementById('devGate');
+  if(!gate)return;
+  gate.innerHTML='<div style="text-align:center;padding:32px 20px;max-width:340px;margin:0 auto">'
+    +'<div style="font-size:2rem;margin-bottom:12px">🚫</div>'
+    +'<div style="color:#ff5050;font-weight:700;font-size:.85rem;margin-bottom:10px">Access Denied</div>'
+    +'<div style="color:#ccc;font-size:.72rem;line-height:1.6;white-space:pre-line">'+esc(msg)+'</div>'
+    +'</div>';
+  gate.style.display='';
+}
+
+// Operator: load device bindings list
+function loadOpBindings(){
+  var ul=document.getElementById('opBindingList');
+  if(!ul)return;
+  ul.innerHTML='<li style="color:#888">Loading…</li>';
+  fetch(devBindingsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
+    if(!data||typeof data!=='object'||!Object.keys(data).length){
+      ul.innerHTML='<li style="color:#888;font-size:.7rem">No bindings yet. They are created automatically on first login.</li>';return;
+    }
+    ul.innerHTML=Object.keys(data).map(function(code){
+      var b=data[code];
+      var enabled=b.enabled!==false;
+      var locked=b.locked===true;
+      var nick=nickFor(code);
+      var label=nick?code+' ('+nick+')':code;
+      var boundAt=b.boundAt?new Date(b.boundAt).toLocaleString():'?';
+      var statusColor=locked?'#ff5050':enabled?'#4fc':'#f5c800';
+      var statusLabel=locked?'🔒 Locked':enabled?'✓ Active':'⊘ Disabled';
+      return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+        +'<span style="font-size:.72rem;color:#eee;font-weight:600;flex:1">'+esc(label)+'</span>'
+        +'<span style="font-size:.62rem;color:'+statusColor+'">'+statusLabel+'</span>'
+        +'</div>'
+        +'<div style="font-size:.62rem;color:#666;margin-top:2px">Bound: '+esc(boundAt)+'</div>'
+        +(b.ua?'<div style="font-size:.6rem;color:#555;margin-top:1px;word-break:break-all">'+esc(b.ua.slice(0,80))+'</div>':'')
+        +'<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'
+        +(locked?'<button class="btn-sm" style="font-size:.62rem" data-bind-unlock="'+esc(code)+'">Unlock</button>':'')
+        +(enabled?'<button class="btn-sm" style="font-size:.62rem" data-bind-disable="'+esc(code)+'">Disable check</button>'
+                 :'<button class="btn-sm" style="font-size:.62rem" data-bind-enable="'+esc(code)+'">Enable check</button>')
+        +'<button class="btn-sm danger" style="font-size:.62rem" data-bind-reset="'+esc(code)+'">Reset binding</button>'
+        +'</div>'
+        +'</li>';
+    }).join('');
+    // Wire buttons
+    ul.querySelectorAll('[data-bind-unlock]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var c=btn.getAttribute('data-bind-unlock');
+        fetch(devBindingLockUrl(c),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(false)})
+          .then(function(){loadOpBindings();}).catch(function(e){alert('Failed: '+e.message);});
+      });
+    });
+    ul.querySelectorAll('[data-bind-disable]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var c=btn.getAttribute('data-bind-disable');
+        var url=fbUrl('_sc6/devBindings/'+encodeURIComponent(c)+'/enabled');
+        fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(false)})
+          .then(function(){loadOpBindings();}).catch(function(e){alert('Failed: '+e.message);});
+      });
+    });
+    ul.querySelectorAll('[data-bind-enable]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var c=btn.getAttribute('data-bind-enable');
+        var url=fbUrl('_sc6/devBindings/'+encodeURIComponent(c)+'/enabled');
+        fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(true)})
+          .then(function(){loadOpBindings();}).catch(function(e){alert('Failed: '+e.message);});
+      });
+    });
+    ul.querySelectorAll('[data-bind-reset]').forEach(function(btn){
+      var armed=false,armTimer=null;
+      btn.addEventListener('click',function(){
+        if(!armed){
+          armed=true;btn.textContent='Sure?';btn.style.background='rgba(192,0,14,.25)';
+          armTimer=setTimeout(function(){armed=false;btn.textContent='Reset binding';btn.style.background='';},3000);
+          return;
+        }
+        clearTimeout(armTimer);
+        var c=btn.getAttribute('data-bind-reset');
+        fetch(devBindingUrl(c),{method:'DELETE'})
+          .then(function(){loadOpBindings();}).catch(function(e){alert('Failed: '+e.message);});
+      });
+    });
+  });
+}
+
+document.getElementById('opBindingRefresh').addEventListener('click',function(){loadOpBindings();});
+
 // ── Log operator access ──
 function logOpAccess(which){
   var n=navigator,ua=n.userAgent;
@@ -1174,7 +1356,7 @@ function tryDevCode(){
       var match=arr.find(function(e){return e.code===val;});
       if(match){
         if(match.disabled===true){shake(inp);inp.value='';}
-        else{logOpAccess('extra ('+val+')');openDev(val);}
+        else{checkDevBinding(val,function(){logOpAccess('extra ('+val+')');openDev(val);});}
       }else{exLog('Dev login failed','Wrong code entered','unknown');shake(inp);inp.value='';}
     });
   });
@@ -1353,12 +1535,13 @@ function loadOpAll(){
   loadOpMsgPreview();
   loadOpAnnouncementPreview();
   loadOpWsStats();
-  // New v1.9.6 panels
+  // New v1.9.7 panels
   loadOpGeo();
   loadOpErrPage();
   loadWsAlerts();
   loadGlobalAlerts();
   loadFailedLogins();
+  loadOpBindings();
 }
 
 // ── Op log ──
