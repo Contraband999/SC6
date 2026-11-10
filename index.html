@@ -143,7 +143,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.9</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.10</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1077,26 +1077,25 @@ function _handleBindingViolation(code,fp,binding){
   _showViolation('⚠️ Security Violation\n\nThis code has been used from an unrecognized device.\nYou have violated the rules by sharing this code or using an unauthorized device.\n\nAccess has been blocked and the operator has been notified.');
 }
 
-function _showViolation(msg){
-  var gate=document.getElementById('devGate');
-  if(!gate)return;
-  gate.innerHTML='<div style="text-align:center;padding:32px 20px;max-width:340px;margin:0 auto">'
-    +'<div style="font-size:2rem;margin-bottom:12px">🚫</div>'
-    +'<div style="color:#ff5050;font-weight:700;font-size:.85rem;margin-bottom:10px">Access Denied</div>'
-    +'<div style="color:#ccc;font-size:.72rem;line-height:1.6;white-space:pre-line">'+esc(msg)+'</div>'
+function _showGateMessage(icon,titleColor,title,bodyHtml){
+  var sec=document.getElementById('devGateSection');
+  if(!sec)return;
+  sec.innerHTML='<div style="text-align:center;padding:28px 20px 16px;max-width:340px;margin:0 auto">'
+    +'<div style="font-size:2rem;margin-bottom:10px">'+icon+'</div>'
+    +'<div style="color:'+titleColor+';font-weight:700;font-size:.85rem;margin-bottom:10px">'+title+'</div>'
+    +'<div style="color:#aaa;font-size:.72rem;line-height:1.6;margin-bottom:18px">'+bodyHtml+'</div>'
+    +'<button class="btn-sm" onclick="location.reload()" style="font-size:.7rem;width:100%;padding:8px">← Back</button>'
     +'</div>';
-  gate.style.display='';
+  document.getElementById('devGate').style.display='';
+}
+
+function _showViolation(msg){
+  _showGateMessage('🚫','#ff5050','Access Denied',esc(msg).replace(/\n/g,'<br>'));
 }
 
 function _showPending(){
-  var gate=document.getElementById('devGate');
-  if(!gate)return;
-  gate.innerHTML='<div style="text-align:center;padding:32px 20px;max-width:340px;margin:0 auto">'
-    +'<div style="font-size:2rem;margin-bottom:12px">⏳</div>'
-    +'<div style="color:#f5c800;font-weight:700;font-size:.85rem;margin-bottom:10px">Waiting for approval</div>'
-    +'<div style="color:#aaa;font-size:.72rem;line-height:1.6">Your device has been registered and is pending operator approval.<br><br>You will be able to access the panel once the operator approves your device.</div>'
-    +'</div>';
-  gate.style.display='';
+  _showGateMessage('⏳','#f5c800','Waiting for approval',
+    'Your device has been registered and is pending operator approval.<br><br>You will be able to access the panel once the operator approves your device.');
 }
 
 // Operator: load device bindings list
@@ -1602,7 +1601,7 @@ function loadOpAll(){
   loadOpMsgPreview();
   loadOpAnnouncementPreview();
   loadOpWsStats();
-  // New v1.9.9 panels
+  // New v1.9.10 panels
   loadOpGeo();
   loadOpErrPage();
   loadWsAlerts();
