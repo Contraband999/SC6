@@ -128,6 +128,33 @@ ul.devlist li:last-child{border-bottom:none}
 .badge-status{display:inline-block;font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:20px;border:1px solid;vertical-align:middle;margin-left:6px}
 .badge-on{color:#4eff8a;border-color:rgba(78,255,138,.35)}
 .badge-off{color:#ff6b6b;border-color:rgba(255,107,107,.4)}
+
+/* ── Operator panel groups ── */
+.op-group{margin-bottom:16px}
+.op-group-header{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-radius:10px;
+  cursor:pointer;user-select:none;
+  font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  transition:opacity .15s;border:1px solid transparent;
+  margin-bottom:6px
+}
+.op-group-header:active{opacity:.7}
+.op-group-arrow{font-size:.7rem;transition:transform .2s;margin-left:auto;opacity:.6}
+.op-group-body{display:none}
+.op-group-body.open{display:block}
+/* group colour themes */
+.op-grp-overview{background:rgba(79,255,204,.07);border-color:rgba(79,255,204,.18);color:#4fc}
+.op-grp-links{background:rgba(245,200,0,.07);border-color:rgba(245,200,0,.2);color:#f5c800}
+.op-grp-access{background:rgba(255,107,107,.07);border-color:rgba(255,107,107,.2);color:#ff6b6b}
+.op-grp-logs{background:rgba(170,170,255,.07);border-color:rgba(170,170,255,.18);color:#aaf}
+.op-grp-comms{background:rgba(159,122,234,.08);border-color:rgba(159,122,234,.22);color:#9f7aea}
+.op-grp-settings{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);color:#ccc}
+.op-grp-danger{background:rgba(192,0,14,.08);border-color:rgba(192,0,14,.35);color:#ff4444}
+/* danger zone sections get red left border */
+.op-group-danger section{border-left:3px solid rgba(192,0,14,.5)}
+/* collapsed indicator dot count */
+.op-grp-badge{font-size:.6rem;background:rgba(255,255,255,.12);color:#aaa;border-radius:20px;padding:1px 7px;font-weight:600;text-transform:none;letter-spacing:0}
 </style>
 </head>
 <body>
@@ -143,7 +170,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.17</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.18</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -292,431 +319,517 @@ ul.devlist li:last-child{border-bottom:none}
   <!-- Op content -->
   <div id="opContent" style="display:none">
 
-    <!-- ── Operator workspace selector ── -->
-    <section>
-      <div class="sec-head"><h3>Workspace</h3><p class="note" style="margin:4px 0 0">View tracker links and visitor logs for a specific workspace.</p></div>
-      <div class="sec-body">
-        <div class="row">
-          <span class="label">Viewing: <code id="opWsDisplay" style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 6px;border-radius:3px;font-size:.78rem">void-alpha</code></span>
-        </div>
-        <div class="row">
-          <input type="text" id="opWsInput" maxlength="40" placeholder="Workspace code…" style="flex:1">
-          <button class="btn-sm" id="opWsApply">View</button>
-          <button class="btn-sm danger" id="opWsReset" style="font-size:.65rem">Default</button>
-        </div>
-        <!-- Quick stats row -->
-        <div id="opWsStats" style="display:none;margin-top:10px;background:rgba(255,255,255,.04);border:1px solid var(--faint);border-radius:8px;padding:9px 12px">
-          <div style="font-size:.6rem;color:#555;letter-spacing:.08em;margin-bottom:7px;text-transform:uppercase">Workspace stats</div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <div style="text-align:center">
-              <div style="font-size:1.2rem;font-weight:800;color:#f5c800;line-height:1" id="opStatsTrapLinks">—</div>
-              <div style="font-size:.6rem;color:#666;margin-top:2px">error links</div>
+    <!-- ════════════════════════════════════
+         📊 OVERVIEW
+    ════════════════════════════════════ -->
+    <div class="op-group" id="opGrp-overview">
+      <div class="op-group-header op-grp-overview" onclick="opGrpToggle('overview')">
+        <span>📊</span><span>Overview</span>
+        <span class="op-grp-badge">Workspace · All workspaces · Live stream</span>
+        <span class="op-group-arrow" id="opGrpArr-overview">▼</span>
+      </div>
+      <div class="op-group-body open" id="opGrpBody-overview">
+
+        <!-- Workspace selector -->
+        <section>
+          <div class="sec-head"><h3>Workspace</h3><p class="note" style="margin:4px 0 0">View tracker links and visitor logs for a specific workspace.</p></div>
+          <div class="sec-body">
+            <div class="row">
+              <span class="label">Viewing: <code id="opWsDisplay" style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 6px;border-radius:3px;font-size:.78rem">void-alpha</code></span>
             </div>
-            <div style="text-align:center">
-              <div style="font-size:1.2rem;font-weight:800;color:#4fc;line-height:1" id="opStatsRedirectLinks">—</div>
-              <div style="font-size:.6rem;color:#666;margin-top:2px">tracker links</div>
+            <div class="row">
+              <input type="text" id="opWsInput" maxlength="40" placeholder="Workspace code…" style="flex:1">
+              <button class="btn-sm" id="opWsApply">View</button>
+              <button class="btn-sm danger" id="opWsReset" style="font-size:.65rem">Default</button>
             </div>
-            <div style="text-align:center">
-              <div style="font-size:1.2rem;font-weight:800;color:#aaa;line-height:1" id="opStatsTrapVisitors">—</div>
-              <div style="font-size:.6rem;color:#666;margin-top:2px">error hits</div>
-            </div>
-            <div style="text-align:center">
-              <div style="font-size:1.2rem;font-weight:800;color:#9f7aea;line-height:1" id="opStatsRedirectHits">—</div>
-              <div style="font-size:.6rem;color:#666;margin-top:2px">tracker hits</div>
+            <div id="opWsStats" style="display:none;margin-top:10px;background:rgba(255,255,255,.04);border:1px solid var(--faint);border-radius:8px;padding:9px 12px">
+              <div style="font-size:.6rem;color:#555;letter-spacing:.08em;margin-bottom:7px;text-transform:uppercase">Workspace stats</div>
+              <div style="display:flex;gap:12px;flex-wrap:wrap">
+                <div style="text-align:center"><div style="font-size:1.2rem;font-weight:800;color:#f5c800;line-height:1" id="opStatsTrapLinks">—</div><div style="font-size:.6rem;color:#666;margin-top:2px">error links</div></div>
+                <div style="text-align:center"><div style="font-size:1.2rem;font-weight:800;color:#4fc;line-height:1" id="opStatsRedirectLinks">—</div><div style="font-size:.6rem;color:#666;margin-top:2px">tracker links</div></div>
+                <div style="text-align:center"><div style="font-size:1.2rem;font-weight:800;color:#aaa;line-height:1" id="opStatsTrapVisitors">—</div><div style="font-size:.6rem;color:#666;margin-top:2px">error hits</div></div>
+                <div style="text-align:center"><div style="font-size:1.2rem;font-weight:800;color:#9f7aea;line-height:1" id="opStatsRedirectHits">—</div><div style="font-size:.6rem;color:#666;margin-top:2px">tracker hits</div></div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
+        </section>
 
-    <!-- ── Workspace overview ── -->
-    <section>
-      <div class="sec-head"><h3>All workspaces</h3><p class="note" style="margin:4px 0 0">All workspaces that have tracker or error links — click any to switch to it.</p></div>
-      <div class="sec-body">
-        <div class="row" style="margin-bottom:6px">
-          <button class="btn-sm" id="opWsOverviewRefresh" style="font-size:.65rem">Scan</button>
-          <span class="label" id="opWsOverviewStatus" style="font-size:.68rem;color:#555">Not loaded</span>
-        </div>
-        <ul class="devlist" id="opWsOverviewList"></ul>
-      </div>
-    </section>
-
-    <!-- ── Access log ── -->
-    <section>
-      <div class="sec-head">
-        <h3>Dev panel access log</h3>
-        <p class="note" style="margin:4px 0 0">Every successful Dev panel login is recorded here.</p>
-      </div>
-      <div class="sec-body">
-        <ul class="devlist" id="opLog"><li style="color:#888">Loading…</li></ul>
-        <div class="row" style="margin-top:10px">
-          <button class="btn-sm danger" id="opLogClear">Clear log</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Redirect links (tracker) ── -->
-    <section>
-      <div class="sec-head">
-        <h3>Tracker links</h3>
-        <p class="note" style="margin:4px 0 0">Redirect links created by dev users. Each hit is logged with full visitor info.</p>
-      </div>
-      <div class="sec-body">
-        <div class="row" style="margin-bottom:10px">
-          <span class="label" id="opRedirectCount" style="font-size:.7rem;color:#888">Loading…</span>
-          <button class="btn-sm" id="opRedirectRefresh" style="font-size:.65rem">Refresh</button>
-          <button class="btn-sm" id="opRedirectExport" style="font-size:.65rem">Export CSV</button>
-          <button class="btn-sm danger" id="opRedirectClearAll" style="font-size:.65rem">Delete all</button>
-        </div>
-        <ul class="devlist" id="opRedirectList"><li style="color:#888">Loading…</li></ul>
-      </div>
-    </section>
-
-    <!-- ── Error links ── -->
-    <section>
-      <div class="sec-head"><h3>Error links</h3></div>
-      <div class="sec-body">
-        <div class="row">
-          <span class="label" id="opTrapLinksStatus">Error links: checking…</span>
-          <button class="btn-sm" id="opTrapToggleLinks">—</button>
-        </div>
-        <div class="row">
-          <span class="label" id="opTrapGenStatus">Generation: checking…</span>
-          <button class="btn-sm" id="opTrapToggleGen">—</button>
-        </div>
-        <div class="row" style="margin-top:4px">
-          <button class="btn-sm" id="opTrapRefresh">Refresh list</button>
-          <button class="btn-sm danger" id="opTrapClearAll">Delete all</button>
-        </div>
-        <ul class="devlist" id="opTrapList"><li style="color:#888">Loading…</li></ul>
-      </div>
-    </section>
-
-    <!-- ── Operator-side error link creator ── -->
-    <section>
-      <div class="sec-head"><h3>Create error link</h3><p class="note" style="margin:4px 0 0">Generate a fake 404 trap link directly — no dev panel needed. Logged to current workspace above.</p></div>
-      <div class="sec-body">
-        <div class="row">
-          <input type="text" id="opTrapCreateLabel" maxlength="80" placeholder="Label / note (optional)…" style="flex:1">
-        </div>
-        <div class="row" style="margin-top:6px">
-          <input type="text" id="opTrapCreateAlias" maxlength="40" placeholder="Custom alias (optional — e.g. invite2024)…" style="flex:1">
-          <button class="btn-sm" id="opTrapCreate" style="font-weight:600;white-space:nowrap">Generate</button>
-        </div>
-        <div id="opTrapCreateResult" style="display:none;margin-top:8px;background:rgba(192,0,14,.07);border:1px solid rgba(192,0,14,.3);border-radius:7px;padding:9px 11px">
-          <div style="font-size:.62rem;color:#ff6b6b;font-weight:700;letter-spacing:.06em;margin-bottom:4px">ERROR LINK CREATED</div>
-          <code id="opTrapCreateResultUrl" style="font-size:.7rem;color:#ff6b6b;word-break:break-all;line-height:1.5"></code>
-          <div class="row" style="margin-top:7px;gap:6px">
-            <button class="btn-sm" id="opTrapCreateCopy" style="font-size:.65rem">Copy</button>
+        <!-- All workspaces -->
+        <section>
+          <div class="sec-head"><h3>All workspaces</h3><p class="note" style="margin:4px 0 0">All workspaces with tracker or error links — click any to switch to it.</p></div>
+          <div class="sec-body">
+            <div class="row" style="margin-bottom:6px">
+              <button class="btn-sm" id="opWsOverviewRefresh" style="font-size:.65rem">Scan</button>
+              <span class="label" id="opWsOverviewStatus" style="font-size:.68rem;color:#555">Not loaded</span>
+            </div>
+            <ul class="devlist" id="opWsOverviewList"></ul>
           </div>
-        </div>
-      </div>
-    </section>
+        </section>
 
-    <!-- ── Panel lock ── -->
-    <section>
-      <div class="sec-head"><h3>Dev panel access</h3></div>
-      <div class="sec-body">
-        <div class="row">
-          <span class="label" id="opLockStatus">Status: checking…</span>
-          <button class="btn-sm" id="opToggleLock">—</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Operator-side link creator ── -->
-    <section>
-      <div class="sec-head"><h3>Create tracker link</h3><p class="note" style="margin:4px 0 0">Create a redirect/tracker link directly — no dev panel needed. Link is added to the workspace shown above.</p></div>
-      <div class="sec-body">
-        <div class="row">
-          <input type="url" id="opCreateTarget" maxlength="400" placeholder="Destination URL…" style="flex:1">
-        </div>
-        <div class="row" style="margin-top:6px">
-          <input type="text" id="opCreateNote" maxlength="80" placeholder="Note / label (optional)…" style="flex:1">
-        </div>
-        <div class="row" style="margin-top:6px">
-          <input type="text" id="opCreateAlias" maxlength="40" placeholder="Custom alias (optional — e.g. promo2024)…" style="flex:1">
-        </div>
-        <div class="row" style="margin-top:6px">
-          <select id="opCreateParam" style="background:rgba(255,255,255,.07);border:1px solid var(--faint);border-radius:6px;color:inherit;padding:5px 8px;font-size:.75rem">
-            <option value="r">Generic (r)</option>
-            <option value="yt">YouTube (yt)</option>
-            <option value="ig">Instagram (ig)</option>
-            <option value="tt">TikTok (tt)</option>
-            <option value="tw">Twitter/X (tw)</option>
-            <option value="fb">Facebook (fb)</option>
-            <option value="dc">Discord (dc)</option>
-            <option value="tg">Telegram (tg)</option>
-            <option value="wa">WhatsApp (wa)</option>
-            <option value="sc">Snapchat (sc)</option>
-            <option value="rd">Reddit (rd)</option>
-          </select>
-          <button class="btn-sm" id="opCreateLink" style="font-weight:600">Create</button>
-        </div>
-        <div id="opCreateResult" style="display:none;margin-top:8px;background:rgba(79,255,204,.07);border:1px solid rgba(79,255,204,.2);border-radius:7px;padding:9px 11px">
-          <div style="font-size:.62rem;color:#555;margin-bottom:3px;letter-spacing:.05em">LINK CREATED</div>
-          <code id="opCreateResultUrl" style="font-size:.7rem;color:#4fc;word-break:break-all;line-height:1.5"></code>
-          <div class="row" style="margin-top:7px;gap:6px">
-            <button class="btn-sm" id="opCreateCopy" style="font-size:.65rem">Copy</button>
+        <!-- Live visitor stream -->
+        <section>
+          <div class="sec-head">
+            <h3>Live visitor stream <span id="liveStreamDot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#333;margin-left:6px;vertical-align:middle;transition:background .3s"></span></h3>
+            <p class="note" style="margin:4px 0 0">Real-time feed of visitor hits across ALL workspaces. Updates every 5 s.</p>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Announcement (shown on Dev panel before login) ── -->
-    <section>
-      <div class="sec-head"><h3>Announcement</h3><p class="note" style="margin:4px 0 0">Shown prominently on the Dev panel to ALL users before they log in.</p></div>
-      <div class="sec-body">
-        <div id="opAnnouncementPreview" style="display:none;margin-bottom:8px;background:rgba(245,200,0,.07);border:1px solid rgba(245,200,0,.2);border-radius:7px;padding:9px 11px">
-          <div style="font-size:.62rem;color:#888;margin-bottom:3px;letter-spacing:.05em">CURRENT ANNOUNCEMENT</div>
-          <p style="font-size:.78rem;color:#f5c800;line-height:1.5;font-weight:600" id="opAnnouncementPreviewText"></p>
-        </div>
-        <div class="row">
-          <input type="text" id="opAnnouncementText" maxlength="300" placeholder="Announcement for all dev users…" style="flex:1">
-          <button class="btn-sm" id="opAnnouncementSet" style="font-weight:600;color:#f5c800">Set</button>
-          <button class="btn-sm danger" id="opAnnouncementClear">Clear</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Message to dev ── -->
-    <section>
-      <div class="sec-head"><h3>Message to dev panel</h3><p class="note" style="margin:4px 0 0">Shown to the next person who opens the Dev panel.</p></div>
-      <div class="sec-body">
-        <div id="opMsgPreview" style="display:none;margin-bottom:8px;background:rgba(255,255,255,.04);border:1px solid var(--faint);border-radius:7px;padding:9px 11px">
-          <div style="font-size:.62rem;color:#555;margin-bottom:3px;letter-spacing:.05em">CURRENT MESSAGE</div>
-          <p style="font-size:.78rem;color:#ccc;line-height:1.5" id="opMsgPreviewText"></p>
-        </div>
-        <div class="row">
-          <input type="text" id="opMsgNewText" maxlength="200" placeholder="Type message…" style="flex:1">
-          <button class="btn-sm" id="opMsgLeave">Set</button>
-          <button class="btn-sm danger" id="opMsgDelete">Clear</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Dev inbox ── -->
-    <section>
-      <div class="sec-head">
-        <h3>Dev inbox <span id="opInboxUnreadBadge" style="display:none;background:#c0000e;color:#fff;font-size:.6rem;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:5px;vertical-align:middle">●</span></h3>
-        <p class="note" style="margin:4px 0 0">Messages sent from the dev panel. Reply privately per message.</p>
-      </div>
-      <div class="sec-body">
-        <ul class="devlist" id="opDevInbox"><li style="color:#888">Loading…</li></ul>
-        <div class="row" style="margin-top:8px">
-          <button class="btn-sm" id="opDevInboxRefresh">Refresh</button>
-          <button class="btn-sm danger" id="opDevInboxClearAll">Clear all</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Passwords ── -->
-    <section>
-      <div class="sec-head"><h3>Dev panel passwords</h3><p class="note" style="margin:4px 0 0">Anyone with one of these can open the Dev panel.</p></div>
-      <div class="sec-body">
-        <div id="opPassList" style="max-height:260px;overflow-y:auto;padding-right:4px"><p class="note">Loading…</p></div>
-        <div class="row" style="margin-top:8px">
-          <input type="text" id="opPassNew" maxlength="32" placeholder="New password…" style="flex:1">
-          <button class="btn-sm" id="opPassAdd">Add</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Device bindings ── -->
-    <section>
-      <div class="sec-head"><h3>Device bindings</h3><p class="note" style="margin:4px 0 0">Each dev code can only be used from its first trusted device. Violations trigger an emergency alert and temporary lock.</p></div>
-      <div class="sec-body">
-        <ul class="devlist" id="opBindingList"><li style="color:#888">Loading…</li></ul>
-        <div class="row" style="margin-top:8px">
-          <button class="btn-sm" id="opBindingRefresh" style="font-size:.65rem">Refresh</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Banned devices ── -->
-    <section>
-      <div class="sec-head"><h3>Banned devices</h3><p class="note" style="margin:4px 0 0">Devices on this list are blocked from the Dev panel.</p></div>
-      <div class="sec-body">
-        <ul class="devlist" id="opBanList"><li style="color:#888">None.</li></ul>
-        <div class="row" style="margin-top:8px">
-          <button class="btn-sm" id="opBanFromLog">Ban from access log</button>
-          <button class="btn-sm danger" id="opBanClear">Clear all bans</button>
-        </div>
-        <div id="opBanPicker" style="display:none;margin-top:8px"></div>
-      </div>
-    </section>
-
-    <!-- ── Code nicknames ── -->
-    <section>
-      <div class="sec-head"><h3>Code nicknames</h3><p class="note" style="margin:4px 0 0">Give each dev code a name — shown in the executive log.</p></div>
-      <div class="sec-body">
-        <ul class="devlist" id="opNicknameList"><li style="color:#888">Loading…</li></ul>
-        <div class="row" style="margin-top:8px">
-          <input type="text" id="opNicknameCode" maxlength="32" placeholder="Code…" style="flex:1">
-          <input type="text" id="opNicknameName" maxlength="24" placeholder="Name…" style="flex:1">
-          <button class="btn-sm" id="opNicknameAdd">Save</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Workspace log ── -->
-    <section>
-      <div class="sec-head"><h3>Workspace log</h3><p class="note" style="margin:4px 0 0">Every time a dev user sets or generates a workspace code.</p></div>
-      <div class="sec-body">
-        <ul class="devlist" id="opSyncLog"><li style="color:#888">Loading…</li></ul>
-        <div class="row" style="margin-top:10px">
-          <button class="btn-sm danger" id="opSyncLogClear">Clear log</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Executive log ── -->
-    <section>
-      <div class="sec-head" style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none" id="execLogToggleHead">
-        <h3 style="margin:0;flex:1">Executive log</h3>
-        <span id="execLogArrow" style="font-size:.8rem;color:#555;transition:transform .2s">▼</span>
-      </div>
-      <p class="note" style="margin:4px 0 6px;padding:0 var(--ph,0)">Every action by everyone — syncs every 3 seconds.</p>
-      <div class="sec-body" id="execLogBody">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span id="execLogStatus" style="font-size:.65rem;color:#555">●</span>
-          <span style="font-size:.65rem;color:#555" id="execLogCount"></span>
-          <span style="flex:1"></span>
-          <button class="btn-sm" id="execLogPause" style="font-size:.65rem">Pause</button>
-          <button class="btn-sm danger" id="execLogClear" style="font-size:.65rem">Clear</button>
-        </div>
-        <!-- Filter bar -->
-        <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-          <input type="text" id="execLogSearch" placeholder="Search actions…" maxlength="80" style="flex:1;min-width:120px;font-size:.72rem;padding:4px 8px;background:rgba(255,255,255,.06);border:1px solid var(--faint);border-radius:6px;color:inherit;outline:none">
-          <div style="display:flex;gap:4px">
-            <button class="btn-sm exec-filter-who" data-who="all" style="font-size:.6rem;padding:2px 7px;background:rgba(255,255,255,.18);color:#fff;font-weight:700;opacity:1">All</button>
-            <button class="btn-sm exec-filter-who" data-who="operator" style="font-size:.6rem;padding:2px 7px;background:rgba(255,107,107,.12);color:#ff6b6b;opacity:.45">Op</button>
-            <button class="btn-sm exec-filter-who" data-who="dev" style="font-size:.6rem;padding:2px 7px;background:rgba(245,200,0,.08);color:#f5c800;opacity:.45">Dev</button>
-            <button class="btn-sm exec-filter-who" data-who="visitor" style="font-size:.6rem;padding:2px 7px;background:rgba(79,255,204,.08);color:#4fc;opacity:.45">Visit</button>
+          <div class="sec-body">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <span id="liveStreamStatus" style="font-size:.65rem;color:#555">Idle</span>
+              <span style="flex:1"></span>
+              <button class="btn-sm" id="liveStreamToggle" style="font-size:.65rem">Start</button>
+              <button class="btn-sm danger" id="liveStreamClear" style="font-size:.65rem">Clear</button>
+            </div>
+            <div id="liveStreamDebug" style="font-size:.6rem;color:#444;margin-bottom:4px;min-height:14px"></div>
+            <ul class="devlist" id="liveStreamList" style="max-height:300px;overflow-y:auto;padding-right:2px"><li style="color:#555;font-size:.72rem">Not running — press Start.</li></ul>
           </div>
-        </div>
-        <ul class="devlist" id="execLogList" style="max-height:420px;overflow-y:auto;padding-right:2px"><li style="color:#888">Loading…</li></ul>
-      </div>
-    </section>
+        </section>
 
-    <!-- ── Geofencing ── -->
-    <section>
-      <div class="sec-head"><h3>Geofencing</h3><p class="note" style="margin:4px 0 0">Only allow visitors from these countries. Leave empty to allow all. Blocked visitors get a "link expired" message.</p></div>
-      <div class="sec-body">
-        <div id="opGeoCountriesList" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:20px"></div>
-        <div class="row">
-          <input type="text" id="opGeoInput" maxlength="4" placeholder="Country code (e.g. US, TR, GB)…" style="flex:1;text-transform:uppercase">
-          <button class="btn-sm" id="opGeoAdd">Add</button>
-          <button class="btn-sm danger" id="opGeoClear">Clear all</button>
-        </div>
-        <div class="row" style="margin-top:4px">
-          <span class="label" id="opGeoStatus" style="font-size:.68rem;color:#555">Not loaded</span>
-          <button class="btn-sm" id="opGeoRefresh" style="font-size:.65rem">Load</button>
-        </div>
       </div>
-    </section>
+    </div>
 
-    <!-- ── Custom error page content ── -->
-    <section>
-      <div class="sec-head"><h3>Custom error page</h3><p class="note" style="margin:4px 0 0">Override the text shown on the 404 trap page.</p></div>
-      <div class="sec-body">
-        <div class="row">
-          <input type="text" id="opErrTitle" maxlength="60" placeholder="Big heading (e.g. 404)…" style="flex:1">
-        </div>
-        <div class="row" style="margin-top:6px">
-          <input type="text" id="opErrSubtitle" maxlength="120" placeholder="Subtitle line…" style="flex:1">
-        </div>
-        <div class="row" style="margin-top:6px">
-          <input type="text" id="opErrBody" maxlength="400" placeholder="Body / detail text…" style="flex:1">
-        </div>
-        <div class="row" style="margin-top:6px">
-          <button class="btn-sm" id="opErrSave" style="color:#4fc;font-weight:600">Save</button>
-          <button class="btn-sm danger" id="opErrReset">Reset to default</button>
-          <button class="btn-sm" id="opErrLoad" style="font-size:.65rem">Load current</button>
-        </div>
-        <div id="opErrSaveMsg" style="display:none;font-size:.7rem;color:#4fc;margin-top:5px">✓ Saved</div>
+    <!-- ════════════════════════════════════
+         🔗 LINKS
+    ════════════════════════════════════ -->
+    <div class="op-group" id="opGrp-links">
+      <div class="op-group-header op-grp-links" onclick="opGrpToggle('links')">
+        <span>🔗</span><span>Links</span>
+        <span class="op-grp-badge">Tracker · Error · Create</span>
+        <span class="op-group-arrow" id="opGrpArr-links">▶</span>
       </div>
-    </section>
+      <div class="op-group-body" id="opGrpBody-links">
 
-    <!-- ── Workspace email alerts ── -->
-    <section>
-      <div class="sec-head"><h3>Workspace email alerts</h3><p class="note" style="margin:4px 0 0">Email a specific address every time any hit lands on a workspace. Add multiple workspace+email pairs.</p></div>
-      <div class="sec-body">
-        <ul class="devlist" id="opWsAlertList"><li style="color:#888;font-size:.72rem">None configured.</li></ul>
-        <div class="row" style="margin-top:8px">
-          <input type="text" id="opWsAlertWs" maxlength="40" placeholder="Workspace code…" style="flex:1">
-          <input type="email" id="opWsAlertEmail" maxlength="100" placeholder="Email…" style="flex:1">
-          <button class="btn-sm" id="opWsAlertAdd" style="font-weight:600">Add</button>
-        </div>
-        <div class="row" style="margin-top:4px">
-          <button class="btn-sm" id="opWsAlertRefresh" style="font-size:.65rem">Refresh</button>
-        </div>
-      </div>
-    </section>
+        <!-- Tracker links -->
+        <section>
+          <div class="sec-head">
+            <h3>Tracker links</h3>
+            <p class="note" style="margin:4px 0 0">Redirect links created by dev users. Each hit is logged with full visitor info.</p>
+          </div>
+          <div class="sec-body">
+            <div class="row" style="margin-bottom:10px">
+              <span class="label" id="opRedirectCount" style="font-size:.7rem;color:#888">Loading…</span>
+              <button class="btn-sm" id="opRedirectRefresh" style="font-size:.65rem">Refresh</button>
+              <button class="btn-sm" id="opRedirectExport" style="font-size:.65rem">Export CSV</button>
+              <button class="btn-sm danger" id="opRedirectClearAll" style="font-size:.65rem">Delete all</button>
+            </div>
+            <ul class="devlist" id="opRedirectList"><li style="color:#888">Loading…</li></ul>
+          </div>
+        </section>
 
-    <!-- ── Global action alerts ── -->
-    <section>
-      <div class="sec-head"><h3>Global action alerts</h3><p class="note" style="margin:4px 0 0">Email on specific SC6-wide events. Select a user code and choose which actions trigger an alert.</p></div>
-      <div class="sec-body">
-        <div class="row">
-          <input type="email" id="opGlobalAlertEmail" maxlength="100" placeholder="Email to alert…" style="flex:1">
-        </div>
-        <div class="row" style="margin-top:6px">
-          <input type="text" id="opGlobalAlertCode" maxlength="32" placeholder="User code (e.g. 010709) — blank = any user…" style="flex:1">
-        </div>
-        <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px" id="opGlobalAlertActions">
-          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="error_link_created"> Error link generated</label>
-          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="dev_panel_opened"> Dev panel opened</label>
-          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="trap_hit"> Trap / error link hit</label>
-          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="redirect_hit"> Redirect / tracker hit</label>
-          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="message_sent"> Dev message sent</label>
-          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="operator_panel_opened"> Operator panel opened</label>
-          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="brute_force_attempt"> 🚨 Brute-force attempt (5 wrong logins from same source)</label>
-          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="device_pending"> 🔔 New device — pending approval</label>
-          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="device_violation"> 🚨 Device violation (wrong device used)</label>
-          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="dev_login_failed"> ✗ Dev login failed (wrong code)</label>
-          <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="workspace_deleted"> 🗑 Workspace deleted</label>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <button class="btn-sm" id="opGlobalAlertAdd" style="font-weight:600">Add alert rule</button>
-        </div>
-        <ul class="devlist" id="opGlobalAlertList" style="margin-top:8px"><li style="color:#888;font-size:.72rem">None configured.</li></ul>
-        <div class="row" style="margin-top:4px">
-          <button class="btn-sm" id="opGlobalAlertRefresh" style="font-size:.65rem">Refresh</button>
-        </div>
-      </div>
-    </section>
+        <!-- Error links -->
+        <section>
+          <div class="sec-head"><h3>Error links</h3><p class="note" style="margin:4px 0 0">Fake 404 trap links — toggle on/off or delete all.</p></div>
+          <div class="sec-body">
+            <div class="row">
+              <span class="label" id="opTrapLinksStatus">Error links: checking…</span>
+              <button class="btn-sm" id="opTrapToggleLinks">—</button>
+            </div>
+            <div class="row">
+              <span class="label" id="opTrapGenStatus">Generation: checking…</span>
+              <button class="btn-sm" id="opTrapToggleGen">—</button>
+            </div>
+            <div class="row" style="margin-top:4px">
+              <button class="btn-sm" id="opTrapRefresh">Refresh list</button>
+              <button class="btn-sm danger" id="opTrapClearAll">Delete all</button>
+            </div>
+            <ul class="devlist" id="opTrapList"><li style="color:#888">Loading…</li></ul>
+          </div>
+        </section>
 
-    <!-- ── Failed login attempts ── -->
-    <section>
-      <div class="sec-head">
-        <h3>Failed login attempts</h3>
-        <p class="note" style="margin:4px 0 0">Every wrong password attempt logged here with IP and time. Brute-force triggers after 5 consecutive fails from the same source.</p>
-      </div>
-      <ul class="devlist" id="opFailedLoginList" style="max-height:280px;overflow-y:auto;padding-right:2px"><li style="color:#888;font-size:.72rem">Loading…</li></ul>
-      <div class="row" style="margin-top:4px">
-        <button class="btn-sm" id="opFailedLoginRefresh" style="font-size:.65rem">Refresh</button>
-        <button class="btn-sm danger" id="opFailedLoginClear" style="font-size:.65rem">Clear all</button>
-      </div>
-    </section>
+        <!-- Create tracker link -->
+        <section>
+          <div class="sec-head"><h3>Create tracker link</h3><p class="note" style="margin:4px 0 0">Create a redirect/tracker link directly — no dev panel needed.</p></div>
+          <div class="sec-body">
+            <div class="row">
+              <input type="url" id="opCreateTarget" maxlength="400" placeholder="Destination URL…" style="flex:1">
+            </div>
+            <div class="row" style="margin-top:6px">
+              <input type="text" id="opCreateNote" maxlength="80" placeholder="Note / label (optional)…" style="flex:1">
+            </div>
+            <div class="row" style="margin-top:6px">
+              <input type="text" id="opCreateAlias" maxlength="40" placeholder="Custom alias (optional — e.g. promo2024)…" style="flex:1">
+            </div>
+            <div class="row" style="margin-top:6px">
+              <select id="opCreateParam" style="background:rgba(255,255,255,.07);border:1px solid var(--faint);border-radius:6px;color:inherit;padding:5px 8px;font-size:.75rem">
+                <option value="r">Generic (r)</option>
+                <option value="yt">YouTube (yt)</option>
+                <option value="ig">Instagram (ig)</option>
+                <option value="tt">TikTok (tt)</option>
+                <option value="tw">Twitter/X (tw)</option>
+                <option value="fb">Facebook (fb)</option>
+                <option value="dc">Discord (dc)</option>
+                <option value="tg">Telegram (tg)</option>
+                <option value="wa">WhatsApp (wa)</option>
+                <option value="sc">Snapchat (sc)</option>
+                <option value="rd">Reddit (rd)</option>
+              </select>
+              <button class="btn-sm" id="opCreateLink" style="font-weight:600">Create</button>
+            </div>
+            <div id="opCreateResult" style="display:none;margin-top:8px;background:rgba(79,255,204,.07);border:1px solid rgba(79,255,204,.2);border-radius:7px;padding:9px 11px">
+              <div style="font-size:.62rem;color:#555;margin-bottom:3px;letter-spacing:.05em">LINK CREATED</div>
+              <code id="opCreateResultUrl" style="font-size:.7rem;color:#4fc;word-break:break-all;line-height:1.5"></code>
+              <div class="row" style="margin-top:7px;gap:6px">
+                <button class="btn-sm" id="opCreateCopy" style="font-size:.65rem">Copy</button>
+              </div>
+            </div>
+          </div>
+        </section>
 
-    <!-- ── Live visitor stream ── -->
-    <section>
-      <div class="sec-head">
-        <h3>Live visitor stream <span id="liveStreamDot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#333;margin-left:6px;vertical-align:middle;transition:background .3s"></span></h3>
-        <p class="note" style="margin:4px 0 0">Real-time feed of visitor hits across ALL workspaces. Updates every 5 s.</p>
+        <!-- Create error link -->
+        <section>
+          <div class="sec-head"><h3>Create error link</h3><p class="note" style="margin:4px 0 0">Generate a fake 404 trap link directly — no dev panel needed.</p></div>
+          <div class="sec-body">
+            <div class="row">
+              <input type="text" id="opTrapCreateLabel" maxlength="80" placeholder="Label / note (optional)…" style="flex:1">
+            </div>
+            <div class="row" style="margin-top:6px">
+              <input type="text" id="opTrapCreateAlias" maxlength="40" placeholder="Custom alias (optional — e.g. invite2024)…" style="flex:1">
+              <button class="btn-sm" id="opTrapCreate" style="font-weight:600;white-space:nowrap">Generate</button>
+            </div>
+            <div id="opTrapCreateResult" style="display:none;margin-top:8px;background:rgba(192,0,14,.07);border:1px solid rgba(192,0,14,.3);border-radius:7px;padding:9px 11px">
+              <div style="font-size:.62rem;color:#ff6b6b;font-weight:700;letter-spacing:.06em;margin-bottom:4px">ERROR LINK CREATED</div>
+              <code id="opTrapCreateResultUrl" style="font-size:.7rem;color:#ff6b6b;word-break:break-all;line-height:1.5"></code>
+              <div class="row" style="margin-top:7px;gap:6px">
+                <button class="btn-sm" id="opTrapCreateCopy" style="font-size:.65rem">Copy</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </div>
-      <div class="sec-body">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span id="liveStreamStatus" style="font-size:.65rem;color:#555">Idle</span>
-          <span style="flex:1"></span>
-          <button class="btn-sm" id="liveStreamToggle" style="font-size:.65rem">Start</button>
-          <button class="btn-sm danger" id="liveStreamClear" style="font-size:.65rem">Clear</button>
-        </div>
-        <div id="liveStreamDebug" style="font-size:.6rem;color:#444;margin-bottom:4px;min-height:14px"></div>
-        <ul class="devlist" id="liveStreamList" style="max-height:340px;overflow-y:auto;padding-right:2px"><li style="color:#555;font-size:.72rem">Not running — press Start.</li></ul>
+    </div>
+
+    <!-- ════════════════════════════════════
+         👥 ACCESS CONTROL
+    ════════════════════════════════════ -->
+    <div class="op-group op-group-danger" id="opGrp-access">
+      <div class="op-group-header op-grp-access" onclick="opGrpToggle('access')">
+        <span>👥</span><span>Access Control</span>
+        <span class="op-grp-badge">Lock · Passwords · Devices · Bans</span>
+        <span class="op-group-arrow" id="opGrpArr-access">▶</span>
       </div>
-    </section>
+      <div class="op-group-body" id="opGrpBody-access">
+
+        <!-- Panel lock -->
+        <section>
+          <div class="sec-head"><h3>Dev panel access</h3><p class="note" style="margin:4px 0 0">Lock or unlock the entire dev panel for all users.</p></div>
+          <div class="sec-body">
+            <div class="row">
+              <span class="label" id="opLockStatus">Status: checking…</span>
+              <button class="btn-sm" id="opToggleLock">—</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Passwords -->
+        <section>
+          <div class="sec-head"><h3>Dev panel passwords</h3><p class="note" style="margin:4px 0 0">Anyone with one of these can open the Dev panel.</p></div>
+          <div class="sec-body">
+            <div id="opPassList" style="max-height:260px;overflow-y:auto;padding-right:4px"><p class="note">Loading…</p></div>
+            <div class="row" style="margin-top:8px">
+              <input type="text" id="opPassNew" maxlength="32" placeholder="New password…" style="flex:1">
+              <button class="btn-sm" id="opPassAdd">Add</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Device bindings -->
+        <section>
+          <div class="sec-head"><h3>Device bindings</h3><p class="note" style="margin:4px 0 0">Each dev code can only be used from its first trusted device. Violations trigger an emergency alert and temporary lock.</p></div>
+          <div class="sec-body">
+            <ul class="devlist" id="opBindingList"><li style="color:#888">Loading…</li></ul>
+            <div class="row" style="margin-top:8px">
+              <button class="btn-sm" id="opBindingRefresh" style="font-size:.65rem">Refresh</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Banned devices -->
+        <section>
+          <div class="sec-head"><h3>Banned devices</h3><p class="note" style="margin:4px 0 0">Devices on this list are blocked from the Dev panel.</p></div>
+          <div class="sec-body">
+            <ul class="devlist" id="opBanList"><li style="color:#888">None.</li></ul>
+            <div class="row" style="margin-top:8px">
+              <button class="btn-sm" id="opBanFromLog">Ban from access log</button>
+              <button class="btn-sm danger" id="opBanClear">Clear all bans</button>
+            </div>
+            <div id="opBanPicker" style="display:none;margin-top:8px"></div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         📋 LOGS
+    ════════════════════════════════════ -->
+    <div class="op-group" id="opGrp-logs">
+      <div class="op-group-header op-grp-logs" onclick="opGrpToggle('logs')">
+        <span>📋</span><span>Logs</span>
+        <span class="op-grp-badge">Access · Failed logins · Exec · Workspace</span>
+        <span class="op-group-arrow" id="opGrpArr-logs">▶</span>
+      </div>
+      <div class="op-group-body" id="opGrpBody-logs">
+
+        <!-- Dev panel access log -->
+        <section>
+          <div class="sec-head">
+            <h3>Dev panel access log</h3>
+            <p class="note" style="margin:4px 0 0">Every successful Dev panel login is recorded here.</p>
+          </div>
+          <div class="sec-body">
+            <ul class="devlist" id="opLog"><li style="color:#888">Loading…</li></ul>
+            <div class="row" style="margin-top:10px">
+              <button class="btn-sm danger" id="opLogClear">Clear log</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Failed login attempts -->
+        <section>
+          <div class="sec-head">
+            <h3>Failed login attempts</h3>
+            <p class="note" style="margin:4px 0 0">Every wrong password attempt logged with IP and time. Brute-force triggers after 5 consecutive fails.</p>
+          </div>
+          <div class="sec-body">
+            <ul class="devlist" id="opFailedLoginList" style="max-height:280px;overflow-y:auto;padding-right:2px"><li style="color:#888;font-size:.72rem">Loading…</li></ul>
+            <div class="row" style="margin-top:4px">
+              <button class="btn-sm" id="opFailedLoginRefresh" style="font-size:.65rem">Refresh</button>
+              <button class="btn-sm danger" id="opFailedLoginClear" style="font-size:.65rem">Clear all</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Executive log -->
+        <section>
+          <div class="sec-head" style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none" id="execLogToggleHead">
+            <h3 style="margin:0;flex:1">Executive log</h3>
+            <span id="execLogArrow" style="font-size:.8rem;color:#555;transition:transform .2s">▼</span>
+          </div>
+          <p class="note" style="margin:4px 0 6px;padding:0 var(--ph,0)">Every action by everyone — syncs every 3 seconds.</p>
+          <div class="sec-body" id="execLogBody">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <span id="execLogStatus" style="font-size:.65rem;color:#555">●</span>
+              <span style="font-size:.65rem;color:#555" id="execLogCount"></span>
+              <span style="flex:1"></span>
+              <button class="btn-sm" id="execLogPause" style="font-size:.65rem">Pause</button>
+              <button class="btn-sm danger" id="execLogClear" style="font-size:.65rem">Clear</button>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+              <input type="text" id="execLogSearch" placeholder="Search actions…" maxlength="80" style="flex:1;min-width:120px;font-size:.72rem;padding:4px 8px;background:rgba(255,255,255,.06);border:1px solid var(--faint);border-radius:6px;color:inherit;outline:none">
+              <div style="display:flex;gap:4px">
+                <button class="btn-sm exec-filter-who" data-who="all" style="font-size:.6rem;padding:2px 7px;background:rgba(255,255,255,.18);color:#fff;font-weight:700;opacity:1">All</button>
+                <button class="btn-sm exec-filter-who" data-who="operator" style="font-size:.6rem;padding:2px 7px;background:rgba(255,107,107,.12);color:#ff6b6b;opacity:.45">Op</button>
+                <button class="btn-sm exec-filter-who" data-who="dev" style="font-size:.6rem;padding:2px 7px;background:rgba(245,200,0,.08);color:#f5c800;opacity:.45">Dev</button>
+                <button class="btn-sm exec-filter-who" data-who="visitor" style="font-size:.6rem;padding:2px 7px;background:rgba(79,255,204,.08);color:#4fc;opacity:.45">Visit</button>
+              </div>
+            </div>
+            <ul class="devlist" id="execLogList" style="max-height:420px;overflow-y:auto;padding-right:2px"><li style="color:#888">Loading…</li></ul>
+          </div>
+        </section>
+
+        <!-- Workspace log -->
+        <section>
+          <div class="sec-head"><h3>Workspace log</h3><p class="note" style="margin:4px 0 0">Every time a dev user sets or generates a workspace code.</p></div>
+          <div class="sec-body">
+            <ul class="devlist" id="opSyncLog"><li style="color:#888">Loading…</li></ul>
+            <div class="row" style="margin-top:10px">
+              <button class="btn-sm danger" id="opSyncLogClear">Clear log</button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         📢 COMMS
+    ════════════════════════════════════ -->
+    <div class="op-group" id="opGrp-comms">
+      <div class="op-group-header op-grp-comms" onclick="opGrpToggle('comms')">
+        <span>📢</span><span>Comms</span>
+        <span class="op-grp-badge">Announcement · Message · Dev inbox</span>
+        <span class="op-group-arrow" id="opGrpArr-comms">▶</span>
+      </div>
+      <div class="op-group-body" id="opGrpBody-comms">
+
+        <!-- Announcement -->
+        <section>
+          <div class="sec-head"><h3>Announcement</h3><p class="note" style="margin:4px 0 0">Shown prominently on the Dev panel to ALL users before they log in.</p></div>
+          <div class="sec-body">
+            <div id="opAnnouncementPreview" style="display:none;margin-bottom:8px;background:rgba(245,200,0,.07);border:1px solid rgba(245,200,0,.2);border-radius:7px;padding:9px 11px">
+              <div style="font-size:.62rem;color:#888;margin-bottom:3px;letter-spacing:.05em">CURRENT ANNOUNCEMENT</div>
+              <p style="font-size:.78rem;color:#f5c800;line-height:1.5;font-weight:600" id="opAnnouncementPreviewText"></p>
+            </div>
+            <div class="row">
+              <input type="text" id="opAnnouncementText" maxlength="300" placeholder="Announcement for all dev users…" style="flex:1">
+              <button class="btn-sm" id="opAnnouncementSet" style="font-weight:600;color:#f5c800">Set</button>
+              <button class="btn-sm danger" id="opAnnouncementClear">Clear</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Message to dev -->
+        <section>
+          <div class="sec-head"><h3>Message to dev panel</h3><p class="note" style="margin:4px 0 0">Shown to the next person who opens the Dev panel.</p></div>
+          <div class="sec-body">
+            <div id="opMsgPreview" style="display:none;margin-bottom:8px;background:rgba(255,255,255,.04);border:1px solid var(--faint);border-radius:7px;padding:9px 11px">
+              <div style="font-size:.62rem;color:#555;margin-bottom:3px;letter-spacing:.05em">CURRENT MESSAGE</div>
+              <p style="font-size:.78rem;color:#ccc;line-height:1.5" id="opMsgPreviewText"></p>
+            </div>
+            <div class="row">
+              <input type="text" id="opMsgNewText" maxlength="200" placeholder="Type message…" style="flex:1">
+              <button class="btn-sm" id="opMsgLeave">Set</button>
+              <button class="btn-sm danger" id="opMsgDelete">Clear</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Dev inbox -->
+        <section>
+          <div class="sec-head">
+            <h3>Dev inbox <span id="opInboxUnreadBadge" style="display:none;background:#c0000e;color:#fff;font-size:.6rem;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:5px;vertical-align:middle">●</span></h3>
+            <p class="note" style="margin:4px 0 0">Messages sent from the dev panel. Reply privately per message.</p>
+          </div>
+          <div class="sec-body">
+            <ul class="devlist" id="opDevInbox"><li style="color:#888">Loading…</li></ul>
+            <div class="row" style="margin-top:8px">
+              <button class="btn-sm" id="opDevInboxRefresh">Refresh</button>
+              <button class="btn-sm danger" id="opDevInboxClearAll">Clear all</button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         ⚙️ SETTINGS
+    ════════════════════════════════════ -->
+    <div class="op-group" id="opGrp-settings">
+      <div class="op-group-header op-grp-settings" onclick="opGrpToggle('settings')">
+        <span>⚙️</span><span>Settings</span>
+        <span class="op-grp-badge">Nicknames · Geofencing · Custom 404</span>
+        <span class="op-group-arrow" id="opGrpArr-settings">▶</span>
+      </div>
+      <div class="op-group-body" id="opGrpBody-settings">
+
+        <!-- Code nicknames -->
+        <section>
+          <div class="sec-head"><h3>Code nicknames</h3><p class="note" style="margin:4px 0 0">Give each dev code a name — shown in the executive log.</p></div>
+          <div class="sec-body">
+            <ul class="devlist" id="opNicknameList"><li style="color:#888">Loading…</li></ul>
+            <div class="row" style="margin-top:8px">
+              <input type="text" id="opNicknameCode" maxlength="32" placeholder="Code…" style="flex:1">
+              <input type="text" id="opNicknameName" maxlength="24" placeholder="Name…" style="flex:1">
+              <button class="btn-sm" id="opNicknameAdd">Save</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Geofencing -->
+        <section>
+          <div class="sec-head"><h3>Geofencing</h3><p class="note" style="margin:4px 0 0">Only allow visitors from these countries. Leave empty to allow all. Blocked visitors get a "link expired" message.</p></div>
+          <div class="sec-body">
+            <div id="opGeoCountriesList" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:20px"></div>
+            <div class="row">
+              <input type="text" id="opGeoInput" maxlength="4" placeholder="Country code (e.g. US, TR, GB)…" style="flex:1;text-transform:uppercase">
+              <button class="btn-sm" id="opGeoAdd">Add</button>
+              <button class="btn-sm danger" id="opGeoClear">Clear all</button>
+            </div>
+            <div class="row" style="margin-top:4px">
+              <span class="label" id="opGeoStatus" style="font-size:.68rem;color:#555">Not loaded</span>
+              <button class="btn-sm" id="opGeoRefresh" style="font-size:.65rem">Load</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Custom error page -->
+        <section>
+          <div class="sec-head"><h3>Custom error page</h3><p class="note" style="margin:4px 0 0">Override the text shown on the 404 trap page.</p></div>
+          <div class="sec-body">
+            <div class="row">
+              <input type="text" id="opErrTitle" maxlength="60" placeholder="Big heading (e.g. 404)…" style="flex:1">
+            </div>
+            <div class="row" style="margin-top:6px">
+              <input type="text" id="opErrSubtitle" maxlength="120" placeholder="Subtitle line…" style="flex:1">
+            </div>
+            <div class="row" style="margin-top:6px">
+              <input type="text" id="opErrBody" maxlength="400" placeholder="Body / detail text…" style="flex:1">
+            </div>
+            <div class="row" style="margin-top:6px">
+              <button class="btn-sm" id="opErrSave" style="color:#4fc;font-weight:600">Save</button>
+              <button class="btn-sm danger" id="opErrReset">Reset to default</button>
+              <button class="btn-sm" id="opErrLoad" style="font-size:.65rem">Load current</button>
+            </div>
+            <div id="opErrSaveMsg" style="display:none;font-size:.7rem;color:#4fc;margin-top:5px">✓ Saved</div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         🚨 DANGER ZONE — Alerts
+    ════════════════════════════════════ -->
+    <div class="op-group op-group-danger" id="opGrp-danger">
+      <div class="op-group-header op-grp-danger" onclick="opGrpToggle('danger')">
+        <span>🚨</span><span>Danger Zone — Alerts</span>
+        <span class="op-grp-badge">Workspace alerts · Global alerts</span>
+        <span class="op-group-arrow" id="opGrpArr-danger">▶</span>
+      </div>
+      <div class="op-group-body" id="opGrpBody-danger">
+
+        <!-- Workspace email alerts -->
+        <section>
+          <div class="sec-head"><h3>Workspace email alerts</h3><p class="note" style="margin:4px 0 0">Email a specific address every time any hit lands on a workspace. Add multiple workspace+email pairs.</p></div>
+          <div class="sec-body">
+            <ul class="devlist" id="opWsAlertList"><li style="color:#888;font-size:.72rem">None configured.</li></ul>
+            <div class="row" style="margin-top:8px">
+              <input type="text" id="opWsAlertWs" maxlength="40" placeholder="Workspace code…" style="flex:1">
+              <input type="email" id="opWsAlertEmail" maxlength="100" placeholder="Email…" style="flex:1">
+              <button class="btn-sm" id="opWsAlertAdd" style="font-weight:600">Add</button>
+            </div>
+            <div class="row" style="margin-top:4px">
+              <button class="btn-sm" id="opWsAlertRefresh" style="font-size:.65rem">Refresh</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Global action alerts -->
+        <section>
+          <div class="sec-head"><h3>Global action alerts</h3><p class="note" style="margin:4px 0 0">Email on specific SC6-wide events. Select a user code and choose which actions trigger an alert.</p></div>
+          <div class="sec-body">
+            <div class="row">
+              <input type="email" id="opGlobalAlertEmail" maxlength="100" placeholder="Email to alert…" style="flex:1">
+            </div>
+            <div class="row" style="margin-top:6px">
+              <input type="text" id="opGlobalAlertCode" maxlength="32" placeholder="User code (e.g. 010709) — blank = any user…" style="flex:1">
+            </div>
+            <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px" id="opGlobalAlertActions">
+              <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="error_link_created"> Error link generated</label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="dev_panel_opened"> Dev panel opened</label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="trap_hit"> Trap / error link hit</label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="redirect_hit"> Redirect / tracker hit</label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="message_sent"> Dev message sent</label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="operator_panel_opened"> Operator panel opened</label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="brute_force_attempt"> 🚨 Brute-force attempt (5 wrong logins from same source)</label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="device_pending"> 🔔 New device — pending approval</label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="device_violation"> 🚨 Device violation (wrong device used)</label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="dev_login_failed"> ✗ Dev login failed (wrong code)</label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="op-alert-chk" value="workspace_deleted"> 🗑 Workspace deleted</label>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <button class="btn-sm" id="opGlobalAlertAdd" style="font-weight:600">Add alert rule</button>
+            </div>
+            <ul class="devlist" id="opGlobalAlertList" style="margin-top:8px"><li style="color:#888;font-size:.72rem">None configured.</li></ul>
+            <div class="row" style="margin-top:4px">
+              <button class="btn-sm" id="opGlobalAlertRefresh" style="font-size:.65rem">Refresh</button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
 
   </div>
 </div>
@@ -1281,10 +1394,11 @@ document.getElementById('btnDev').addEventListener('click',function(){
 });
 document.getElementById('btnOp').addEventListener('click',function(){show('opView');});
 document.getElementById('devBack').addEventListener('click',function(){
+  _devWatchdogStop();
   document.getElementById('devGate').style.display='';
   document.getElementById('devContent').style.display='none';
   document.getElementById('devCodeInput').value='';
-  document.getElementById('devLockedBanner').style.display='none';
+  var lb=document.getElementById('devLockedBanner');if(lb)lb.style.display='none';
   document.getElementById('devGateSection').style.display='';
   show(null);
 });
@@ -1299,6 +1413,80 @@ document.getElementById('opBack').addEventListener('click',function(){
 // ══════════════════════════════════════════
 // DEV PANEL AUTH
 // ══════════════════════════════════════════
+
+// ── Dev session watchdog ──
+var _devWatchdogTimer=null;
+function _devWatchdogStop(){
+  if(_devWatchdogTimer){clearInterval(_devWatchdogTimer);_devWatchdogTimer=null;}
+}
+function _devWatchdogStart(code){
+  _devWatchdogStop();
+  _devWatchdogTimer=setInterval(function(){
+    var base=FIREBASE_BASE+'_sc6/';
+    // Check devLocked
+    fetch(base+'devLocked.json').then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(locked){
+      if(locked===true){
+        _devWatchdogStop();
+        // Show kick screen
+        var gate=document.getElementById('devGate');
+        var content=document.getElementById('devContent');
+        if(content)content.style.display='none';
+        if(gate){
+          gate.style.display='';
+          document.getElementById('devGateSection').style.display='none';
+          var banner=document.getElementById('devLockedBanner');
+          if(!banner){
+            banner=document.createElement('div');
+            banner.id='devLockedBanner';
+            gate.insertBefore(banner,gate.firstChild);
+          }
+          banner.style.cssText='margin:20px 0;background:rgba(192,0,14,.12);border:1px solid rgba(192,0,14,.4);border-radius:10px;padding:18px 16px;text-align:center';
+          banner.innerHTML='<div style="font-size:1.1rem;font-weight:800;color:#ff4444;margin-bottom:8px">🔒 Panel locked by operator.</div>'
+            +'<div style="font-size:.78rem;color:#aaa;line-height:1.5">The dev panel has been locked. Contact the operator.</div>'
+            +'<button class="btn-sm" onclick="location.reload()" style="margin-top:12px;font-size:.72rem;width:100%;padding:7px">← Back to login</button>';
+          banner.style.display='';
+        }
+        return;
+      }
+      // Check if this code still exists and is not disabled
+      fetch(base+'devPasswords.json').then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(passes){
+        if(!passes||typeof passes!=='object')return;
+        // Find entry for _currentDevCode
+        var found=false;
+        var disabled=false;
+        Object.values(passes).forEach(function(entry){
+          if(!entry||typeof entry!=='object')return;
+          if(entry.code===code||entry.hash===code){
+            found=true;
+            if(entry.disabled===true||entry.disabled==='true')disabled=true;
+          }
+        });
+        if(!found||disabled){
+          _devWatchdogStop();
+          var gate=document.getElementById('devGate');
+          var content=document.getElementById('devContent');
+          if(content)content.style.display='none';
+          if(gate){
+            gate.style.display='';
+            document.getElementById('devGateSection').style.display='none';
+            var banner=document.getElementById('devLockedBanner');
+            if(!banner){
+              banner=document.createElement('div');
+              banner.id='devLockedBanner';
+              gate.insertBefore(banner,gate.firstChild);
+            }
+            banner.style.cssText='margin:20px 0;background:rgba(192,0,14,.12);border:1px solid rgba(192,0,14,.4);border-radius:10px;padding:18px 16px;text-align:center';
+            banner.innerHTML='<div style="font-size:1.1rem;font-weight:800;color:#ff4444;margin-bottom:8px">⛔ Your access code was disabled.</div>'
+              +'<div style="font-size:.78rem;color:#aaa;line-height:1.5">Your access has been revoked by the operator.</div>'
+              +'<button class="btn-sm" onclick="location.reload()" style="margin-top:12px;font-size:.72rem;width:100%;padding:7px">← Back to login</button>';
+            banner.style.display='';
+          }
+        }
+      });
+    });
+  },5000);
+}
+
 function openDev(whichCode){
   _currentDevCode=whichCode||'?';
   var nick=nickFor(_currentDevCode);
@@ -1318,6 +1506,8 @@ function openDev(whichCode){
   loadNicknames(function(){updateDevSyncNickname();});
   // Count existing hits for session stats
   _countDevSessionHits();
+  // Start watchdog — kick if locked or code disabled
+  _devWatchdogStart(_currentDevCode);
 }
 function _countDevSessionHits(){
   var sc=getSyncCode();
@@ -1458,6 +1648,30 @@ function tryDevCode(){
 function shake(el){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');}
 
 // ══════════════════════════════════════════
+// ── Operator panel group toggle ──
+function opGrpToggle(id){
+  var body=document.getElementById('opGrpBody-'+id);
+  var arr=document.getElementById('opGrpArr-'+id);
+  if(!body)return;
+  var open=body.classList.toggle('open');
+  if(arr)arr.style.transform=open?'':'rotate(-90deg)';
+  try{localStorage.setItem('opGrp-'+id,open?'1':'0');}catch(e){}
+}
+// restore saved group states on operator panel load
+function opGrpRestoreStates(){
+  ['overview','links','access','logs','comms','settings','danger'].forEach(function(id){
+    var saved;
+    try{saved=localStorage.getItem('opGrp-'+id);}catch(e){}
+    // default: overview open, rest collapsed
+    var shouldOpen=(saved===null)?(id==='overview'):(saved==='1');
+    var body=document.getElementById('opGrpBody-'+id);
+    var arr=document.getElementById('opGrpArr-'+id);
+    if(!body)return;
+    body.classList.toggle('open',shouldOpen);
+    if(arr)arr.style.transform=shouldOpen?'':'rotate(-90deg)';
+  });
+}
+
 // OPERATOR AUTH
 // ══════════════════════════════════════════
 document.getElementById('opCodeSubmit').addEventListener('click',function(){tryOpCode();});
@@ -1474,6 +1688,7 @@ function tryOpCode(){
       inp.value='';
       document.getElementById('opGate').style.display='none';
       document.getElementById('opContent').style.display='';
+      opGrpRestoreStates();
       exLog('Operator panel opened','','operator',true);
       fireGlobalAlerts('operator_panel_opened','operator','Operator panel opened','');
       loadOpAll();
