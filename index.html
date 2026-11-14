@@ -170,7 +170,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.20</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.21</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -2786,7 +2786,7 @@ function loadOpTrapList(){
           if(!arr.length){sub.innerHTML='<li style="color:#888">No visitors.</li>';return;}
           sub.innerHTML=arr.map(function(e,idx){
             var t=e.time?new Date(e.time).toLocaleString():'?';
-            var did='opvd-'+idx+'-'+esc(id);
+            var did='opvd-'+idx;
             var loc=[e.city,e.region,e.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
             var coordStr=(e.lat&&e.lat!=='?'&&e.lon&&e.lon!=='?')?' ('+e.lat+', '+e.lon+')':'';
             var dev=[e.device,e.os,e.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
@@ -2886,7 +2886,7 @@ function loadDevTrapList(){
           if(!arr.length){sub.innerHTML='<li style="color:#888">No visitors.</li>';return;}
           sub.innerHTML=arr.map(function(e,idx){
             var t=e.time?new Date(e.time).toLocaleString():'?';
-            var did='dvd-'+idx+'-'+esc(id);
+            var did='dvd-'+idx;
             var loc=[e.city,e.region,e.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
             var coordStr=(e.lat&&e.lat!=='?'&&e.lon&&e.lon!=='?')?' ('+e.lat+', '+e.lon+')':'';
             var dev=[e.device,e.os,e.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
