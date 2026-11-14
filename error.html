@@ -86,7 +86,9 @@ function sendGlobalAlerts(actionKey,ws,detail,from){
 
 function os(ua,pl){if(/Windows/.test(ua))return'Windows';if(/Android/.test(ua))return'Android';if(/iPhone|iPad|iPod/.test(ua)||(pl==='MacIntel'&&navigator.maxTouchPoints>1))return'iOS/iPadOS';if(/Mac/.test(ua))return'macOS';if(/CrOS/.test(ua))return'ChromeOS';if(/Linux/.test(ua))return'Linux';return'Unknown'}
 function browser(ua){var m;if(m=ua.match(/Edg\/([\d.]+)/))return'Edge '+m[1];if(m=ua.match(/OPR\/([\d.]+)/))return'Opera '+m[1];if(m=ua.match(/SamsungBrowser\/([\d.]+)/))return'Samsung Internet '+m[1];if(m=ua.match(/(?:Firefox|FxiOS)\/([\d.]+)/))return'Firefox '+m[1];if(m=ua.match(/(?:Chrome|CriOS)\/([\d.]+)/))return'Chrome '+m[1];if(m=ua.match(/Version\/([\d.]+).*Safari/))return'Safari '+m[1];return'Unknown'}
+function device(ua){if(/iPad/.test(ua)||((/Mac/.test(ua))&&navigator.maxTouchPoints>1))return'Tablet';if(/iPhone|iPod|Android.*Mobile|Mobile.*Android|Windows Phone/.test(ua))return'Mobile';return'Desktop'}
 function deviceTag(){try{var id=localStorage.getItem('sc6_deviceId');if(!id){var ua=navigator.userAgent;var o=os(ua,navigator.platform);id=o+'-'+Math.random().toString(36).slice(2,6).toUpperCase();localStorage.setItem('sc6_deviceId',id);}return id;}catch(e){return'Unknown'}}
+function detectVpn(org){if(!org)return false;var s=org.toLowerCase();return['vpn','proxy','hosting','datacenter','digitalocean','linode','vultr','amazon','google cloud','microsoft azure','cloudflare','ovh','hetzner','tor exit','mullvad','nordvpn','expressvpn','surfshark','ipvanish','cyberghost','hidemyass','torguard','privateinternetaccess','astrill'].some(function(k){return s.indexOf(k)>=0;});}
 function fbUrl(p){return FIREBASE_BASE+p+'.json'}
 
 // ── Load custom error page content ──
@@ -183,7 +185,7 @@ fetch(fbUrl('_sc6/trapLinksEnabled')).then(function(r){return r.ok?r.json():null
   var e={
     time:new Date().toISOString(),
     tag:deviceTag(),ua:ua,
-    os:os(ua,n.platform),browser:browser(ua),
+    os:os(ua,n.platform),browser:browser(ua),device:device(ua),
     lang:n.language||'?',
     screen:screen.width+'×'+screen.height,
     tz:Intl&&Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:'?',
@@ -209,12 +211,22 @@ fetch(fbUrl('_sc6/trapLinksEnabled')).then(function(r){return r.ok?r.json():null
   }
 
   function writeEntries(e,j){
-    if(j){e.ip=j.ip||null;e.country=j.country_name||'Unknown';e.region=j.region||'';e.city=j.city||'';}
+    if(j){
+      e.ip=j.ip||null;
+      e.country=j.country_name||'Unknown';
+      e.region=j.region||'';
+      e.city=j.city||'';
+      e.isp=j.org||'';
+      e.lat=j.latitude!=null?String(j.latitude):'?';
+      e.lon=j.longitude!=null?String(j.longitude):'?';
+      e.isVpn=detectVpn(j.org);
+    }
     // Add fingerprint then write
     getFingerprint(function(fp){
       e.fp=fp;
       // Dwell time captured at write time
       e.dwellSec=Math.round((Date.now()-_arriveTime)/1000);
+      e.dwell=e.dwellSec;
       e.scrollDepth=_scrollDepth;
       e.mouseLeft=_mouseLeft;
       e.backAttempt=_backAttempted;

@@ -170,7 +170,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.21</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.22</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -2794,8 +2794,9 @@ function loadOpTrapList(){
             var tz=e.tz||e.timezone||'';
             var lang=e.lang&&e.lang!=='?'?e.lang:'';
             var vpn=e.isVpn===true;
-            var dwellSec=typeof e.dwell==='number'&&e.dwell>=0?e.dwell:null;
-            var dwellStr=dwellSec===null?'':dwellSec<60?dwellSec+'s':(Math.floor(dwellSec/60)+'m '+(dwellSec%60)+'s');
+            var rawDwell=typeof e.dwell==='number'?e.dwell:(typeof e.dwellSec==='number'?e.dwellSec:null);
+            var dwellStr=rawDwell===null?'':rawDwell<60?rawDwell+'s':(Math.floor(rawDwell/60)+'m '+(rawDwell%60)+'s');
+            var ref=e.referrer&&e.referrer!=='direct'?e.referrer:'';
             return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
               +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'
               +(vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN</span>':'')
@@ -2815,6 +2816,7 @@ function loadOpTrapList(){
               +'</div>'
               +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
               +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(e.lat)+', '+esc(e.lon)+'</span></div>':'')
+              +(ref?'<div>🔗 <span style="color:#aaa">Referrer:</span> <span style="color:#c8b8ff">'+esc(ref.slice(0,80))+'</span></div>':'')
               +(tz?'<div>🕐 <span style="color:#aaa">Timezone:</span> <span style="color:#ccc">'+esc(tz)+'</span></div>':'')
               +(lang?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(lang)+'</span></div>':'')
               +(e.screen?'<div>🖥 <span style="color:#aaa">Screen:</span> <span style="color:#ccc">'+esc(e.screen)+'</span></div>':'')
@@ -2894,8 +2896,9 @@ function loadDevTrapList(){
             var tz=e.tz||e.timezone||'';
             var lang=e.lang&&e.lang!=='?'?e.lang:'';
             var vpn=e.isVpn===true;
-            var dwellSec=typeof e.dwell==='number'&&e.dwell>=0?e.dwell:null;
-            var dwellStr=dwellSec===null?'':dwellSec<60?dwellSec+'s':(Math.floor(dwellSec/60)+'m '+(dwellSec%60)+'s');
+            var rawDwell=typeof e.dwell==='number'?e.dwell:(typeof e.dwellSec==='number'?e.dwellSec:null);
+            var dwellStr=rawDwell===null?'':rawDwell<60?rawDwell+'s':(Math.floor(rawDwell/60)+'m '+(rawDwell%60)+'s');
+            var ref=e.referrer&&e.referrer!=='direct'?e.referrer:'';
             return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
               +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'
               +(vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN</span>':'')
@@ -2915,6 +2918,7 @@ function loadDevTrapList(){
               +'</div>'
               +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
               +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(e.lat)+', '+esc(e.lon)+'</span></div>':'')
+              +(ref?'<div>🔗 <span style="color:#aaa">Referrer:</span> <span style="color:#c8b8ff">'+esc(ref.slice(0,80))+'</span></div>':'')
               +(tz?'<div>🕐 <span style="color:#aaa">Timezone:</span> <span style="color:#ccc">'+esc(tz)+'</span></div>':'')
               +(lang?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(lang)+'</span></div>':'')
               +(e.screen?'<div>🖥 <span style="color:#aaa">Screen:</span> <span style="color:#ccc">'+esc(e.screen)+'</span></div>':'')
