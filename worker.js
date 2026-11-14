@@ -1,4 +1,4 @@
-// SC6 Redirect Tracker Worker — v1.9.23
+// SC6 Redirect Tracker Worker — v1.9.25
 // Deploy at: media.sharelink-1.workers.dev
 
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
@@ -236,10 +236,21 @@ export default {
     // ── Geofencing check ──
     let geoBlocked = false;
     try {
-      const geoRes = await fetch(`${FIREBASE}/_sc6/geofence/allowed.json`);
-      const allowList = geoRes.ok ? await geoRes.json() : null;
-      if (Array.isArray(allowList) && allowList.length > 0) {
-        if (!allowList.includes(country) && country !== '?') geoBlocked = true;
+      const geoRes = await fetch(`${FIREBASE}/_sc6/geofence.json`);
+      const geoData = geoRes.ok ? await geoRes.json() : null;
+      if (geoData && country !== '?') {
+        // Support old format (plain array = allowlist) and new format {mode, countries}
+        if (Array.isArray(geoData)) {
+          // Legacy: plain array = allowlist
+          if (geoData.length > 0 && !geoData.includes(country)) geoBlocked = true;
+        } else if (geoData && typeof geoData === 'object') {
+          const mode = geoData.mode || 'block';
+          const list = Array.isArray(geoData.countries) ? geoData.countries : [];
+          if (list.length > 0) {
+            if (mode === 'allow' && !list.includes(country)) geoBlocked = true;
+            if (mode === 'block' && list.includes(country)) geoBlocked = true;
+          }
+        }
       }
     } catch(e) {}
 

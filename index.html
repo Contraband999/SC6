@@ -170,7 +170,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.24</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.25</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -728,12 +728,21 @@ ul.devlist li:last-child{border-bottom:none}
 
         <!-- Geofencing -->
         <section>
-          <div class="sec-head"><h3>Geofencing</h3><p class="note" style="margin:4px 0 0">Only allow visitors from these countries. Leave empty to allow all. Blocked visitors get a "link expired" message.</p></div>
+          <div class="sec-head"><h3>Geofencing</h3><p class="note" style="margin:4px 0 0">Block or allow specific countries. Leave empty to allow all. Blocked visitors get a "link expired" message.</p></div>
           <div class="sec-body">
+            <!-- Mode toggle -->
+            <div class="row" style="margin-bottom:10px;gap:6px">
+              <button class="btn-sm" id="opGeoModeAllow" style="flex:1">✓ Allow listed only</button>
+              <button class="btn-sm" id="opGeoModeBlock" style="flex:1">⊘ Block listed</button>
+            </div>
+            <div id="opGeoModeLabel" style="font-size:.7rem;color:#888;margin-bottom:8px">Mode: loading…</div>
             <div id="opGeoCountriesList" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:20px"></div>
-            <div class="row">
-              <input type="text" id="opGeoInput" maxlength="4" placeholder="Country code (e.g. US, TR, GB)…" style="flex:1;text-transform:uppercase">
-              <button class="btn-sm" id="opGeoAdd">Add</button>
+            <!-- Country selector -->
+            <div class="row" style="gap:6px">
+              <div style="flex:1;position:relative">
+                <input type="text" id="opGeoSearch" placeholder="Search country…" autocomplete="off" style="width:100%;box-sizing:border-box">
+                <div id="opGeoDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:160px;overflow-y:auto;background:#1a1a1a;border:1px solid #333;border-radius:6px;z-index:99;margin-top:2px"></div>
+              </div>
               <button class="btn-sm danger" id="opGeoClear">Clear all</button>
             </div>
             <div class="row" style="margin-top:4px">
@@ -3341,25 +3350,89 @@ function sanitizeAlias(s){
 // ══════════════════════════════════════════
 // GEOFENCING
 // ══════════════════════════════════════════
-function geoUrl(){return fbUrl('_sc6/geofence/allowed')}
+function geoUrl(){return fbUrl('_sc6/geofence')}
+
+// Full country list: [code, name]
+var GEO_COUNTRIES=[
+  ['AF','Afghanistan'],['AL','Albania'],['DZ','Algeria'],['AD','Andorra'],['AO','Angola'],
+  ['AG','Antigua & Barbuda'],['AR','Argentina'],['AM','Armenia'],['AU','Australia'],['AT','Austria'],
+  ['AZ','Azerbaijan'],['BS','Bahamas'],['BH','Bahrain'],['BD','Bangladesh'],['BB','Barbados'],
+  ['BY','Belarus'],['BE','Belgium'],['BZ','Belize'],['BJ','Benin'],['BT','Bhutan'],
+  ['BO','Bolivia'],['BA','Bosnia & Herzegovina'],['BW','Botswana'],['BR','Brazil'],['BN','Brunei'],
+  ['BG','Bulgaria'],['BF','Burkina Faso'],['BI','Burundi'],['CV','Cabo Verde'],['KH','Cambodia'],
+  ['CM','Cameroon'],['CA','Canada'],['CF','Central African Republic'],['TD','Chad'],['CL','Chile'],
+  ['CN','China'],['CO','Colombia'],['KM','Comoros'],['CG','Congo'],['CD','Congo (DRC)'],
+  ['CR','Costa Rica'],['CI','Côte d\'Ivoire'],['HR','Croatia'],['CU','Cuba'],['CY','Cyprus'],
+  ['CZ','Czech Republic'],['DK','Denmark'],['DJ','Djibouti'],['DM','Dominica'],['DO','Dominican Republic'],
+  ['EC','Ecuador'],['EG','Egypt'],['SV','El Salvador'],['GQ','Equatorial Guinea'],['ER','Eritrea'],
+  ['EE','Estonia'],['SZ','Eswatini'],['ET','Ethiopia'],['FJ','Fiji'],['FI','Finland'],
+  ['FR','France'],['GA','Gabon'],['GM','Gambia'],['GE','Georgia'],['DE','Germany'],
+  ['GH','Ghana'],['GR','Greece'],['GD','Grenada'],['GT','Guatemala'],['GN','Guinea'],
+  ['GW','Guinea-Bissau'],['GY','Guyana'],['HT','Haiti'],['HN','Honduras'],['HU','Hungary'],
+  ['IS','Iceland'],['IN','India'],['ID','Indonesia'],['IR','Iran'],['IQ','Iraq'],
+  ['IE','Ireland'],['IL','Israel'],['IT','Italy'],['JM','Jamaica'],['JP','Japan'],
+  ['JO','Jordan'],['KZ','Kazakhstan'],['KE','Kenya'],['KI','Kiribati'],['KW','Kuwait'],
+  ['KG','Kyrgyzstan'],['LA','Laos'],['LV','Latvia'],['LB','Lebanon'],['LS','Lesotho'],
+  ['LR','Liberia'],['LY','Libya'],['LI','Liechtenstein'],['LT','Lithuania'],['LU','Luxembourg'],
+  ['MG','Madagascar'],['MW','Malawi'],['MY','Malaysia'],['MV','Maldives'],['ML','Mali'],
+  ['MT','Malta'],['MH','Marshall Islands'],['MR','Mauritania'],['MU','Mauritius'],['MX','Mexico'],
+  ['FM','Micronesia'],['MD','Moldova'],['MC','Monaco'],['MN','Mongolia'],['ME','Montenegro'],
+  ['MA','Morocco'],['MZ','Mozambique'],['MM','Myanmar'],['NA','Namibia'],['NR','Nauru'],
+  ['NP','Nepal'],['NL','Netherlands'],['NZ','New Zealand'],['NI','Nicaragua'],['NE','Niger'],
+  ['NG','Nigeria'],['KP','North Korea'],['MK','North Macedonia'],['NO','Norway'],['OM','Oman'],
+  ['PK','Pakistan'],['PW','Palau'],['PA','Panama'],['PG','Papua New Guinea'],['PY','Paraguay'],
+  ['PE','Peru'],['PH','Philippines'],['PL','Poland'],['PT','Portugal'],['QA','Qatar'],
+  ['RO','Romania'],['RU','Russia'],['RW','Rwanda'],['KN','Saint Kitts & Nevis'],['LC','Saint Lucia'],
+  ['VC','Saint Vincent & Grenadines'],['WS','Samoa'],['SM','San Marino'],['ST','São Tomé & Príncipe'],
+  ['SA','Saudi Arabia'],['SN','Senegal'],['RS','Serbia'],['SC','Seychelles'],['SL','Sierra Leone'],
+  ['SG','Singapore'],['SK','Slovakia'],['SI','Slovenia'],['SB','Solomon Islands'],['SO','Somalia'],
+  ['ZA','South Africa'],['SS','South Sudan'],['ES','Spain'],['LK','Sri Lanka'],['SD','Sudan'],
+  ['SR','Suriname'],['SE','Sweden'],['CH','Switzerland'],['SY','Syria'],['TW','Taiwan'],
+  ['TJ','Tajikistan'],['TZ','Tanzania'],['TH','Thailand'],['TL','Timor-Leste'],['TG','Togo'],
+  ['TO','Tonga'],['TT','Trinidad & Tobago'],['TN','Tunisia'],['TR','Turkey'],['TM','Turkmenistan'],
+  ['TV','Tuvalu'],['UG','Uganda'],['UA','Ukraine'],['AE','United Arab Emirates'],['GB','United Kingdom'],
+  ['US','United States'],['UY','Uruguay'],['UZ','Uzbekistan'],['VU','Vanuatu'],['VE','Venezuela'],
+  ['VN','Vietnam'],['YE','Yemen'],['ZM','Zambia'],['ZW','Zimbabwe']
+];
+var _geoMode='block'; // default
 
 function loadOpGeo(){
   var status=document.getElementById('opGeoStatus');
   if(status)status.textContent='Loading…';
   fetch(geoUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
-    var list=Array.isArray(d)?d:[];
-    _renderGeoList(list);
-    if(status)status.textContent=list.length?list.length+' countries':list.length===0?'Allow all (empty)':'Allow all (empty)';
+    // Support old format (plain array = allowlist) and new format {mode,countries}
+    var list,mode;
+    if(Array.isArray(d)){list=d;mode='allow';}
+    else if(d&&typeof d==='object'){list=Array.isArray(d.countries)?d.countries:[];mode=d.mode||'block';}
+    else{list=[];mode='block';}
+    _geoMode=mode;
+    _renderGeoMode(mode);
+    _renderGeoList(list,mode);
+    if(status)status.textContent=list.length?(list.length+' countries, '+(mode==='block'?'blocking':'allowing')+' listed'):'No filter (allow all)';
   });
 }
 
-function _renderGeoList(list){
+function _renderGeoMode(mode){
+  var modeLabel=document.getElementById('opGeoModeLabel');
+  var btnAllow=document.getElementById('opGeoModeAllow');
+  var btnBlock=document.getElementById('opGeoModeBlock');
+  if(modeLabel)modeLabel.textContent=mode==='block'?'Mode: Block listed countries (everyone else gets through)':'Mode: Allow listed countries only (everyone else is blocked)';
+  if(btnAllow){btnAllow.style.opacity=mode==='allow'?'1':'0.4';btnAllow.style.fontWeight=mode==='allow'?'700':'400';}
+  if(btnBlock){btnBlock.style.opacity=mode==='block'?'1':'0.4';btnBlock.style.fontWeight=mode==='block'?'700':'400';}
+}
+
+function _renderGeoList(list,mode){
   var el=document.getElementById('opGeoCountriesList');
   if(!el)return;
-  if(!list||!list.length){el.innerHTML='<span style="font-size:.7rem;color:#555">Empty — all countries allowed</span>';return;}
+  var color=mode==='block'?'rgba(255,100,100,.15)':'rgba(79,255,204,.1)';
+  var border=mode==='block'?'rgba(255,100,100,.35)':'rgba(79,255,204,.25)';
+  var textColor=mode==='block'?'#ff8888':'#4fc';
+  if(!list||!list.length){el.innerHTML='<span style="font-size:.7rem;color:#555">No countries added — all visitors allowed</span>';return;}
   el.innerHTML=list.map(function(c){
-    return '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(79,255,204,.1);border:1px solid rgba(79,255,204,.25);border-radius:5px;padding:2px 8px;font-size:.72rem;color:#4fc">'
-      +esc(c)
+    var name=GEO_COUNTRIES.find(function(x){return x[0]===c;});
+    var label=name?c+' · '+name[1]:c;
+    return '<span style="display:inline-flex;align-items:center;gap:4px;background:'+color+';border:1px solid '+border+';border-radius:5px;padding:2px 8px;font-size:.72rem;color:'+textColor+'">'
+      +esc(label)
       +'<button style="background:none;border:none;color:#ff6b6b;cursor:pointer;font-size:.75rem;padding:0 0 0 2px;line-height:1" data-geo-remove="'+esc(c)+'">×</button>'
       +'</span>';
   }).join('');
@@ -3367,26 +3440,64 @@ function _renderGeoList(list){
     btn.addEventListener('click',function(){
       var code=btn.getAttribute('data-geo-remove');
       fetch(geoUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
-        var arr=(Array.isArray(d)?d:[]).filter(function(x){return x!==code;});
-        fetch(geoUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)}).then(function(){loadOpGeo();}).catch(function(){});
+        var list=Array.isArray(d)?d:(d&&Array.isArray(d.countries)?d.countries:[]);
+        var mode=Array.isArray(d)?'allow':(d&&d.mode?d.mode:'block');
+        var arr=list.filter(function(x){return x!==code;});
+        fetch(geoUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:mode,countries:arr})}).then(function(){loadOpGeo();}).catch(function(){});
       });
     });
   });
 }
 
-document.getElementById('opGeoAdd').addEventListener('click',function(){
-  var val=document.getElementById('opGeoInput').value.trim().toUpperCase().slice(0,3);
-  if(!val)return;
-  document.getElementById('opGeoInput').value='';
+function _geoAddCountry(code){
   fetch(geoUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
-    var arr=Array.isArray(d)?d:[];
-    if(arr.indexOf(val)<0)arr.push(val);
-    fetch(geoUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)}).then(function(){loadOpGeo();}).catch(function(){});
+    var list=Array.isArray(d)?d:(d&&Array.isArray(d.countries)?d.countries:[]);
+    var mode=Array.isArray(d)?'allow':(d&&d.mode?d.mode:_geoMode);
+    if(list.indexOf(code)<0)list.push(code);
+    fetch(geoUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:mode,countries:list})}).then(function(){loadOpGeo();}).catch(function(){});
+  });
+}
+
+// Mode buttons
+document.getElementById('opGeoModeAllow').addEventListener('click',function(){
+  fetch(geoUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var list=Array.isArray(d)?d:(d&&Array.isArray(d.countries)?d.countries:[]);
+    fetch(geoUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'allow',countries:list})}).then(function(){loadOpGeo();}).catch(function(){});
   });
 });
+document.getElementById('opGeoModeBlock').addEventListener('click',function(){
+  fetch(geoUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var list=Array.isArray(d)?d:(d&&Array.isArray(d.countries)?d.countries:[]);
+    fetch(geoUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'block',countries:list})}).then(function(){loadOpGeo();}).catch(function(){});
+  });
+});
+
+// Country search dropdown
+var _geoSearchEl=document.getElementById('opGeoSearch');
+var _geoDropEl=document.getElementById('opGeoDropdown');
+_geoSearchEl.addEventListener('input',function(){
+  var q=this.value.trim().toLowerCase();
+  if(!q){_geoDropEl.style.display='none';return;}
+  var matches=GEO_COUNTRIES.filter(function(c){return c[0].toLowerCase().indexOf(q)>=0||c[1].toLowerCase().indexOf(q)>=0;}).slice(0,12);
+  if(!matches.length){_geoDropEl.style.display='none';return;}
+  _geoDropEl.innerHTML=matches.map(function(c){
+    return '<div style="padding:7px 10px;cursor:pointer;font-size:.75rem;border-bottom:1px solid #2a2a2a;color:#ccc" data-geo-code="'+c[0]+'"><span style="color:#4fc;font-weight:600;margin-right:6px">'+c[0]+'</span>'+esc(c[1])+'</div>';
+  }).join('');
+  _geoDropEl.style.display='';
+  _geoDropEl.querySelectorAll('[data-geo-code]').forEach(function(item){
+    item.addEventListener('mousedown',function(e){
+      e.preventDefault();
+      _geoAddCountry(item.getAttribute('data-geo-code'));
+      _geoSearchEl.value='';
+      _geoDropEl.style.display='none';
+    });
+  });
+});
+_geoSearchEl.addEventListener('blur',function(){setTimeout(function(){_geoDropEl.style.display='none';},150);});
+
 document.getElementById('opGeoClear').addEventListener('click',function(){
-  if(!confirm('Remove all geofencing? All countries will be allowed.'))return;
-  fetch(geoUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify([])}).then(function(){loadOpGeo();}).catch(function(){});
+  if(!confirm('Remove all countries from the geofence list?'))return;
+  fetch(geoUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:_geoMode,countries:[]})}).then(function(){loadOpGeo();}).catch(function(){});
 });
 document.getElementById('opGeoRefresh').addEventListener('click',loadOpGeo);
 
