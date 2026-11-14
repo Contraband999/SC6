@@ -143,7 +143,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.15</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.16</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -769,14 +769,26 @@ function _loginAllowed(){
 function _loginFail(inp){
   _loginAttempts++;
   var isBrute=(_loginAttempts>=5);
+  // Detect OS + browser from UA
+  function _detectOs(){var ua=navigator.userAgent;if(/Windows/.test(ua))return'Windows';if(/Android/.test(ua))return'Android';if(/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))return'iOS';if(/Mac/.test(ua))return'Mac';if(/Linux/.test(ua))return'Linux';return'?';}
+  function _detectBr(){var ua=navigator.userAgent,m;if(m=ua.match(/Edg\/([\d.]+)/))return'Edge '+m[1].split('.')[0];if(m=ua.match(/OPR\/([\d.]+)/))return'Opera '+m[1].split('.')[0];if(m=ua.match(/(?:Chrome|CriOS)\/([\d.]+)/))return'Chrome '+m[1].split('.')[0];if(m=ua.match(/(?:Firefox|FxiOS)\/([\d.]+)/))return'Firefox '+m[1].split('.')[0];if(m=ua.match(/Version\/([\d.]+).*Safari/))return'Safari '+m[1].split('.')[0];return'?';}
   // Fetch IP and log the attempt
   fetch('https://ipapi.co/json/').then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(geo){
     var entry={
       time:new Date().toISOString(),
       ip:(geo&&geo.ip)||'unknown',
       country:(geo&&geo.country_name)||'?',
+      country_code:(geo&&geo.country_code)||'?',
       city:(geo&&geo.city)||'?',
+      region:(geo&&geo.region)||'?',
       isp:(geo&&geo.org)||'?',
+      timezone:(geo&&geo.timezone)||'?',
+      lat:(geo&&geo.latitude)||'?',
+      lon:(geo&&geo.longitude)||'?',
+      isVpn:!!(geo&&(geo.proxy||geo.tor||geo.hosting)),
+      os:_detectOs(),
+      browser:_detectBr(),
+      lang:navigator.language||'?',
       panel:inp&&inp.id==='opCodeInput'?'operator':'dev',
       brute:isBrute
     };
@@ -942,7 +954,7 @@ function renderExLog(){
     if(!arr.length){ul.innerHTML='<li style="color:#666">'+(totalCount?'No matches for filter.':'No events yet.')+'</li>';return;}
     var rev=arr.slice().reverse();
     var wasAtTop=ul.scrollTop<=10;
-    ul.innerHTML=rev.map(function(e){
+    ul.innerHTML=rev.map(function(e,i){
       var d=new Date(e.t);
       var ts=isNaN(d)?e.t:d.toLocaleTimeString()+' '+d.toLocaleDateString();
       var whoRaw=e.who||'?';
@@ -951,6 +963,8 @@ function renderExLog(){
       var whoLabel=devCode?nameFor(devCode):whoRaw;
       var whoColor=whoRaw==='operator'?'#ff6b6b':whoRaw.startsWith('dev ')?'#f5c800':whoRaw==='visitor'?'#4fc':'#aaa';
       var actionColor=e.action&&e.action.startsWith('ERR')?'#ff6b6b':'#eee';
+      var hasDetail=!!(e.os||e.br||e.ip||e.country||e.tag||e.region);
+      var did='exdet-'+i;
       return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.7rem">'
         +'<div style="display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap">'
         +'<span style="color:'+whoColor+';font-weight:700;min-width:52px;text-transform:uppercase;font-size:.62rem">'+esc(whoLabel)+'</span>'
@@ -958,7 +972,14 @@ function renderExLog(){
         +'<span style="color:#555;white-space:nowrap;font-size:.62rem">'+esc(ts)+'</span>'
         +'</div>'
         +(e.detail?'<div style="color:#888;font-size:.65rem;padding-left:60px;margin-top:1px;word-break:break-all">'+esc(e.detail)+'</div>':'')
-        +'<div style="color:#444;font-size:.6rem;padding-left:60px">'+esc(e.os||'')+(e.br?' · '+esc(e.br):'')+(e.ip?' · '+esc(e.ip):'')+(e.country?' '+esc(e.country):'')+(e.tag?' · '+esc(e.tag):'')+'</div>'
+        +(hasDetail?'<div style="padding-left:60px;margin-top:3px">'
+          +'<button class="btn-sm" style="font-size:.58rem;padding:1px 6px;opacity:.6" onclick="(function(el,id){var d=document.getElementById(id);var open=d.style.display!==\'none\';d.style.display=open?\'none\':\'\';el.textContent=open?\'Details\':\'Hide\';el.style.opacity=open?\'.6\':\'1\';})(this,\''+did+'\')" >Details</button>'
+          +'</div>':'')
+        +(hasDetail?'<div id="'+did+'" style="display:none;padding-left:60px;margin-top:4px;background:rgba(255,255,255,.03);border-left:2px solid rgba(255,255,255,.08);padding-top:4px;padding-bottom:4px;padding-right:8px;font-size:.62rem;line-height:1.9;color:#777">'
+          +(e.ip&&e.ip!=='?'?'<span style="color:#f5c800">🌐 '+esc(e.ip)+'</span>'+(e.country?' <span style="color:#888">'+esc(e.country)+(e.region&&e.region!=='?'?' · '+esc(e.region):'')+'</span>':'')+'<br>':'')
+          +(e.os?'<span>💻 '+esc(e.os)+(e.br?' &nbsp;·&nbsp; 🌏 '+esc(e.br):'')+'</span><br>':'')
+          +(e.tag?'<span>🔖 Tag: '+esc(e.tag)+'</span><br>':'')
+          +'</div>':'')
         +'</li>';
     }).join('');
     if(wasAtTop)ul.scrollTop=0;
@@ -1748,7 +1769,7 @@ function loadOpRedirectList(){
         fetch(opRedirectLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
           var arr=Array.isArray(logs)?logs.slice().reverse():(logs&&typeof logs==='object'?Object.values(logs).reverse():[]);
           if(!arr.length){sub.innerHTML='<li style="color:#888;font-size:.7rem">No hits yet.</li>';return;}
-          sub.innerHTML='<li style="color:#4fc;font-size:.65rem;padding:3px 0">'+arr.length+' hit'+(arr.length===1?'':'s')+'</li>'+arr.map(function(h){
+          sub.innerHTML='<li style="color:#4fc;font-size:.65rem;padding:3px 0">'+arr.length+' hit'+(arr.length===1?'':'s')+'</li>'+arr.map(function(h,hi){
             var loc=[h.city,h.region,h.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
             var coordStr=(h.lat&&h.lat!=='?'&&h.lon&&h.lon!=='?')?' ('+h.lat+', '+h.lon+')':'';
             var dev=[h.device,h.os,h.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
@@ -1767,20 +1788,27 @@ function loadOpRedirectList(){
               'Gmail':'📧','Outlook':'📧','Signal':'🔒','Spotify':'🎧','Twitch':'🟣'
             };
             var srcIcon=sourceIcon[src]||'🔗';
+            var did='trhit-'+id+'-'+hi;
             return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
-              // VPN badge — prominent if detected
-              +(vpn?'<div style="display:inline-block;font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px;margin-bottom:4px">⚠ VPN / PROXY</div>':'<div style="display:inline-block;font-size:.6rem;background:rgba(80,255,160,.12);color:#4fc;border:1px solid rgba(80,255,160,.3);border-radius:3px;padding:1px 5px;margin-bottom:4px">✓ Clean IP</div>')
-              +'<div style="font-size:.72rem;color:#4fc;font-weight:600">📍 '+esc(loc)+(coordStr?'<span style="color:#666;font-weight:400"> '+esc(coordStr)+'</span>':'')+'</div>'
-              +'<div style="font-size:.68rem;color:#ccc;margin-top:2px">🖥 '+esc(dev)+'</div>'
-              +(h.ip&&h.ip!=='?'?'<div style="font-size:.68rem;color:#f5c800;margin-top:2px">🌐 '+esc(h.ip)+'</div>':'')
-              +(isp?'<div style="font-size:.65rem;color:#aaa;margin-top:1px">📡 '+esc(isp)+'</div>':'')
-              // Dwell time
-              +(dwellStr?'<div style="font-size:.65rem;color:#a0cfff;margin-top:2px">⏱ Stayed '+esc(dwellStr)+'</div>':'')
-              // Opened from
-              +'<div style="font-size:.65rem;color:#c8b8ff;margin-top:2px">'+srcIcon+' Opened from: '+esc(openedFrom)+'</div>'
-              +(tz?'<div style="font-size:.65rem;color:#aaa;margin-top:1px">🕐 '+esc(tz)+'</div>':'')
-              +(lang?'<div style="font-size:.65rem;color:#aaa;margin-top:1px">🗣 '+esc(lang)+'</div>':'')
-              +'<div style="font-size:.6rem;color:#555;margin-top:3px">'+esc(new Date(h.time).toLocaleString())+'</div>'
+              +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'
+              // VPN badge — always visible
+              +(vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN / PROXY</span>':'<span style="font-size:.6rem;background:rgba(80,255,160,.12);color:#4fc;border:1px solid rgba(80,255,160,.3);border-radius:3px;padding:1px 5px">✓ Clean</span>')
+              // Location always visible
+              +'<span style="font-size:.72rem;color:#4fc;font-weight:600">📍 '+esc(loc)+'</span>'
+              +(dwellStr?'<span style="font-size:.65rem;color:#a0cfff">⏱ '+esc(dwellStr)+'</span>':'')
+              +'<span style="margin-left:auto;font-size:.6rem;color:#555">'+esc(new Date(h.time).toLocaleString())+'</span>'
+              +'</div>'
+              +'<button class="btn-sm" style="font-size:.6rem;padding:1px 7px" onclick="(function(el,id){var d=document.getElementById(id);var open=d.style.display!==\'none\';d.style.display=open?\'none\':\'\';el.textContent=open?\'Details\':\'Hide\';})(this,\''+did+'\')" >Details</button>'
+              +'<div id="'+did+'" style="display:none;margin-top:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:7px 9px;font-size:.65rem;line-height:1.8">'
+              +(h.ip&&h.ip!=='?'?'<div>🌐 <span style="color:#f5c800;font-family:monospace">'+esc(h.ip)+'</span></div>':'')
+              +(isp?'<div>📡 <span style="color:#aaa">ISP:</span> <span style="color:#ccc">'+esc(isp)+'</span></div>':'')
+              +'<div>🖥 <span style="color:#ccc">'+esc(dev)+'</span></div>'
+              +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(h.lat)+', '+esc(h.lon)+'</span></div>':'')
+              +'<div>'+srcIcon+' <span style="color:#aaa">Opened from:</span> <span style="color:#c8b8ff">'+esc(openedFrom)+'</span></div>'
+              +(tz?'<div>🕐 <span style="color:#aaa">Timezone:</span> <span style="color:#ccc">'+esc(tz)+'</span></div>':'')
+              +(lang?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(lang)+'</span></div>':'')
+              +(vpn?'<div style="color:#ff5050;margin-top:2px">⚠ VPN / Proxy / Hosting IP flagged</div>':'')
+              +'</div>'
               +'</li>';
           }).join('');
         });
@@ -3248,18 +3276,35 @@ function loadFailedLogins(){
     var arr=d&&typeof d==='object'?(Array.isArray(d)?d:Object.values(d)):[];
     arr.sort(function(a,b){return (b.time||'').localeCompare(a.time||'');});
     if(!arr.length){ul.innerHTML='<li style="color:#888;font-size:.72rem">No failed attempts recorded.</li>';return;}
-    ul.innerHTML=arr.map(function(e){
+    ul.innerHTML=arr.map(function(e,i){
       var t=e.time?new Date(e.time).toLocaleString():'?';
       var isBrute=e.brute===true;
-      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
-        +'<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">'
-        +(isBrute?'<span style="font-size:.65rem;background:#ff2222;color:#fff;border-radius:4px;padding:1px 6px;font-weight:700">BRUTE FORCE</span>':'')
-        +'<span style="font-size:.7rem;color:#ccc;font-weight:600">'+esc(t)+'</span>'
-        +'<span style="font-size:.68rem;color:#ff6b6b;font-family:monospace">'+esc(e.ip||'?')+'</span>'
-        +(e.panel?'<span style="font-size:.62rem;color:#f5c800;background:rgba(245,200,0,.1);border-radius:3px;padding:1px 5px">'+esc(e.panel)+'</span>':'')
+      var vpn=e.isVpn===true;
+      var loc=[e.city,e.region,e.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
+      var did='fldet-'+i;
+      return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+        +'<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:2px">'
+        +(isBrute?'<span style="font-size:.65rem;background:#ff2222;color:#fff;border-radius:4px;padding:1px 6px;font-weight:700">🚨 BRUTE</span>':'')
+        +(vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN</span>':'<span style="font-size:.6rem;background:rgba(80,255,160,.12);color:#4fc;border:1px solid rgba(80,255,160,.3);border-radius:3px;padding:1px 5px">✓ Clean IP</span>')
+        +(e.panel?'<span style="font-size:.62rem;color:#f5c800;background:rgba(245,200,0,.1);border-radius:3px;padding:1px 5px">'+esc(e.panel)+' panel</span>':'')
+        +'<span style="margin-left:auto;font-size:.62rem;color:#555">'+esc(t)+'</span>'
         +'</div>'
-        +(e.city||e.country?'<div style="font-size:.68rem;color:#4fc;margin-top:1px">📍 '+esc([e.city,e.country].filter(Boolean).join(', '))+'</div>':'')
-        +(e.isp&&e.isp!=='?'?'<div style="font-size:.62rem;color:#888;margin-top:1px">🌐 '+esc(e.isp)+'</div>':'')
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+        +'<span style="font-size:.7rem;color:#ff6b6b;font-family:monospace;font-weight:600">'+esc(e.ip||'?')+'</span>'
+        +'<span style="font-size:.68rem;color:#4fc">📍 '+esc(loc)+'</span>'
+        +'</div>'
+        +'<div style="margin-top:4px">'
+        +'<button class="btn-sm" style="font-size:.6rem;padding:1px 7px" onclick="(function(el,id){var d=document.getElementById(id);var open=d.style.display!==\'none\';d.style.display=open?\'none\':\'\';el.textContent=open?\'Details\':\'Hide\';})(this,\''+did+'\')" >Details</button>'
+        +'</div>'
+        +'<div id="'+did+'" style="display:none;margin-top:5px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:7px 9px;font-size:.65rem;line-height:1.7">'
+        +(e.isp&&e.isp!=='?'?'<div>📡 <span style="color:#aaa">ISP:</span> <span style="color:#ccc">'+esc(e.isp)+'</span></div>':'')
+        +(e.timezone&&e.timezone!=='?'?'<div>🕐 <span style="color:#aaa">Timezone:</span> <span style="color:#ccc">'+esc(e.timezone)+'</span></div>':'')
+        +(e.os&&e.os!=='?'?'<div>💻 <span style="color:#aaa">OS:</span> <span style="color:#ccc">'+esc(e.os)+'</span></div>':'')
+        +(e.browser&&e.browser!=='?'?'<div>🌐 <span style="color:#aaa">Browser:</span> <span style="color:#ccc">'+esc(e.browser)+'</span></div>':'')
+        +(e.lang&&e.lang!=='?'?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(e.lang)+'</span></div>':'')
+        +((e.lat&&e.lat!=='?'&&e.lon&&e.lon!=='?')?'<div>🗺 <span style="color:#aaa">Coords:</span> <span style="color:#ccc">'+esc(e.lat)+', '+esc(e.lon)+'</span></div>':'')
+        +(vpn?'<div style="color:#ff5050;margin-top:2px">⚠ VPN / Proxy / Hosting IP detected</div>':'')
+        +'</div>'
         +'</li>';
     }).join('');
   });
