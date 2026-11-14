@@ -170,7 +170,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.19</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.20</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -2787,21 +2787,38 @@ function loadOpTrapList(){
           sub.innerHTML=arr.map(function(e,idx){
             var t=e.time?new Date(e.time).toLocaleString():'?';
             var did='opvd-'+idx+'-'+esc(id);
-            return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
-              +'<div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">'
-              +'<span style="color:#ccc;font-weight:600;font-size:.75rem">'+esc(t)+'</span>'
-              +'<span style="color:#f5c800;font-size:.7rem">'+esc(e.country||'?')+'</span>'
-              +(e.ip?'<span style="color:#555;font-size:.65rem">'+esc(e.ip)+'</span>':'')
-              +'<button onclick="var d=document.getElementById(\''+did+'\');d.style.display=d.style.display===\'none\'?\'block\':\'none\'" style="background:none;border:1px solid rgba(255,255,255,.18);border-radius:4px;color:#aaa;font-size:.62rem;padding:1px 6px;cursor:pointer;margin-left:auto">details</button>'
+            var loc=[e.city,e.region,e.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
+            var coordStr=(e.lat&&e.lat!=='?'&&e.lon&&e.lon!=='?')?' ('+e.lat+', '+e.lon+')':'';
+            var dev=[e.device,e.os,e.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
+            var isp=e.isp&&e.isp!=='?'?e.isp:'';
+            var tz=e.tz||e.timezone||'';
+            var lang=e.lang&&e.lang!=='?'?e.lang:'';
+            var vpn=e.isVpn===true;
+            var dwellSec=typeof e.dwell==='number'&&e.dwell>=0?e.dwell:null;
+            var dwellStr=dwellSec===null?'':dwellSec<60?dwellSec+'s':(Math.floor(dwellSec/60)+'m '+(dwellSec%60)+'s');
+            return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+              +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'
+              +(vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN</span>':'')
+              +'<span style="font-size:.72rem;color:#ff6b6b;font-weight:600">📍 '+esc(loc)+'</span>'
+              +(dwellStr?'<span style="font-size:.65rem;color:#a0cfff">⏱ '+esc(dwellStr)+'</span>':'')
+              +'<span style="margin-left:auto;font-size:.6rem;color:#555">'+esc(t)+'</span>'
               +'</div>'
-              +'<div style="color:#666;font-size:.68rem">'+esc(e.tag||'')+'</div>'
-              +'<div id="'+did+'" style="display:none;margin-top:5px;background:rgba(0,0,0,.35);border-radius:6px;padding:5px 8px">'
-              +[['OS',e.os||'—'],['Browser',e.browser||'—'],['Screen',e.screen||'—'],['Language',e.lang||'—'],['Timezone',e.tz||'—'],['IP',e.ip||'—'],['Location',[(e.country||''),(e.region||'')].filter(Boolean).join(', ')||'—']].map(function(r){
-                return '<div style="display:flex;gap:5px;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
-                  +'<span style="color:#555;font-size:.64rem;min-width:64px;flex-shrink:0">'+r[0]+'</span>'
-                  +'<span style="color:#ccc;font-size:.68rem;word-break:break-all">'+esc(r[1])+'</span></div>';
-              }).join('')
-              +(e.ua?'<div style="margin-top:3px;color:#444;font-size:.6rem;word-break:break-all;line-height:1.3">'+esc(e.ua)+'</div>':'')
+              +(e.tag?'<div style="font-size:.65rem;color:#888;margin-bottom:3px">'+esc(e.tag)+'</div>':'')
+              +'<button class="btn-sm" style="font-size:.6rem;padding:1px 7px" onclick="(function(el,id){var d=document.getElementById(id);var open=d.style.display!==\'none\';d.style.display=open?\'none\':\'\';el.textContent=open?\'Details\':\'Hide\';})(this,\''+did+'\')" >Details</button>'
+              +'<div id="'+did+'" style="display:none;margin-top:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:7px 9px;font-size:.65rem;line-height:1.8">'
+              +(e.ip&&e.ip!=='?'?'<div>🌐 <span style="color:#f5c800;font-family:monospace;font-weight:600">'+esc(e.ip)+'</span></div>':'')
+              +(isp?'<div>📡 <span style="color:#aaa">ISP:</span> <span style="color:#ccc">'+esc(isp)+'</span></div>':'')
+              +(vpn?'<div style="color:#ff5050">⚠ VPN / Proxy / Hosting IP flagged</div>':'')
+              +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
+              +(e.model&&e.model!=='?'?'<div>📱 <span style="color:#fff;font-weight:600">'+esc(e.model)+'</span></div>':'')
+              +'<div>'+esc(dev)+'</div>'
+              +'</div>'
+              +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
+              +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(e.lat)+', '+esc(e.lon)+'</span></div>':'')
+              +(tz?'<div>🕐 <span style="color:#aaa">Timezone:</span> <span style="color:#ccc">'+esc(tz)+'</span></div>':'')
+              +(lang?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(lang)+'</span></div>':'')
+              +(e.screen?'<div>🖥 <span style="color:#aaa">Screen:</span> <span style="color:#ccc">'+esc(e.screen)+'</span></div>':'')
+              +'</div>'
               +'</div></li>';
           }).join('');
         });
@@ -2870,21 +2887,38 @@ function loadDevTrapList(){
           sub.innerHTML=arr.map(function(e,idx){
             var t=e.time?new Date(e.time).toLocaleString():'?';
             var did='dvd-'+idx+'-'+esc(id);
-            return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
-              +'<div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">'
-              +'<span style="color:#ccc;font-weight:600;font-size:.75rem">'+esc(t)+'</span>'
-              +'<span style="color:#f5c800;font-size:.7rem">'+esc(e.country||'?')+'</span>'
-              +(e.ip?'<span style="color:#555;font-size:.65rem">'+esc(e.ip)+'</span>':'')
-              +'<button onclick="var d=document.getElementById(\''+did+'\');d.style.display=d.style.display===\'none\'?\'block\':\'none\'" style="background:none;border:1px solid rgba(255,255,255,.18);border-radius:4px;color:#aaa;font-size:.62rem;padding:1px 6px;cursor:pointer;margin-left:auto">details</button>'
+            var loc=[e.city,e.region,e.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
+            var coordStr=(e.lat&&e.lat!=='?'&&e.lon&&e.lon!=='?')?' ('+e.lat+', '+e.lon+')':'';
+            var dev=[e.device,e.os,e.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
+            var isp=e.isp&&e.isp!=='?'?e.isp:'';
+            var tz=e.tz||e.timezone||'';
+            var lang=e.lang&&e.lang!=='?'?e.lang:'';
+            var vpn=e.isVpn===true;
+            var dwellSec=typeof e.dwell==='number'&&e.dwell>=0?e.dwell:null;
+            var dwellStr=dwellSec===null?'':dwellSec<60?dwellSec+'s':(Math.floor(dwellSec/60)+'m '+(dwellSec%60)+'s');
+            return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+              +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'
+              +(vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN</span>':'')
+              +'<span style="font-size:.72rem;color:#ff6b6b;font-weight:600">📍 '+esc(loc)+'</span>'
+              +(dwellStr?'<span style="font-size:.65rem;color:#a0cfff">⏱ '+esc(dwellStr)+'</span>':'')
+              +'<span style="margin-left:auto;font-size:.6rem;color:#555">'+esc(t)+'</span>'
               +'</div>'
-              +'<div style="color:#666;font-size:.68rem">'+esc(e.tag||'')+'</div>'
-              +'<div id="'+did+'" style="display:none;margin-top:5px;background:rgba(0,0,0,.35);border-radius:6px;padding:5px 8px">'
-              +[['OS',e.os||'—'],['Browser',e.browser||'—'],['Screen',e.screen||'—'],['Language',e.lang||'—'],['Timezone',e.tz||'—'],['IP',e.ip||'—'],['Location',[(e.country||''),(e.region||'')].filter(Boolean).join(', ')||'—']].map(function(r){
-                return '<div style="display:flex;gap:5px;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
-                  +'<span style="color:#555;font-size:.64rem;min-width:64px;flex-shrink:0">'+r[0]+'</span>'
-                  +'<span style="color:#ccc;font-size:.68rem;word-break:break-all">'+esc(r[1])+'</span></div>';
-              }).join('')
-              +(e.ua?'<div style="margin-top:3px;color:#444;font-size:.6rem;word-break:break-all;line-height:1.3">'+esc(e.ua)+'</div>':'')
+              +(e.tag?'<div style="font-size:.65rem;color:#888;margin-bottom:3px">'+esc(e.tag)+'</div>':'')
+              +'<button class="btn-sm" style="font-size:.6rem;padding:1px 7px" onclick="(function(el,id){var d=document.getElementById(id);var open=d.style.display!==\'none\';d.style.display=open?\'none\':\'\';el.textContent=open?\'Details\':\'Hide\';})(this,\''+did+'\')" >Details</button>'
+              +'<div id="'+did+'" style="display:none;margin-top:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:7px 9px;font-size:.65rem;line-height:1.8">'
+              +(e.ip&&e.ip!=='?'?'<div>🌐 <span style="color:#f5c800;font-family:monospace;font-weight:600">'+esc(e.ip)+'</span></div>':'')
+              +(isp?'<div>📡 <span style="color:#aaa">ISP:</span> <span style="color:#ccc">'+esc(isp)+'</span></div>':'')
+              +(vpn?'<div style="color:#ff5050">⚠ VPN / Proxy / Hosting IP flagged</div>':'')
+              +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
+              +(e.model&&e.model!=='?'?'<div>📱 <span style="color:#fff;font-weight:600">'+esc(e.model)+'</span></div>':'')
+              +'<div>'+esc(dev)+'</div>'
+              +'</div>'
+              +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
+              +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(e.lat)+', '+esc(e.lon)+'</span></div>':'')
+              +(tz?'<div>🕐 <span style="color:#aaa">Timezone:</span> <span style="color:#ccc">'+esc(tz)+'</span></div>':'')
+              +(lang?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(lang)+'</span></div>':'')
+              +(e.screen?'<div>🖥 <span style="color:#aaa">Screen:</span> <span style="color:#ccc">'+esc(e.screen)+'</span></div>':'')
+              +'</div>'
               +'</div></li>';
           }).join('');
         });
@@ -2962,20 +2996,44 @@ function loadDevRedirectList(){
           var raw=Array.isArray(logs)?logs:(logs&&typeof logs==='object'?Object.values(logs):[]);
           var arr=raw.slice().sort(function(a,b){return (b.time||'').localeCompare(a.time||'');});
           if(!arr.length){sub.innerHTML='<li style="color:#888;font-size:.7rem">No hits yet.</li>';return;}
-          sub.innerHTML=arr.map(function(h){
+          sub.innerHTML=arr.map(function(h,hi){
             var loc=[h.city,h.region,h.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
+            var coordStr=(h.lat&&h.lat!=='?'&&h.lon&&h.lon!=='?')?' ('+h.lat+', '+h.lon+')':'';
             var dev=[h.device,h.os,h.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
             var isp=h.isp&&h.isp!=='?'?h.isp:'';
             var tz=h.timezone&&h.timezone!=='?'?h.timezone:'';
             var lang=h.lang&&h.lang!=='?'?h.lang:'';
+            var vpn=h.isVpn===true;
+            var dwellSec=typeof h.dwell==='number'&&h.dwell>=0?h.dwell:null;
+            var dwellStr=dwellSec===null?'':dwellSec<60?dwellSec+'s':(Math.floor(dwellSec/60)+'m '+(dwellSec%60)+'s');
+            var src=h.refSource&&h.refSource!=='?'?h.refSource:null;
+            var openedFrom=src?src:(h.referer&&h.referer!=='?'?h.referer.slice(0,60):'Direct / unknown');
+            var sourceIcon={'Instagram':'📸','Twitter/X':'🐦','Facebook':'👥','WhatsApp':'💬','Telegram':'✈️','Discord':'🎮','Reddit':'🔴','TikTok':'🎵','YouTube':'▶️','Snapchat':'👻','LinkedIn':'💼','Google':'🔍','Gmail':'📧','Outlook':'📧','Signal':'🔒','Spotify':'🎧','Twitch':'🟣'};
+            var srcIcon=sourceIcon[src]||'🔗';
+            var did='devrhit-'+id+'-'+hi;
             return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
-              +'<div style="font-size:.72rem;color:#4fc;font-weight:600">📍 '+esc(loc)+'</div>'
-              +'<div style="font-size:.68rem;color:#ccc;margin-top:2px">🖥 '+esc(dev)+'</div>'
-              +(h.ip&&h.ip!=='?'?'<div style="font-size:.68rem;color:#f5c800;margin-top:2px">🌐 '+esc(h.ip)+'</div>':'')
-              +(isp?'<div style="font-size:.65rem;color:#aaa;margin-top:1px">📡 '+esc(isp)+'</div>':'')
-              +(tz?'<div style="font-size:.65rem;color:#aaa;margin-top:1px">🕐 '+esc(tz)+'</div>':'')
-              +(lang?'<div style="font-size:.65rem;color:#aaa;margin-top:1px">🗣 '+esc(lang)+'</div>':'')
-              +'<div style="font-size:.6rem;color:#555;margin-top:3px">'+esc(new Date(h.time).toLocaleString())+'</div>'
+              +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'
+              +(vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN / PROXY</span>':'<span style="font-size:.6rem;background:rgba(80,255,160,.12);color:#4fc;border:1px solid rgba(80,255,160,.3);border-radius:3px;padding:1px 5px">✓ Clean</span>')
+              +'<span style="font-size:.72rem;color:#4fc;font-weight:600">📍 '+esc(loc)+'</span>'
+              +(dwellStr?'<span style="font-size:.65rem;color:#a0cfff">⏱ '+esc(dwellStr)+'</span>':'')
+              +'<span style="margin-left:auto;font-size:.6rem;color:#555">'+esc(new Date(h.time).toLocaleString())+'</span>'
+              +'</div>'
+              +'<button class="btn-sm" style="font-size:.6rem;padding:1px 7px" onclick="(function(el,id){var d=document.getElementById(id);var open=d.style.display!==\'none\';d.style.display=open?\'none\':\'\';el.textContent=open?\'Details\':\'Hide\';})(this,\''+did+'\')" >Details</button>'
+              +'<div id="'+did+'" style="display:none;margin-top:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:7px 9px;font-size:.65rem;line-height:1.8">'
+              +(h.ip&&h.ip!=='?'?'<div>🌐 <span style="color:#f5c800;font-family:monospace;font-weight:600">'+esc(h.ip)+'</span></div>':'')
+              +(isp?'<div>📡 <span style="color:#aaa">ISP:</span> <span style="color:#ccc">'+esc(isp)+'</span></div>':'')
+              +(vpn?'<div style="color:#ff5050">⚠ VPN / Proxy / Hosting IP flagged</div>':'')
+              +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
+              +(h.model&&h.model!=='?'?'<div>📱 <span style="color:#fff;font-weight:600">'+esc(h.model)+'</span></div>':'')
+              +'<div>'+esc(dev)+'</div>'
+              +'</div>'
+              +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
+              +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(h.lat)+', '+esc(h.lon)+'</span></div>':'')
+              +'<div>'+srcIcon+' <span style="color:#aaa">Opened from:</span> <span style="color:#c8b8ff">'+esc(openedFrom)+'</span></div>'
+              +(tz?'<div>🕐 <span style="color:#aaa">Timezone:</span> <span style="color:#ccc">'+esc(tz)+'</span></div>':'')
+              +(lang?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(lang)+'</span></div>':'')
+              +'</div>'
+              +'</div>'
               +'</li>';
           }).join('');
         });
