@@ -1,4 +1,4 @@
-// SC6 Redirect Tracker Worker — v1.9.16
+// SC6 Redirect Tracker Worker — v1.9.17
 // Deploy at: media.sharelink-1.workers.dev
 
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
@@ -31,6 +31,71 @@ function getDeviceType(ua) {
   if (/iPad/.test(ua)) return 'Tablet';
   if (/iPhone|Android.*Mobile|Mobile/.test(ua)) return 'Mobile';
   return 'Desktop';
+}
+
+// Map Android model codes → marketing names (common devices)
+const ANDROID_MODELS = {
+  // Samsung Galaxy S
+  'SM-S928':'Samsung Galaxy S24 Ultra','SM-S926':'Samsung Galaxy S24+','SM-S921':'Samsung Galaxy S24',
+  'SM-S918':'Samsung Galaxy S23 Ultra','SM-S916':'Samsung Galaxy S23+','SM-S911':'Samsung Galaxy S23',
+  'SM-S908':'Samsung Galaxy S22 Ultra','SM-S906':'Samsung Galaxy S22+','SM-S901':'Samsung Galaxy S22',
+  'SM-G998':'Samsung Galaxy S21 Ultra','SM-G996':'Samsung Galaxy S21+','SM-G991':'Samsung Galaxy S21',
+  'SM-G988':'Samsung Galaxy S20 Ultra','SM-G986':'Samsung Galaxy S20+','SM-G981':'Samsung Galaxy S20',
+  // Samsung Galaxy A
+  'SM-A556':'Samsung Galaxy A55','SM-A546':'Samsung Galaxy A54','SM-A536':'Samsung Galaxy A53',
+  'SM-A526':'Samsung Galaxy A52','SM-A346':'Samsung Galaxy A34','SM-A336':'Samsung Galaxy A33',
+  'SM-A156':'Samsung Galaxy A15','SM-A146':'Samsung Galaxy A14','SM-A136':'Samsung Galaxy A13',
+  'SM-A057':'Samsung Galaxy A05s','SM-A047':'Samsung Galaxy A04s',
+  // Samsung Galaxy Z
+  'SM-F956':'Samsung Galaxy Z Fold 6','SM-F731':'Samsung Galaxy Z Flip 5',
+  'SM-F946':'Samsung Galaxy Z Fold 5','SM-F721':'Samsung Galaxy Z Flip 4',
+  // Google Pixel
+  'Pixel 9 Pro XL':'Google Pixel 9 Pro XL','Pixel 9 Pro':'Google Pixel 9 Pro','Pixel 9':'Google Pixel 9',
+  'Pixel 8 Pro':'Google Pixel 8 Pro','Pixel 8a':'Google Pixel 8a','Pixel 8':'Google Pixel 8',
+  'Pixel 7 Pro':'Google Pixel 7 Pro','Pixel 7a':'Google Pixel 7a','Pixel 7':'Google Pixel 7',
+  'Pixel 6 Pro':'Google Pixel 6 Pro','Pixel 6a':'Google Pixel 6a','Pixel 6':'Google Pixel 6',
+  // OnePlus
+  'CPH2581':'OnePlus 12','CPH2423':'OnePlus 11','CPH2409':'OnePlus 10 Pro',
+  'LE2125':'OnePlus 9 Pro','LE2115':'OnePlus 9',
+  // Xiaomi
+  '23116PN5BC':'Xiaomi 14 Ultra','2312DRAABL':'Xiaomi 14','2210132C':'Xiaomi 13 Pro','2211133C':'Xiaomi 13',
+  '22071212AG':'Xiaomi 12 Pro','2201122G':'Xiaomi 12',
+  'M2101K7BG':'Xiaomi Redmi Note 10 Pro','M2101K7BNY':'Xiaomi Redmi Note 10',
+  '2203129G':'Xiaomi Redmi Note 12 Pro','22111317I':'Xiaomi Redmi Note 12',
+  'M2010J19SG':'Xiaomi Redmi Note 9 Pro',
+  // Realme
+  'RMX3686':'Realme GT 5','RMX3741':'Realme 11 Pro+','RMX3561':'Realme GT Neo 3',
+  // Oppo
+  'CPH2525':'OPPO Find X6 Pro','CPH2219':'OPPO A74','CPH2179':'OPPO A54',
+  // Huawei (UA may still appear)
+  'VOG-L29':'Huawei P30 Pro','ELS-NX9':'Huawei P40 Pro','NOH-NX9':'Huawei P40',
+  // Sony
+  'XQ-EC54':'Sony Xperia 1 V','XQ-DQ54':'Sony Xperia 1 IV',
+  // Motorola
+  'XT2341':'Motorola Edge 40 Pro','XT2251':'Motorola Edge 30 Pro',
+};
+
+function getDeviceModel(ua) {
+  if (!ua || ua === '?') return null;
+  // iPhone / iPad — iOS doesn't expose model
+  if (/iPhone/.test(ua)) return 'iPhone';
+  if (/iPad/.test(ua)) return 'iPad';
+  // Android — try to extract model token
+  // UA format: (Linux; Android X.Y; MODEL Build/...) or (Linux; Android X.Y; MODEL)
+  const m = ua.match(/Android[\d. ]+;([^)]+)/);
+  if (!m) return null;
+  const raw = m[1].trim().replace(/\s+Build.*$/, '').replace(/\s+\d+$/, '').trim();
+  if (!raw) return null;
+  // Check full token first, then prefix (model codes like SM-S928B → SM-S928)
+  if (ANDROID_MODELS[raw]) return ANDROID_MODELS[raw];
+  const prefix = raw.replace(/-[A-Z0-9]{1,3}$/, ''); // strip suffix like -B, -DS, -BN
+  if (ANDROID_MODELS[prefix]) return ANDROID_MODELS[prefix];
+  // Check if it starts with a known prefix key (Pixel models are stored as full name)
+  for (const [k, v] of Object.entries(ANDROID_MODELS)) {
+    if (raw.startsWith(k) || raw.includes(k)) return v;
+  }
+  // Unknown model — return the raw code so it's still informative
+  return raw;
 }
 
 // Detect VPN/proxy/datacenter from ISP name or ASN org
@@ -183,6 +248,7 @@ export default {
         time: new Date().toISOString(),
         ip, country, city, region, ua,
         os: getOS(ua), browser: getBrowser(ua), device: getDeviceType(ua),
+        model: getDeviceModel(ua) || undefined,
         lang, referer, refSource, linkId: resolvedId, param, geoBlocked: true,
         isVpn, lat, lon, isp, asn
       };
@@ -195,6 +261,7 @@ export default {
       ip, country, city, region, timezone, isp, asn,
       lat, lon, isVpn,
       os: getOS(ua), browser: getBrowser(ua), device: getDeviceType(ua),
+      model: getDeviceModel(ua) || undefined,
       lang, referer, refSource, ua, linkId: resolvedId, param,
       originalParam: linkId !== resolvedId ? linkId : undefined,
       dwell: null  // filled in later via /ping
