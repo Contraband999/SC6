@@ -170,7 +170,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.23</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.24</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1386,10 +1386,16 @@ document.getElementById('btnDev').addEventListener('click',function(){
   show('devView');
   loadDevAnnouncement();
   fetch(devLockedUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(locked){
+    var isLocked=locked===true||(locked&&locked.locked===true);
+    var lockReason=locked&&locked.reason?locked.reason:'';
     var banner=document.getElementById('devLockedBanner');
     var section=document.getElementById('devGateSection');
-    if(locked===true){banner.style.display='';section.style.display='none';}
-    else{banner.style.display='none';section.style.display='';}
+    if(isLocked){
+      banner.innerHTML='<div style="font-size:1rem;font-weight:800;color:#ff4444;margin-bottom:6px">🔒 Dev panel is locked.</div>'
+        +'<div style="font-size:.78rem;color:#aaa;line-height:1.5">The dev panel has been locked. Contact the operator.</div>'
+        +(lockReason?'<div style="font-size:.78rem;color:#ccc;margin-top:8px;padding:8px 10px;background:rgba(255,255,255,.05);border-radius:6px;text-align:left"><span style="color:#ff6b6b;font-weight:600">Operator reason:</span> '+lockReason.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>':'');
+      banner.style.display='';section.style.display='none';
+    } else {banner.style.display='none';section.style.display='';}
   });
 });
 document.getElementById('btnOp').addEventListener('click',function(){show('opView');});
@@ -1475,9 +1481,19 @@ function _devWatchdogStart(code){
               banner.id='devLockedBanner';
               gate.insertBefore(banner,gate.firstChild);
             }
+            // Find reason from the matching entry
+            var disabledReason='';
+            if(disabled&&passes){
+              Object.values(passes).forEach(function(entry){
+                if(entry&&(entry.code===code||entry.hash===code)&&entry.disabledReason){
+                  disabledReason=entry.disabledReason;
+                }
+              });
+            }
             banner.style.cssText='margin:20px 0;background:rgba(192,0,14,.12);border:1px solid rgba(192,0,14,.4);border-radius:10px;padding:18px 16px;text-align:center';
             banner.innerHTML='<div style="font-size:1.1rem;font-weight:800;color:#ff4444;margin-bottom:8px">⛔ Your access code was disabled.</div>'
               +'<div style="font-size:.78rem;color:#aaa;line-height:1.5">Your access has been revoked by the operator.</div>'
+              +(disabledReason?'<div style="font-size:.78rem;color:#ccc;margin-top:8px;padding:8px 10px;background:rgba(255,255,255,.05);border-radius:6px;text-align:left"><span style="color:#ff6b6b;font-weight:600">Operator reason:</span> '+disabledReason.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>':'')
               +'<button class="btn-sm" onclick="location.reload()" style="margin-top:12px;font-size:.72rem;width:100%;padding:7px">← Back to login</button>';
             banner.style.display='';
           }
@@ -1632,7 +1648,7 @@ function tryDevCode(){
   if(!_loginAllowed()){shake(inp);inp.value='';return;}
   // Check lock
   fetch(devLockedUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(locked){
-    if(locked===true){exLog('Dev login blocked','Panel is locked','unknown');shake(inp);inp.value='';return;}
+    if(locked===true||(locked&&locked.locked===true)){exLog('Dev login blocked','Panel is locked','unknown');shake(inp);inp.value='';return;}
     // Check passwords stored in Firebase (plain text comparison)
     fetch(devPasswordsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
       var arr=extrasFromRaw(d);
@@ -2220,17 +2236,25 @@ document.querySelectorAll('.exec-filter-who').forEach(function(btn){
 // ── Lock ──
 function refreshOpLock(){
   fetch(devLockedUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
-    var on=v===true;
-    document.getElementById('opLockStatus').textContent='Dev panel: '+(on?'Locked':'Unlocked');
+    var on=v===true||(v&&v.locked===true);
+    var reason=v&&v.reason?v.reason:'';
+    document.getElementById('opLockStatus').textContent='Dev panel: '+(on?'Locked'+(reason?' — "'+reason+'"':''):'Unlocked');
     document.getElementById('opToggleLock').textContent=on?'Unlock':'Lock';
     document.getElementById('opToggleLock').style.color=on?'#ff6b6b':'';
   });
 }
 document.getElementById('opToggleLock').addEventListener('click',function(){
   fetch(devLockedUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
-    var on=v===true;
-    if(!on&&!confirm('Lock the Dev panel? No one (even with a valid code) can open it until you unlock here.'))return;
-    syncFetch(devLockedUrl(),{method:'PUT',body:JSON.stringify(!on)}).then(function(){exLog('Dev panel '+(on?'unlocked':'locked'),'','operator',true);refreshOpLock();}).catch(function(e){alert('Failed: '+e.message);});
+    var on=v===true||(v&&v.locked===true);
+    if(on){
+      // Unlocking — no reason needed
+      syncFetch(devLockedUrl(),{method:'PUT',body:JSON.stringify(false)}).then(function(){exLog('Dev panel unlocked','','operator',true);refreshOpLock();}).catch(function(e){alert('Failed: '+e.message);});
+    } else {
+      var reason=window.prompt('Operator reason (optional — shown to users who try to log in):','');
+      if(reason===null)return; // cancelled
+      var payload=reason?{locked:true,reason:reason}:true;
+      syncFetch(devLockedUrl(),{method:'PUT',body:JSON.stringify(payload)}).then(function(){exLog('Dev panel locked','Reason: '+(reason||'none'),'operator',true);refreshOpLock();}).catch(function(e){alert('Failed: '+e.message);});
+    }
   });
 });
 
@@ -2580,15 +2604,22 @@ function loadOpPasswords(){
     document.querySelectorAll('[data-pass-toggle]').forEach(function(btn){
       btn.addEventListener('click',function(){
         var idx=parseInt(btn.getAttribute('data-pass-toggle'));
-        var arr=extras.map(function(e){return{code:e.code,disabled:e.disabled};});
+        var arr=extras.map(function(e){return{code:e.code,disabled:e.disabled,disabledReason:e.disabledReason||undefined};});
         var targetCode=arr[idx].code;
-        arr[idx].disabled=!arr[idx].disabled;
+        var willDisable=!arr[idx].disabled;
+        var reason='';
+        if(willDisable){
+          reason=window.prompt('Operator reason (optional — shown to the user):','');
+          if(reason===null)return; // cancelled
+        }
+        arr[idx].disabled=willDisable;
+        arr[idx].disabledReason=willDisable&&reason?reason:undefined;
         var nowDisabled=arr[idx].disabled;
         btn.disabled=true;
         fetch(devPasswordsUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)})
           .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-          .then(function(){exLog('Password '+(nowDisabled?'disabled':'enabled'),'Code: '+targetCode,'operator',true);loadOpPasswords();})
-          .catch(function(e){btn.disabled=false;fbPutError(e.message);});
+          .then(function(){exLog('Password '+(nowDisabled?'disabled':'enabled'),'Code: '+targetCode+(reason?' | Reason: '+reason:''),'operator',true);loadOpPasswords();})
+          .catch(function(e){btn.disabled=false;fbPutError(e.message);})
       });
     });
 
