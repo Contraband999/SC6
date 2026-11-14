@@ -1649,7 +1649,7 @@ function shake(el){el.classList.remove('shake');void el.offsetWidth;el.classList
 
 // ══════════════════════════════════════════
 // ── Operator panel group toggle ──
-function opGrpToggle(id){
+window.opGrpToggle=function opGrpToggle(id){
   var body=document.getElementById('opGrpBody-'+id);
   var arr=document.getElementById('opGrpArr-'+id);
   if(!body)return;
