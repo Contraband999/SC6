@@ -1,4 +1,4 @@
-// SC6 Redirect Tracker Worker — v1.9.31
+// SC6 Redirect Tracker Worker — v1.9.32
 // Deploy at: media.sharelink-1.workers.dev
 
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
@@ -98,21 +98,39 @@ function getDeviceModel(ua) {
   return raw;
 }
 
-// Detect VPN/proxy/datacenter from ISP name or ASN org
+// Detect VPN/proxy/datacenter from ISP name or ASN org.
+// Strategy: flag known VPN/datacenter keywords, AND flag anything that
+// doesn't look like a residential ISP (mobile carrier or home broadband).
 function detectVpn(isp, asn) {
   if (!isp || isp === '?') return false;
   const s = isp.toLowerCase();
-  const vpnKeywords = [
+
+  // Explicit VPN provider names
+  const vpnNames = [
     'nordvpn','expressvpn','mullvad','surfshark','protonvpn','cyberghost',
-    'ipvanish','hidemyass','purevpn','windscribe','pia ','private internet access',
-    'torguard','vpn','proxy','tor exit','hosting','hosted','digitalocean','linode','vultr',
-    'ovh','hetzner','leaseweb','choopa','psychz','quadranet','coresite','zenlayer',
-    'amazon','google cloud','microsoft azure','cloudflare','fastly','akamai',
-    'datacenter','data center','datacamp','server','colocation','colo',
-    'm247','datapacket','b2 net','pack et','heficed','tzulo','servercheap',
-    'sharktech','frantech','buyvm','ponynet','flarenodes','terrahost'
+    'ipvanish','hidemyass','purevpn','windscribe','private internet access',
+    'torguard','hidemyass','vyprvpn','strongvpn','tunnelbear','hotspot shield'
   ];
-  return vpnKeywords.some(k => s.includes(k));
+  if (vpnNames.some(k => s.includes(k))) return true;
+
+  // Datacenter / hosting / infrastructure keywords
+  const dcKeywords = [
+    'hosting','hosted','datacenter','data center','colocation','colo',
+    'cloud','server','dedicated','vps','virtual private','infrastructure',
+    'network services','transit','ix ','internet exchange',
+    'digitalocean','linode','vultr','ovh','hetzner','leaseweb','choopa',
+    'psychz','quadranet','coresite','zenlayer','datacamp','datapacket',
+    'm247','heficed','tzulo','sharktech','frantech','buyvm','terrahost',
+    'amazon','google llc','microsoft','cloudflare','fastly','akamai',
+    'cogent','zayo','telia','level 3','lumen','centurylink','hurricane electric',
+    'as13335','pvsl','constant','incapsula','imperva','sucuri'
+  ];
+  if (dcKeywords.some(k => s.includes(k))) return true;
+
+  // Generic: any word that strongly implies non-residential
+  if (/\b(vpn|proxy|tor|relay|tunnel|exit node|anon)\b/.test(s)) return true;
+
+  return false;
 }
 
 // Parse referer into a human-readable source
