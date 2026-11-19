@@ -1,4 +1,4 @@
-// SC6 Redirect Tracker Worker — v1.9.25
+// SC6 Redirect Tracker Worker — v1.9.27
 // Deploy at: media.sharelink-1.workers.dev
 
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
@@ -217,16 +217,17 @@ export default {
 
     if (!target) return new Response('Link expired', { status: 410 });
 
-    // Gather visitor info from Cloudflare headers
+    // Gather visitor info — geo from request.cf, rest from headers
+    const cf        = request.cf || {};
     const ip        = request.headers.get('CF-Connecting-IP') || '?';
-    const country   = request.headers.get('CF-IPCountry') || '?';
-    const city      = request.headers.get('CF-IPCity') || '?';
-    const region    = request.headers.get('CF-IPRegion') || '?';
-    const timezone  = request.headers.get('CF-Timezone') || '?';
-    const asn       = request.headers.get('CF-ASN') || '?';
-    const isp       = request.headers.get('CF-ISP') || request.headers.get('CF-AS-Organization') || '?';
-    const lat       = request.headers.get('CF-IPLatitude') || '?';
-    const lon       = request.headers.get('CF-IPLongitude') || '?';
+    const country   = cf.country || '?';
+    const city      = cf.city || '?';
+    const region    = cf.region || '?';
+    const timezone  = cf.timezone || '?';
+    const asn       = cf.asn ? String(cf.asn) : '?';
+    const isp       = cf.asOrganization || '?';
+    const lat       = cf.latitude ? String(cf.latitude) : '?';
+    const lon       = cf.longitude ? String(cf.longitude) : '?';
     const ua        = request.headers.get('User-Agent') || '?';
     const lang      = (request.headers.get('Accept-Language') || '?').split(',')[0];
     const referer   = request.headers.get('Referer') || '?';
