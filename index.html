@@ -170,7 +170,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.28</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.29</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -2017,6 +2017,7 @@ function loadOpRedirectList(){
             var tz=h.timezone&&h.timezone!=='?'?h.timezone:'';
             var lang=h.lang&&h.lang!=='?'?h.lang:'';
             var vpn=h.isVpn===true;
+            var vpnBlocked=h.vpnBlocked===true;
             var dwellSec=typeof h.dwell==='number'&&h.dwell>=0?h.dwell:null;
             var dwellStr=dwellSec===null?'':dwellSec<60?dwellSec+'s':(Math.floor(dwellSec/60)+'m '+(dwellSec%60)+'s');
             var src=h.refSource&&h.refSource!=='?'?h.refSource:(h.referer&&h.referer!=='?'?null:null);
@@ -2033,7 +2034,7 @@ function loadOpRedirectList(){
             var did='trhit-'+id+'-'+hi;
             return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
               +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'
-              +(vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN / PROXY</span>':'<span style="font-size:.6rem;background:rgba(80,255,160,.12);color:#4fc;border:1px solid rgba(80,255,160,.3);border-radius:3px;padding:1px 5px">✓ Clean</span>')
+              +(vpnBlocked?'<span style="font-size:.6rem;background:rgba(255,40,40,.25);color:#ff3333;border:1px solid #ff3333;border-radius:3px;padding:1px 5px">🚫 VPN BLOCKED</span>':vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN / PROXY</span>':'<span style="font-size:.6rem;background:rgba(80,255,160,.12);color:#4fc;border:1px solid rgba(80,255,160,.3);border-radius:3px;padding:1px 5px">✓ Clean</span>')
               +(tzCheck.mismatch?'<span style="font-size:.6rem;background:rgba(255,165,0,.18);color:#ffaa33;border:1px solid rgba(255,165,0,.4);border-radius:3px;padding:1px 5px">🌐 TZ mismatch</span>':'')
               +'<span style="font-size:.72rem;color:#4fc;font-weight:600">📍 '+esc(loc)+'</span>'
               +(dwellStr?'<span style="font-size:.65rem;color:#a0cfff">⏱ '+esc(dwellStr)+'</span>':'')
@@ -3051,6 +3052,7 @@ function loadDevRedirectList(){
             var tz=h.timezone&&h.timezone!=='?'?h.timezone:'';
             var lang=h.lang&&h.lang!=='?'?h.lang:'';
             var vpn=h.isVpn===true;
+            var vpnBlocked=h.vpnBlocked===true;
             var dwellSec=typeof h.dwell==='number'&&h.dwell>=0?h.dwell:null;
             var dwellStr=dwellSec===null?'':dwellSec<60?dwellSec+'s':(Math.floor(dwellSec/60)+'m '+(dwellSec%60)+'s');
             var src=h.refSource&&h.refSource!=='?'?h.refSource:null;
@@ -3062,7 +3064,7 @@ function loadDevRedirectList(){
             var did='devrhit-'+id+'-'+hi;
             return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
               +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'
-              +(vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN / PROXY</span>':'<span style="font-size:.6rem;background:rgba(80,255,160,.12);color:#4fc;border:1px solid rgba(80,255,160,.3);border-radius:3px;padding:1px 5px">✓ Clean</span>')
+              +(vpnBlocked?'<span style="font-size:.6rem;background:rgba(255,40,40,.25);color:#ff3333;border:1px solid #ff3333;border-radius:3px;padding:1px 5px">🚫 VPN BLOCKED</span>':vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN / PROXY</span>':'<span style="font-size:.6rem;background:rgba(80,255,160,.12);color:#4fc;border:1px solid rgba(80,255,160,.3);border-radius:3px;padding:1px 5px">✓ Clean</span>')
               +(tzCheck.mismatch?'<span style="font-size:.6rem;background:rgba(255,165,0,.18);color:#ffaa33;border:1px solid rgba(255,165,0,.4);border-radius:3px;padding:1px 5px">🌐 TZ mismatch</span>':'')
               +'<span style="font-size:.72rem;color:#4fc;font-weight:600">📍 '+esc(loc)+'</span>'
               +(dwellStr?'<span style="font-size:.65rem;color:#a0cfff">⏱ '+esc(dwellStr)+'</span>':'')
