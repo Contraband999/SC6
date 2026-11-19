@@ -1,4 +1,4 @@
-// SC6 Redirect Tracker Worker — v1.9.37
+// SC6 Redirect Tracker Worker — v1.9.38
 // Deploy at: media.sharelink-1.workers.dev
 
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
@@ -469,15 +469,14 @@ button:active{opacity:.8}
     ctx.waitUntil(writeExecLog(execEntry));
 
     // Serve an HTML bridge page that records dwell time then redirects.
-    // Redirect strategy (most-compatible order):
-    //   1. <meta http-equiv="refresh"> — fires even if JS is off or blocked
-    //   2. document.location.replace() inline in <script> — synchronous, no timer, no gesture needed
-    //   3. setTimeout fallback at 0ms in case replace() somehow didn't fire
-    // The ping for dwell time fires on pagehide/beforeunload.
+    // - Attach pagehide/beforeunload listeners FIRST so they're wired before navigation starts
+    // - location.replace() inline in <script> is a top-level navigation — browsers allow it
+    //   without a user gesture (it's not a popup); no setTimeout needed or wanted
+    // - A noscript meta-refresh fallback handles the rare JS-disabled case
     const pingUrl = 'https://media.sharelink-1.workers.dev/ping';
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="0;url=${target.replace(/"/g,'&quot;')}">
+<noscript><meta http-equiv="refresh" content="0;url=${target.replace(/"/g,'&quot;')}"></noscript>
 <style>body{margin:0;background:#000}</style>
 </head><body>
 <script>
@@ -491,10 +490,11 @@ function ping(dwell){
   try{fetch(${JSON.stringify(pingUrl)},{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({ws:_ws,linkId:_id,logKey:_key,dwell:dwell})});}catch(e){}
 }
+// Wire listeners before navigating so pagehide fires with dwell time
 window.addEventListener('pagehide',function(){ping(Math.round((Date.now()-_t)/1000));},{capture:true});
 window.addEventListener('beforeunload',function(){ping(Math.round((Date.now()-_t)/1000));});
-// Redirect immediately — synchronous replace, no setTimeout needed
-document.location.replace(_target);
+// Top-level location.replace is allowed without a user gesture on all browsers
+location.replace(_target);
 </script>
 </body></html>`;
 
