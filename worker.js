@@ -1,4 +1,4 @@
-// SC6 Redirect Tracker Worker — v1.9.35
+// SC6 Redirect Tracker Worker — v1.9.36
 // Deploy at: media.sharelink-1.workers.dev
 
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
@@ -322,6 +322,25 @@ export default {
         isVpn, lat, lon, isp, asn
       };
       ctx.waitUntil(writeLog(ws, resolvedId, blockedEntry));
+      // Also write to exec log so geo-blocked hits appear in live stream and exec log
+      const geoExecEntry = {
+        time: blockedEntry.time,
+        t: blockedEntry.time,
+        action: '🌍 Geo-blocked redirect hit',
+        detail: 'Link: ' + resolvedId
+          + (city !== '?' ? ' | ' + city : '')
+          + (country !== '?' ? ', ' + country : '')
+          + (ip !== '?' ? ' | ' + ip : '')
+          + ' | ISP: ' + (isp !== '?' ? isp : 'unknown')
+          + ' WS:' + ws,
+        who: 'visitor',
+        tag: '?',
+        ip, country, city, region,
+        os: getOS(ua), browser: getBrowser(ua), device: getDeviceType(ua),
+        br: getBrowser(ua),
+        geoBlocked: true
+      };
+      ctx.waitUntil(writeExecLog(geoExecEntry));
       return new Response('Link expired', { status: 410 });
     }
 

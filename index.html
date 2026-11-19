@@ -170,7 +170,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.35</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.36</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -2048,7 +2048,10 @@ function loadOpRedirectList(){
               +(tzCheck.mismatch?'<div style="color:#ffaa33;background:rgba(255,165,0,.08);border:1px solid rgba(255,165,0,.25);border-radius:4px;padding:4px 7px;margin-top:3px">🌐 <span style="font-weight:600">Timezone mismatch — likely VPN</span><br><span style="color:#ccc">IP says <b>'+esc(h.country||'?')+'</b> but timezone is <b>'+esc(tz)+'</b> — actual location may be <b>'+esc(tzCheck.tzCountryName)+'</b></span></div>':'')
               +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
               +(h.model&&h.model!=='?'?'<div>📱 <span style="color:#fff;font-weight:600">'+esc(h.model)+'</span></div>':'')
-              +'<div>'+esc(h.device||'?')+' · '+esc(h.os||'?')+' · '+esc(h.browser||'?')+'</div>'
+              +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+              +'<span>'+esc(h.device||'?')+' · '+esc(h.os||'?')+' · '+esc(h.browser||'?')+'</span>'
+              +(h.tag&&h.tag!=='?'?'<button class="btn-sm op-redir-hit-ban" style="font-size:.58rem;padding:1px 6px" data-tag="'+esc(h.tag)+'">Ban</button>':'')
+              +'</div>'
               +(screen?'<div>🖥 <span style="color:#aaa">Screen:</span> <span style="color:#ccc">'+esc(screen)+'</span></div>':'')
               +'</div>'
               +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
@@ -2060,6 +2063,21 @@ function loadOpRedirectList(){
               +'</div>'
               +'</li>';
           }).join('');
+          // Wire ban buttons in this hits sub-list
+          sub.querySelectorAll('.op-redir-hit-ban').forEach(function(bBtn){
+            bBtn.addEventListener('click',function(){
+              var tag=bBtn.getAttribute('data-tag');
+              if(!confirm('Ban device '+tag+'?'))return;
+              fetch(devBansUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+                var a=Array.isArray(d)?d:[];
+                if(a.indexOf(tag)===-1)a.push(tag);
+                return fetch(devBansUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(a)});
+              }).then(function(){
+                exLog('Device banned (op redirect hit)','Tag: '+tag,'operator',true);
+                bBtn.textContent='Banned';bBtn.disabled=true;
+              }).catch(function(e){alert('Failed: '+e.message);});
+            });
+          });
         });
       });
     });
@@ -3248,17 +3266,22 @@ function _renderLiveStream(){
     var t=e.time?new Date(e.time).toLocaleString():'?';
     var loc=[e.city,e.region,e.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
     var dev=[e.device,e.os,e.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
-    var ws=e.detail&&e.detail.match(/WS:([\S]+)/)?e.detail.match(/WS:([\S]+)/)[1]:(e.action||'');
+    var isp=e.isp&&e.isp!=='?'?e.isp:'';
+    var isVpnBlocked=e.action&&e.action.indexOf('VPN blocked')>=0;
+    var isGeoBlocked=e.action&&e.action.indexOf('Geo-blocked')>=0;
+    var isVpn=e.isVpn===true||isVpnBlocked;
+    var dotColor=isVpnBlocked||isGeoBlocked?'#ff3333':isVpn?'#ff6b6b':'#4fc';
     return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
       +'<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">'
-      +'<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#4fc;flex-shrink:0"></span>'
+      +'<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:'+dotColor+';flex-shrink:0"></span>'
+      +(isVpnBlocked?'<span style="font-size:.58rem;background:rgba(255,40,40,.2);color:#ff3333;border:1px solid #ff3333;border-radius:3px;padding:0 4px">🚫 VPN BLOCKED</span>':isGeoBlocked?'<span style="font-size:.58rem;background:rgba(255,165,0,.18);color:#ffaa33;border:1px solid rgba(255,165,0,.5);border-radius:3px;padding:0 4px">🌍 GEO BLOCKED</span>':isVpn?'<span style="font-size:.58rem;background:rgba(255,80,80,.15);color:#ff6b6b;border:1px solid rgba(255,107,107,.4);border-radius:3px;padding:0 4px">⚠ VPN</span>':'')
       +'<span style="font-size:.7rem;color:#ccc;font-weight:600">'+esc(t)+'</span>'
       +(e.country&&e.country!=='?'?'<span style="font-size:.68rem;color:#f5c800">'+esc(e.country)+'</span>':'')
       +'</div>'
       +'<div style="font-size:.72rem;color:#4fc;margin-top:2px">📍 '+esc(loc)+'</div>'
       +'<div style="font-size:.68rem;color:#888;margin-top:1px">🖥 '+esc(dev)+'</div>'
-      +(e.ip&&e.ip!=='?'?'<div style="font-size:.65rem;color:#f5c800;margin-top:1px">🌐 '+esc(e.ip)+'</div>':'')
-      +(ws?'<div style="font-size:.62rem;color:#555;margin-top:1px">'+esc(e.action||'')+'</div>':'')
+      +(e.ip&&e.ip!=='?'?'<div style="font-size:.65rem;color:#f5c800;margin-top:1px">🌐 '+esc(e.ip)+(isp?' · <span style="color:#888">'+esc(isp)+'</span>':'')+'</div>':'')
+      +(isVpnBlocked||isGeoBlocked?'<div style="font-size:.62rem;color:#666;margin-top:1px">'+esc(e.action||'')+'</div>':'')
       +'</li>';
   }).join('');
 }
