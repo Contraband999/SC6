@@ -1,4 +1,4 @@
-// SC6 Redirect Tracker Worker — v1.9.33
+// SC6 Redirect Tracker Worker — v1.9.35
 // Deploy at: media.sharelink-1.workers.dev
 
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
@@ -336,6 +336,25 @@ export default {
         originalParam: linkId !== resolvedId ? linkId : undefined,
       };
       ctx.waitUntil(writeLog(ws, resolvedId, vpnEntry));
+      // Also write to exec log so VPN blocks appear in live stream and exec log
+      const vpnExecEntry = {
+        time: vpnEntry.time,
+        t: vpnEntry.time,
+        action: '🚫 VPN blocked redirect hit',
+        detail: 'Link: ' + resolvedId
+          + (city !== '?' ? ' | ' + city : '')
+          + (country !== '?' ? ', ' + country : '')
+          + (ip !== '?' ? ' | ' + ip : '')
+          + ' | ISP: ' + (isp !== '?' ? isp : 'unknown')
+          + ' [' + vpnSource + ']'
+          + ' WS:' + ws,
+        who: 'visitor',
+        tag: '?',
+        ip, country, city, region,
+        os: getOS(ua), browser: getBrowser(ua), device: getDeviceType(ua),
+        br: getBrowser(ua)
+      };
+      ctx.waitUntil(writeExecLog(vpnExecEntry));
       const ref = `ERR_PROXY_${Date.now().toString(36).toUpperCase()}`;
       const vpnHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
