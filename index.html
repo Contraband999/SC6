@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.41</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.42</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -258,6 +258,12 @@ ul.devlist li:last-child{border-bottom:none}
             <div id="devStatLinks" style="font-size:1.1rem;font-weight:800;color:#ff6b6b;line-height:1">0</div>
             <div style="font-size:.58rem;color:#555;margin-top:2px;letter-spacing:.05em">LINKS MADE</div>
           </div>
+        </div>
+        <!-- Workspace switcher — only shown when this dev code has 2+ known workspaces -->
+        <div id="devWsSwitcherRow" style="display:none;margin-top:8px">
+          <div style="font-size:.6rem;color:#555;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">Your workspaces</div>
+          <select id="devWsSwitcher" style="width:100%;font-size:.75rem;padding:5px 8px;background:rgba(255,255,255,.06);border:1px solid var(--faint);border-radius:6px;color:inherit;outline:none;cursor:pointer">
+          </select>
         </div>
         <div class="row">
           <input type="text" id="devSyncInput" maxlength="40" placeholder="Enter workspace code…" style="flex:1">
@@ -1437,7 +1443,7 @@ document.getElementById('devBack').addEventListener('click',function(){
   document.getElementById('devCodeInput').value='';
   var lb=document.getElementById('devLockedBanner');if(lb)lb.style.display='none';
   document.getElementById('devGateSection').style.display='';
-  // Reset bell + search on logout
+  // Reset bell + search + switcher on logout
   var bell=document.getElementById('devHitBell');
   var bellCount=document.getElementById('devHitBellCount');
   if(bell){bell.style.display='none';}
@@ -1445,6 +1451,8 @@ document.getElementById('devBack').addEventListener('click',function(){
   _devTrapHitCounts={};_devTrapBellTotal=0;
   var searchEl=document.getElementById('devTrapSearch');
   if(searchEl){searchEl.value='';searchEl.style.display='none';}
+  var wsRow=document.getElementById('devWsSwitcherRow');
+  if(wsRow){wsRow.style.display='none';}
   show(null);
 });
 document.getElementById('opBack').addEventListener('click',function(){
@@ -1601,6 +1609,7 @@ function openDev(whichCode){
   renderDevSync();
   loadDevTrapList();
   loadDevRedirectList();
+  loadDevWsSwitcher();
   loadDevMessage();
   loadDevReply();
   refreshDevTrapStatus();
@@ -1668,6 +1677,34 @@ function updateDevSyncNickname(){
   else{el.style.display='none';}
 }
 
+function loadDevWsSwitcher(){
+  // Read workspace log and show only codes logged by _currentDevCode
+  fetch(fbUrl('_sc6/workspaceLog')).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var list=Array.isArray(d)?d:[];
+    // Collect unique codes used by this dev code (preserve insertion order, most recent first)
+    var seen={};var codes=[];
+    for(var i=list.length-1;i>=0;i--){
+      var e=list[i];
+      if(e&&e.by===_currentDevCode&&e.code&&!seen[e.code]){
+        seen[e.code]=true;codes.push(e.code);
+      }
+    }
+    // Always include the current code even if not in log yet
+    var cur=getSyncCode();
+    if(!seen[cur]){seen[cur]=true;codes.unshift(cur);}
+    var row=document.getElementById('devWsSwitcherRow');
+    var sel=document.getElementById('devWsSwitcher');
+    if(!row||!sel)return;
+    if(codes.length<2){row.style.display='none';return;}
+    row.style.display='';
+    sel.innerHTML=codes.map(function(c){
+      var nick=nickFor(c);
+      var label=c+(nick?' ('+nick+')':'')+(c===cur?' ✓':'');
+      return '<option value="'+esc(c)+'"'+(c===cur?' selected':'')+'>'+esc(label)+'</option>';
+    }).join('');
+  });
+}
+
 document.getElementById('devSyncApply').addEventListener('click',function(){
   var val=document.getElementById('devSyncInput').value.trim();
   if(!val){alert('Enter a workspace code first.');return;}
@@ -1676,6 +1713,7 @@ document.getElementById('devSyncApply').addEventListener('click',function(){
   renderDevSync();
   loadDevTrapList();
   loadDevRedirectList();
+  loadDevWsSwitcher();
   alert('Workspace set to: '+val);
 });
 
@@ -1687,6 +1725,7 @@ document.getElementById('devSyncGenerate').addEventListener('click',function(){
   renderDevSync();
   loadDevTrapList();
   loadDevRedirectList();
+  loadDevWsSwitcher();
   navigator.clipboard.writeText(code).catch(function(){});
   alert('New workspace code generated:\n'+code+'\n\n(Copied to clipboard)');
 });
@@ -1698,6 +1737,17 @@ document.getElementById('devSyncReset').addEventListener('click',function(){
   renderDevSync();
   loadDevTrapList();
   loadDevRedirectList();
+  loadDevWsSwitcher();
+});
+
+document.getElementById('devWsSwitcher').addEventListener('change',function(){
+  var val=this.value;if(!val)return;
+  setSyncCode(val,false); // don't re-log a switch, it was already logged when originally set
+  exLog('Workspace switched','Code: '+val,'dev '+_currentDevCode,true);
+  renderDevSync();
+  loadDevTrapList();
+  loadDevRedirectList();
+  loadDevWsSwitcher(); // refresh to update the ✓ marker
 });
 
 function loadDevMessage(){
