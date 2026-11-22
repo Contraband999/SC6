@@ -170,7 +170,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.38</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.39</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1663,9 +1663,26 @@ function tryDevCode(){
       var arr=extrasFromRaw(d);
       var match=arr.find(function(e){return e.code===val;});
       if(match){
-        if(match.disabled===true){shake(inp);inp.value='';}
-        else{checkDevBinding(val,function(){logOpAccess('extra ('+val+')');openDev(val);});}
-      }else{exLog('Dev login failed','Wrong code entered','unknown');shake(inp);inp.value='';}
+        if(match.disabled===true||match.disabled==='true'){
+          shake(inp);inp.value='';
+          var reason=match.disabledReason&&match.disabledReason.trim?match.disabledReason.trim():'';
+          var errBox=document.getElementById('devDisabledBox');
+          if(!errBox){
+            errBox=document.createElement('div');
+            errBox.id='devDisabledBox';
+            errBox.style.cssText='margin-top:12px;background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.35);border-radius:8px;padding:12px 14px;text-align:left';
+            inp.closest('.sec-body').appendChild(errBox);
+          }
+          errBox.innerHTML='<div style="font-size:.82rem;font-weight:700;color:#ff4444;margin-bottom:4px">⛔ Access code disabled</div>'
+            +'<div style="font-size:.75rem;color:#ccc;line-height:1.5">Your access has been revoked by the operator.</div>'
+            +(reason?'<div style="font-size:.75rem;color:#ccc;margin-top:8px;padding:8px 10px;background:rgba(255,255,255,.05);border-radius:6px"><span style="color:#ff6b6b;font-weight:600">Reason:</span> '+reason.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>':'');
+          errBox.style.display='';
+        }else{checkDevBinding(val,function(){logOpAccess('extra ('+val+')');openDev(val);});}
+      }else{
+        // Wrong code — hide disabled box if visible
+        var eb=document.getElementById('devDisabledBox');if(eb)eb.style.display='none';
+        exLog('Dev login failed','Wrong code entered','unknown');shake(inp);inp.value='';
+      }
     });
   });
 }
