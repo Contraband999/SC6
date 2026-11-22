@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.42</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.43</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -305,6 +305,7 @@ ul.devlist li:last-child{border-bottom:none}
           <div id="devConvertUrl" style="font-size:.7rem;color:#ccc;word-break:break-all;line-height:1.5"></div>
           <button class="btn-sm" id="devConvertCopy" style="margin-top:7px;font-size:.68rem">Copy link</button>
         </div>
+        <div id="devRedirectRefreshInfo" style="display:none;font-size:.6rem;color:#444;margin-top:4px;letter-spacing:.03em"></div>
         <ul class="devlist" id="devRedirectList" style="margin-top:8px"></ul>
       </div>
     </section>
@@ -317,6 +318,23 @@ ul.devlist li:last-child{border-bottom:none}
         </div>
         <div class="row">
           <button class="btn-sm" id="devTrapGen">Generate &amp; copy link</button>
+          <select id="devTrapExpirySelect" title="Link TTL (optional)" style="font-size:.65rem;padding:3px 6px;background:rgba(255,255,255,.06);border:1px solid var(--faint);border-radius:6px;color:#888;outline:none;cursor:pointer">
+            <option value="">No expiry</option>
+            <option value="1">1 hour</option>
+            <option value="6">6 hours</option>
+            <option value="24">24 hours</option>
+            <option value="72">3 days</option>
+            <option value="168">7 days</option>
+          </select>
+          <button class="btn-sm" id="devTrapCopyAll" style="font-size:.68rem;display:none">Copy all</button>
+          <button class="btn-sm" id="devTrapAutoRefreshToggle" style="font-size:.68rem;color:#555;border-color:rgba(255,255,255,.12)" title="Auto-refresh every 30s">↻ Auto</button>
+        </div>
+        <!-- Trap refresh indicator -->
+        <div id="devTrapRefreshInfo" style="display:none;font-size:.6rem;color:#444;margin-top:4px;letter-spacing:.03em"></div>
+        <!-- Trap live hit feed -->
+        <div id="devTrapLiveFeed" style="display:none;margin-top:8px;background:rgba(79,255,204,.04);border:1px solid rgba(79,255,204,.12);border-radius:7px;padding:7px 10px">
+          <div style="font-size:.6rem;color:#4fc;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;font-weight:700">Live hit feed <span id="devTrapFeedDot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#4fc;vertical-align:middle;animation:tri-pulse 2s ease-in-out infinite"></span></div>
+          <ul id="devTrapFeedList" style="list-style:none;padding:0;margin:0;max-height:120px;overflow-y:auto"></ul>
         </div>
         <input type="text" id="devTrapSearch" placeholder="Filter links…" maxlength="80" autocomplete="off" style="width:100%;font-size:.72rem;padding:5px 9px;background:rgba(255,255,255,.05);border:1px solid var(--faint);border-radius:6px;color:inherit;outline:none;margin-top:6px;display:none">
         <ul class="devlist" id="devTrapList"></ul>
@@ -640,7 +658,7 @@ ul.devlist li:last-child{border-bottom:none}
               <button class="btn-sm" id="execLogExportCsv" style="font-size:.65rem">Export CSV</button>
               <button class="btn-sm danger" id="execLogClear" style="font-size:.65rem">Clear</button>
             </div>
-            <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
               <input type="text" id="execLogSearch" placeholder="Search actions…" maxlength="80" style="flex:1;min-width:120px;font-size:.72rem;padding:4px 8px;background:rgba(255,255,255,.06);border:1px solid var(--faint);border-radius:6px;color:inherit;outline:none">
               <div style="display:flex;gap:4px">
                 <button class="btn-sm exec-filter-who" data-who="all" style="font-size:.6rem;padding:2px 7px;background:rgba(255,255,255,.18);color:#fff;font-weight:700;opacity:1">All</button>
@@ -648,6 +666,14 @@ ul.devlist li:last-child{border-bottom:none}
                 <button class="btn-sm exec-filter-who" data-who="dev" style="font-size:.6rem;padding:2px 7px;background:rgba(245,200,0,.08);color:#f5c800;opacity:.45">Dev</button>
                 <button class="btn-sm exec-filter-who" data-who="visitor" style="font-size:.6rem;padding:2px 7px;background:rgba(79,255,204,.08);color:#4fc;opacity:.45">Visit</button>
               </div>
+            </div>
+            <!-- Time-range filter row -->
+            <div style="display:flex;gap:4px;margin-bottom:8px;align-items:center">
+              <span style="font-size:.6rem;color:#444;letter-spacing:.05em;text-transform:uppercase;margin-right:2px">Range:</span>
+              <button class="btn-sm exec-filter-time" data-hours="1" style="font-size:.6rem;padding:2px 7px;opacity:.45">1h</button>
+              <button class="btn-sm exec-filter-time" data-hours="6" style="font-size:.6rem;padding:2px 7px;opacity:.45">6h</button>
+              <button class="btn-sm exec-filter-time" data-hours="24" style="font-size:.6rem;padding:2px 7px;opacity:.45">24h</button>
+              <button class="btn-sm exec-filter-time" data-hours="0" style="font-size:.6rem;padding:2px 7px;background:rgba(255,255,255,.18);color:#fff;font-weight:700;opacity:1">All time</button>
             </div>
             <ul class="devlist" id="execLogList" style="max-height:420px;overflow-y:auto;padding-right:2px"><li style="color:#888">Loading…</li></ul>
           </div>
@@ -1066,6 +1092,20 @@ function exLog(action,detail,who,noGeo){
 var _execLogLastCount=0;
 var _execLogFilterWho='all';
 var _execLogFilterSearch='';
+var _execLogFilterHours=0; // 0 = all time
+// Dev panel session timer
+var _devSessionTimerInterval=null;
+var _devSessionLoginTime=null;
+// Auto-refresh toggle
+var _devTrapAutoRefresh=false;
+var _devTrapAutoRefreshInterval=null;
+// Last refresh timestamps
+var _devTrapLastRefresh=null;
+var _devRedirectLastRefresh=null;
+var _devRefreshAgoInterval=null;
+// Live feed tracking: {trapId: lastKnownHitCount}
+var _devFeedHitCounts={};
+var _devFeedEntries=[];
 function renderExLog(){
   if(_execLogPaused)return;
   var ul=document.getElementById('execLogList');
@@ -1096,6 +1136,11 @@ function renderExLog(){
           ||(e.detail||'').toLowerCase().indexOf(srch)>=0
           ||(e.who||'').toLowerCase().indexOf(srch)>=0;
       });
+    }
+    // Apply time-range filter
+    if(_execLogFilterHours>0){
+      var cutoff=Date.now()-(_execLogFilterHours*3600000);
+      arr=arr.filter(function(e){return e.t&&(new Date(e.t).getTime()>=cutoff);});
     }
     var count=document.getElementById('execLogCount');
     if(count)count.textContent=(who==='all'&&!srch?'':arr.length+' / ')+totalCount+' events'+(who!=='all'||srch?' (filtered)':'');
@@ -1443,6 +1488,24 @@ document.getElementById('devBack').addEventListener('click',function(){
   document.getElementById('devCodeInput').value='';
   var lb=document.getElementById('devLockedBanner');if(lb)lb.style.display='none';
   document.getElementById('devGateSection').style.display='';
+  // Stop session timer
+  if(_devSessionTimerInterval){clearInterval(_devSessionTimerInterval);_devSessionTimerInterval=null;}
+  _devSessionLoginTime=null;
+  // Stop auto-refresh
+  if(_devTrapAutoRefreshInterval){clearInterval(_devTrapAutoRefreshInterval);_devTrapAutoRefreshInterval=null;}
+  _devTrapAutoRefresh=false;
+  var arBtn=document.getElementById('devTrapAutoRefreshToggle');
+  if(arBtn){arBtn.style.color='#555';arBtn.style.borderColor='rgba(255,255,255,.12)';}
+  // Stop refresh-ago interval
+  if(_devRefreshAgoInterval){clearInterval(_devRefreshAgoInterval);_devRefreshAgoInterval=null;}
+  _devTrapLastRefresh=null;_devRedirectLastRefresh=null;
+  var tri=document.getElementById('devTrapRefreshInfo');if(tri)tri.style.display='none';
+  var rri=document.getElementById('devRedirectRefreshInfo');if(rri)rri.style.display='none';
+  // Reset live feed
+  _devFeedHitCounts={};_devFeedEntries=[];
+  var feedEl=document.getElementById('devTrapLiveFeed');if(feedEl)feedEl.style.display='none';
+  // Reset expiry select
+  var exSel=document.getElementById('devTrapExpirySelect');if(exSel)exSel.value='';
   // Reset bell + search + switcher on logout
   var bell=document.getElementById('devHitBell');
   var bellCount=document.getElementById('devHitBellCount');
@@ -1599,12 +1662,19 @@ function openDev(whichCode){
   exLog('Dev panel opened','Code: '+codeDisplay,'dev '+_currentDevCode);
   fireGlobalAlerts('dev_panel_opened',_currentDevCode,'Dev panel opened — Code: '+codeDisplay,'');
   _devSessionStats={hits:0,tracker:0,msgs:0,links:0};
-  // Show session info bar with login time
+  // Session timer — live "Logged in Xm Ys" counter
+  _devSessionLoginTime=Date.now();
+  if(_devSessionTimerInterval)clearInterval(_devSessionTimerInterval);
   var bar=document.getElementById('devSessionInfoBar');
   if(bar){
-    var loginTime=new Date();
-    bar.textContent='Session started: '+loginTime.toLocaleTimeString()+' · '+loginTime.toLocaleDateString();
     bar.style.display='';
+    function _updateSessionBar(){
+      var elapsed=Math.floor((Date.now()-_devSessionLoginTime)/1000);
+      var m=Math.floor(elapsed/60);var s=elapsed%60;
+      bar.textContent='⏱ Logged in '+(m>0?m+'m ':'')+s+'s · since '+(new Date(_devSessionLoginTime)).toLocaleTimeString();
+    }
+    _updateSessionBar();
+    _devSessionTimerInterval=setInterval(_updateSessionBar,1000);
   }
   renderDevSync();
   loadDevTrapList();
@@ -1910,16 +1980,41 @@ function loadOpWsOverview(){
     if(status)status.textContent=wsCodes.length+' workspace'+(wsCodes.length===1?'':'s');
     if(!wsCodes.length){list.innerHTML='<li style="color:#888">No workspaces yet.</li>';return;}
     list.innerHTML=wsCodes.map(function(ws){
-      var trapCount=data[ws].trapLinks?Object.keys(data[ws].trapLinks).length:0;
+      var trapLinks=data[ws].trapLinks?data[ws].trapLinks:{};
+      var trapCount=Object.keys(trapLinks).length;
       var redirectCount=data[ws].redirectLinks?Object.keys(data[ws].redirectLinks).length:0;
       var isCurrent=ws===getOpWs();
+      // Count total trap hits from embedded logs if available, else show placeholder
+      var totalHits=0;
+      var hasHitData=false;
+      Object.keys(trapLinks).forEach(function(lid){
+        var logs=trapLinks[lid]&&trapLinks[lid].logs;
+        if(logs){hasHitData=true;totalHits+=Array.isArray(logs)?logs.length:Object.keys(logs).length;}
+      });
       return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
         +'<code style="font-size:.75rem;color:'+(isCurrent?'#f5c800':'#ccc')+';flex:1;cursor:pointer;text-decoration:underline;text-decoration-style:dotted" data-ws-switch="'+esc(ws)+'">'+esc(ws)+(isCurrent?' ◀':'')+'</code>'
         +(redirectCount?'<span style="font-size:.65rem;color:#9f7aea">'+redirectCount+' tracker</span>':'')
         +(trapCount?'<span style="font-size:.65rem;color:#f5c800">'+trapCount+' error</span>':'')
+        +'<span class="op-ws-hitbadge" data-ws-hits="'+esc(ws)+'" style="font-size:.62rem;color:#ff6b6b;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:10px;padding:1px 7px;cursor:default">hits: …</span>'
         +'<button data-ws-delete="'+esc(ws)+'" style="background:none;border:1px solid rgba(255,107,107,.35);border-radius:5px;color:#ff6b6b;font-size:.65rem;padding:2px 8px;cursor:pointer;font-family:Manrope,sans-serif">Delete</button>'
         +'</li>';
     }).join('');
+    // Async: load hit counts per workspace
+    wsCodes.forEach(function(ws){
+      var trapLinks2=data[ws]&&data[ws].trapLinks?data[ws].trapLinks:{};
+      var trapIds=Object.keys(trapLinks2);
+      var badge=list.querySelector('[data-ws-hits="'+ws+'"]');
+      if(!badge)return;
+      if(!trapIds.length){badge.textContent='0 hits';return;}
+      var total=0,done=0;
+      trapIds.forEach(function(lid){
+        fetch(fbUrl('_sc6/workspaces/'+ws+'/trapLogs/'+lid)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
+          var n=logs?(Array.isArray(logs)?logs.length:Object.keys(logs).length):0;
+          total+=n;done++;
+          if(done===trapIds.length){badge.textContent=total+(total===1?' hit':' hits');if(total>0){badge.style.color='#ff6b6b';badge.style.borderColor='rgba(255,107,107,.4)';badge.style.background='rgba(255,107,107,.12)';}}
+        });
+      });
+    });
     list.querySelectorAll('[data-ws-switch]').forEach(function(el){
       el.addEventListener('click',function(){
         var ws=el.getAttribute('data-ws-switch');
@@ -2437,6 +2532,19 @@ document.querySelectorAll('.exec-filter-who').forEach(function(btn){
     document.querySelectorAll('.exec-filter-who').forEach(function(b){
       b.style.opacity=b===btn?'1':'0.45';
       b.style.fontWeight=b===btn?'700':'400';
+    });
+    renderExLog();
+  });
+});
+document.querySelectorAll('.exec-filter-time').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    _execLogFilterHours=parseInt(btn.getAttribute('data-hours'))||0;
+    document.querySelectorAll('.exec-filter-time').forEach(function(b){
+      var active=b===btn;
+      b.style.opacity=active?'1':'0.45';
+      b.style.fontWeight=active?'700':'400';
+      b.style.background=active?'rgba(255,255,255,.18)':'';
+      b.style.color=active?'#fff':'';
     });
     renderExLog();
   });
@@ -3107,37 +3215,71 @@ function loadDevTrapList(){
   var list=document.getElementById('devTrapList');
   if(!list)return;
   fetch(trapLinksUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
+    // Update refresh timestamp
+    _devTrapLastRefresh=Date.now();
+    _startRefreshAgoUpdater();
     var obj=data&&typeof data==='object'&&!Array.isArray(data)?data:{};
     var keys=Object.keys(obj);
+    // Show/hide copy-all button
+    var copyAllBtn=document.getElementById('devTrapCopyAll');
+    if(copyAllBtn)copyAllBtn.style.display=keys.length>0?'':'none';
     var searchEl=document.getElementById('devTrapSearch');
     if(searchEl)searchEl.style.display=keys.length>2?'':'none';
     if(!keys.length){list.innerHTML='<li style="color:#888">No links yet.</li>';return;}
+    var now=Date.now();
     list.innerHTML=keys.map(function(id){
       var e=data[id]||{};
       var ws=e.workspace||getSyncCode();
       var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws);
       var short='…'+id.slice(-6);
       var note=e.note||e.label||'';
-      var haystack=(short+' '+note+' '+id).toLowerCase();
-      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)" data-trap-id="'+esc(id)+'" data-trap-haystack="'+esc(haystack)+'">'
+      var muted=e.muted===true||e.muted==='true';
+      // Expiry
+      var expiryStr='';
+      var expiryOver=false;
+      if(e.expiresAt){
+        var exp=new Date(e.expiresAt).getTime();
+        var diff=exp-now;
+        if(diff<=0){expiryStr='Expired';expiryOver=true;}
+        else{
+          var dh=Math.floor(diff/3600000);var dm=Math.floor((diff%3600000)/60000);
+          expiryStr='Exp: '+(dh>0?dh+'h ':'')+dm+'m';
+        }
+      }
+      var haystack=(short+' '+note+' '+id+(muted?' muted':'')).toLowerCase();
+      var opacity=muted?'0.38':'1';
+      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07);opacity:'+opacity+'" data-trap-id="'+esc(id)+'" data-trap-haystack="'+esc(haystack)+'" data-trap-muted="'+esc(String(muted))+'">'
+        +(muted?'<div style="font-size:.58rem;color:#666;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px">🔇 MUTED / ARCHIVED</div>':'')
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
         +'<span style="font-size:.78rem;color:#ccc;flex:1">'
-        +'🔗 <code style="font-size:.72rem;color:#f5c800;background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px">'+esc(short)+'</code>'
+        +'🔗 <code style="font-size:.72rem;color:'+(expiryOver?'#555':'#f5c800')+';background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px">'+esc(short)+'</code>'
         +(note?' <span style="font-size:.65rem;color:#9f7aea;font-style:italic">'+esc(note)+'</span>':'')
+        +(expiryStr?' <span style="font-size:.58rem;color:'+(expiryOver?'#ff4444':'#555')+';border:1px solid '+(expiryOver?'rgba(255,68,68,.35)':'rgba(255,255,255,.1)')+';border-radius:3px;padding:1px 5px">'+esc(expiryStr)+'</span>':'')
         +'</span>'
         +'<span style="font-size:.6rem;color:#555;background:rgba(255,255,255,.05);border-radius:10px;padding:1px 7px" id="devtraphits-'+esc(id)+'">— hits</span>'
         +'<button class="btn-sm" style="font-size:.68rem;padding:2px 8px" data-copy-trap="'+esc(url)+'">Copy</button>'
         +'<button class="btn-sm" style="font-size:.68rem;padding:2px 8px" data-dev-trap-view="'+esc(id)+'">Visitors</button>'
         +'</div>'
+        // Note editor row
+        +'<div style="display:flex;gap:5px;margin-top:5px;align-items:center">'
+        +'<input type="text" data-trap-note-input="'+esc(id)+'" value="'+esc(note)+'" placeholder="Add note…" maxlength="80" style="flex:1;font-size:.68rem;padding:3px 7px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:5px;color:inherit;outline:none">'
+        +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px" data-trap-note-save="'+esc(id)+'">Save note</button>'
+        +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px;color:'+(muted?'#4fc':'#777')+'" data-trap-mute="'+esc(id)+'" title="'+(muted?'Unmute link':'Mute / archive link')+'">'+(muted?'Unmute':'Mute')+'</button>'
+        +'</div>'
         +'<ul class="devlist" id="devvis-'+esc(id)+'" style="display:none;margin-top:6px"></ul>'
         +'</li>';
     }).join('');
-    // Async: load hit counts per link
+    // Async: load hit counts per link + update live feed
     var totalNewHits=0;
     var hitsDone=0;
+    var allUrls=[];
     keys.forEach(function(id){
+      var e=obj[id]||{};
+      var ws=e.workspace||getSyncCode();
+      allUrls.push(ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws));
       fetch(trapLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
-        var n=logs?(Array.isArray(logs)?logs.length:Object.keys(logs).length):0;
+        var raw=Array.isArray(logs)?logs:(logs&&typeof logs==='object'?Object.values(logs):[]);
+        var n=raw.length;
         var badge=document.getElementById('devtraphits-'+id);
         if(badge){
           badge.textContent=n+(n===1?' hit':' hits');
@@ -3146,34 +3288,84 @@ function loadDevTrapList(){
         // Track for bell: if count increased since last load, flash
         var prev=_devTrapHitCounts[id]||0;
         if(n>prev&&_devTrapBellTotal>0){
-          totalNewHits+=n-prev;
+          var delta=n-prev;
+          totalNewHits+=delta;
           var li=list.querySelector('[data-trap-id="'+id+'"]');
           if(li){li.classList.add('hit-flash');setTimeout(function(){li.classList.remove('hit-flash');},700);}
+          // Add to live feed
+          var latestLogs=raw.slice().sort(function(a,b){return (b.time||'').localeCompare(a.time||'');});
+          for(var di=0;di<delta&&di<latestLogs.length;di++){
+            var hit=latestLogs[di];
+            var loc2=[hit.city,hit.region,hit.country].filter(function(x){return x&&x!=='?';}).join(', ')||'?';
+            _devFeedEntries.unshift({id:id,time:hit.time||new Date().toISOString(),loc:loc2,short:'…'+id.slice(-6)});
+          }
         }
+        _devFeedHitCounts[id]=n;
         _devTrapHitCounts[id]=n;
         hitsDone++;
-        if(hitsDone===keys.length&&totalNewHits>0){
-          var bell=document.getElementById('devHitBell');
-          var bellCount=document.getElementById('devHitBellCount');
-          if(bell&&bellCount){
-            var prev2=parseInt(bellCount.textContent||'0')||0;
-            bellCount.textContent=prev2+totalNewHits;
-            bell.style.display='';
-            bell.style.animation='none';
-            void bell.offsetWidth;
-            bell.style.animation='hitflash .6s ease-out';
+        if(hitsDone===keys.length){
+          if(totalNewHits>0){
+            var bell=document.getElementById('devHitBell');
+            var bellCount=document.getElementById('devHitBellCount');
+            if(bell&&bellCount){
+              var prev2=parseInt(bellCount.textContent||'0')||0;
+              bellCount.textContent=prev2+totalNewHits;
+              bell.style.display='';
+              bell.style.animation='none';
+              void bell.offsetWidth;
+              bell.style.animation='hitflash .6s ease-out';
+            }
+            // Render live feed
+            _renderDevTrapFeed();
           }
         }
       });
     });
+    // Store all URLs for copy-all
+    list._allTrapUrls=allUrls;
     // After first load, set bell baseline
     if(_devTrapBellTotal===0)_devTrapBellTotal=1;
+    // Wire copy buttons
     list.querySelectorAll('[data-copy-trap]').forEach(function(btn){
       btn.addEventListener('click',function(){
         var url=btn.getAttribute('data-copy-trap');
         navigator.clipboard.writeText(url).then(function(){btn.textContent='Copied!';setTimeout(function(){btn.textContent='Copy';},1500);}).catch(function(){});
       });
     });
+    // Wire note save buttons
+    list.querySelectorAll('[data-trap-note-save]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var id=btn.getAttribute('data-trap-note-save');
+        var inp=list.querySelector('[data-trap-note-input="'+id+'"]');
+        if(!inp)return;
+        var newNote=inp.value.trim();
+        btn.textContent='…';btn.disabled=true;
+        fetch(trapLinksUrl()+'/'+id+'/note').then(function(){}).catch(function(){});
+        // Write note to Firebase
+        fetch(fbUrl('_sc6/workspaces/'+getSyncCode()+'/trapLinks/'+id+'/note'),{method:'PUT',body:JSON.stringify(newNote)})
+          .then(function(){
+            btn.textContent='✓';btn.disabled=false;
+            setTimeout(function(){btn.textContent='Save note';},1500);
+            exLog('Trap note updated','ID: …'+id.slice(-6)+' note: '+newNote,'dev '+_currentDevCode,true);
+          }).catch(function(){btn.textContent='Save note';btn.disabled=false;});
+      });
+    });
+    // Wire mute/archive buttons
+    list.querySelectorAll('[data-trap-mute]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var id=btn.getAttribute('data-trap-mute');
+        var li=list.querySelector('[data-trap-id="'+id+'"]');
+        var currentMuted=li?li.getAttribute('data-trap-muted')==='true':false;
+        var newMuted=!currentMuted;
+        btn.textContent='…';btn.disabled=true;
+        fetch(fbUrl('_sc6/workspaces/'+getSyncCode()+'/trapLinks/'+id+'/muted'),{method:'PUT',body:JSON.stringify(newMuted)})
+          .then(function(){
+            exLog('Trap link '+(newMuted?'muted':'unmuted'),'ID: …'+id.slice(-6),'dev '+_currentDevCode,true);
+            loadDevTrapList();
+          }).catch(function(){btn.textContent=currentMuted?'Unmute':'Mute';btn.disabled=false;});
+      });
+    });
+    // Wire visitors buttons
     list.querySelectorAll('[data-dev-trap-view]').forEach(function(btn){
       btn.addEventListener('click',function(){
         var id=btn.getAttribute('data-dev-trap-view');
@@ -3229,6 +3421,44 @@ function loadDevTrapList(){
     });
   });
 }
+// ── Live trap feed renderer ──
+function _renderDevTrapFeed(){
+  var feedEl=document.getElementById('devTrapLiveFeed');
+  var feedList=document.getElementById('devTrapFeedList');
+  if(!feedEl||!feedList)return;
+  if(!_devFeedEntries.length)return;
+  feedEl.style.display='';
+  // Keep last 10 entries
+  var entries=_devFeedEntries.slice(0,10);
+  feedList.innerHTML=entries.map(function(h){
+    var t=h.time?new Date(h.time).toLocaleTimeString():'?';
+    return '<li style="font-size:.65rem;padding:3px 0;border-bottom:1px solid rgba(79,255,204,.07);display:flex;gap:6px;align-items:center">'
+      +'<span style="color:#4fc;font-weight:700;font-family:monospace">'+esc(h.short)+'</span>'
+      +'<span style="color:#ccc;flex:1">📍 '+esc(h.loc)+'</span>'
+      +'<span style="color:#444;white-space:nowrap">'+esc(t)+'</span>'
+      +'</li>';
+  }).join('');
+}
+
+// ── Refresh "X ago" updater ──
+function _startRefreshAgoUpdater(){
+  if(_devRefreshAgoInterval)return; // already running
+  _devRefreshAgoInterval=setInterval(function(){
+    _updateRefreshAgo('devTrapRefreshInfo',_devTrapLastRefresh);
+    _updateRefreshAgo('devRedirectRefreshInfo',_devRedirectLastRefresh);
+  },15000);
+  _updateRefreshAgo('devTrapRefreshInfo',_devTrapLastRefresh);
+  _updateRefreshAgo('devRedirectRefreshInfo',_devRedirectLastRefresh);
+}
+function _updateRefreshAgo(elId,ts){
+  var el=document.getElementById(elId);
+  if(!el||!ts)return;
+  var diff=Math.floor((Date.now()-ts)/1000);
+  var str=diff<60?'just now':diff<3600?Math.floor(diff/60)+'m ago':Math.floor(diff/3600)+'h ago';
+  el.textContent='Updated '+str;
+  el.style.display='';
+}
+
 // ── Platform hint from URL ──
 function platformParam(url){
   if(/youtu\.be|youtube\.com/i.test(url))return'yt';
@@ -3252,6 +3482,8 @@ function loadDevRedirectList(){
   var list=document.getElementById('devRedirectList');
   if(!list)return;
   fetch(redirectLinksUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
+    _devRedirectLastRefresh=Date.now();
+    _startRefreshAgoUpdater();
     var obj=data&&typeof data==='object'&&!Array.isArray(data)?data:{};
     var keys=Object.keys(obj);
     if(!keys.length){list.innerHTML='<li style="color:#888;font-size:.7rem">No redirect links yet.</li>';return;}
@@ -3412,17 +3644,50 @@ document.getElementById('devTrapGen').addEventListener('click',function(){
     var id=Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,8);
     var sc=getSyncCode();
     var entry={createdAt:new Date().toISOString(),createdBy:deviceTag(),workspace:sc};
+    // Optional expiry
+    var expiryHoursRaw=(document.getElementById('devTrapExpirySelect')||{}).value;
+    var expiryHours=parseInt(expiryHoursRaw)||0;
+    if(expiryHours>0){entry.expiresAt=new Date(Date.now()+expiryHours*3600000).toISOString();}
     syncFetch(fbUrl('_sc6/workspaces/'+sc+'/trapLinks/'+id),{method:'PUT',body:JSON.stringify(entry)}).then(function(){
       var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(sc);
-      exLog('Error link generated','ID: '+id+' | Code: '+_currentDevCode,'dev '+_currentDevCode);
+      exLog('Error link generated','ID: '+id+' | Code: '+_currentDevCode+(expiryHours?' | Expires: '+expiryHours+'h':''),'dev '+_currentDevCode);
       var _elNick=nickFor(_currentDevCode);var _elLabel=_elNick?_currentDevCode+' ('+_elNick+')':_currentDevCode;
       fireGlobalAlerts('error_link_created',_currentDevCode,'Error link generated by '+_elLabel+' WS: '+sc,'');
       devStatInc('links');
       loadDevTrapList();
       navigator.clipboard.writeText(url).catch(function(){});
-      alert('Link generated:\n'+url);
+      alert('Link generated:\n'+url+(expiryHours?'\n\n⏳ Expires in '+expiryHours+'h':''));
     }).catch(function(e){alert('Failed: '+e.message);});
   });
+});
+
+// ── Copy all trap links ──
+document.getElementById('devTrapCopyAll').addEventListener('click',function(){
+  var list=document.getElementById('devTrapList');
+  var urls=list&&list._allTrapUrls?list._allTrapUrls:[];
+  // Also collect from DOM as fallback
+  if(!urls.length){
+    list.querySelectorAll('[data-copy-trap]').forEach(function(btn){urls.push(btn.getAttribute('data-copy-trap'));});
+  }
+  if(!urls.length){alert('No links to copy.');return;}
+  var btn=this;
+  navigator.clipboard.writeText(urls.join('\n')).then(function(){
+    btn.textContent='Copied '+urls.length+'!';
+    setTimeout(function(){btn.textContent='Copy all';},2000);
+  }).catch(function(){alert('Could not copy:\n\n'+urls.join('\n'));});
+});
+
+// ── Auto-refresh toggle ──
+document.getElementById('devTrapAutoRefreshToggle').addEventListener('click',function(){
+  _devTrapAutoRefresh=!_devTrapAutoRefresh;
+  if(_devTrapAutoRefresh){
+    this.style.color='#4fc';this.style.borderColor='rgba(79,255,204,.4)';
+    if(_devTrapAutoRefreshInterval)clearInterval(_devTrapAutoRefreshInterval);
+    _devTrapAutoRefreshInterval=setInterval(function(){loadDevTrapList();},30000);
+  }else{
+    this.style.color='#555';this.style.borderColor='rgba(255,255,255,.12)';
+    if(_devTrapAutoRefreshInterval){clearInterval(_devTrapAutoRefreshInterval);_devTrapAutoRefreshInterval=null;}
+  }
 });
 
 // Pre-load nicknames silently so exec log render has them ready
