@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.43</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.44</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -232,6 +232,17 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;align-items:center;gap:8px;padding:4px 2px 0">
     <div id="devSessionInfoBar" style="display:none;font-size:.62rem;color:#555;flex:1;letter-spacing:.03em"></div>
     <div id="devHitBell" style="display:none;font-size:.7rem;cursor:pointer;padding:2px 8px;border:1px solid rgba(79,255,204,.3);border-radius:20px;background:rgba(79,255,204,.08);color:#4fc;font-weight:700;white-space:nowrap" title="New trap hits — click to scroll to list">🔔 <span id="devHitBellCount">0</span> new</div>
+    <button id="devKbdHintBtn" title="Keyboard shortcuts" style="background:none;border:1px solid rgba(255,255,255,.12);border-radius:50%;width:20px;height:20px;color:#444;font-size:.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;font-family:Manrope,sans-serif;flex-shrink:0">?</button>
+  </div>
+  <!-- Keyboard shortcut tooltip -->
+  <div id="devKbdHintPanel" style="display:none;margin-top:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px">
+    <div style="font-size:.6rem;color:#555;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;font-weight:700">Keyboard shortcuts</div>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:.65rem">
+      <code style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;text-align:center;font-size:.6rem">G</code><span style="color:#aaa">Generate & copy trap link</span>
+      <code style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;text-align:center;font-size:.6rem">C</code><span style="color:#aaa">Focus URL convert input</span>
+      <code style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;text-align:center;font-size:.6rem">R</code><span style="color:#aaa">Refresh trap & redirect lists</span>
+      <code style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;text-align:center;font-size:.6rem">Esc</code><span style="color:#aaa">Back to main menu</span>
+    </div>
   </div>
 
     <section>
@@ -304,6 +315,10 @@ ul.devlist li:last-child{border-bottom:none}
           <div style="font-size:.62rem;color:#f5c800;font-weight:700;letter-spacing:.06em;margin-bottom:4px">TRACKER LINK READY</div>
           <div id="devConvertUrl" style="font-size:.7rem;color:#ccc;word-break:break-all;line-height:1.5"></div>
           <button class="btn-sm" id="devConvertCopy" style="margin-top:7px;font-size:.68rem">Copy link</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+          <div id="devRedirectSummary" style="display:none;font-size:.62rem;color:#555;flex:1;letter-spacing:.03em"></div>
+          <button class="btn-sm" id="devRedirectAutoRefreshToggle" style="font-size:.68rem;color:#555;border-color:rgba(255,255,255,.12)" title="Auto-refresh every 30s">↻ Auto</button>
         </div>
         <div id="devRedirectRefreshInfo" style="display:none;font-size:.6rem;color:#444;margin-top:4px;letter-spacing:.03em"></div>
         <ul class="devlist" id="devRedirectList" style="margin-top:8px"></ul>
@@ -655,7 +670,8 @@ ul.devlist li:last-child{border-bottom:none}
               <span style="font-size:.65rem;color:#555" id="execLogCount"></span>
               <span style="flex:1"></span>
               <button class="btn-sm" id="execLogPause" style="font-size:.65rem">Pause</button>
-              <button class="btn-sm" id="execLogExportCsv" style="font-size:.65rem">Export CSV</button>
+              <button class="btn-sm" id="execLogExportCsv" style="font-size:.65rem">CSV</button>
+              <button class="btn-sm" id="execLogExportJson" style="font-size:.65rem">JSON</button>
               <button class="btn-sm danger" id="execLogClear" style="font-size:.65rem">Clear</button>
             </div>
             <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
@@ -1096,9 +1112,11 @@ var _execLogFilterHours=0; // 0 = all time
 // Dev panel session timer
 var _devSessionTimerInterval=null;
 var _devSessionLoginTime=null;
-// Auto-refresh toggle
+// Auto-refresh toggles
 var _devTrapAutoRefresh=false;
 var _devTrapAutoRefreshInterval=null;
+var _devRedirectAutoRefresh=false;
+var _devRedirectAutoRefreshInterval=null;
 // Last refresh timestamps
 var _devTrapLastRefresh=null;
 var _devRedirectLastRefresh=null;
@@ -1106,6 +1124,8 @@ var _devRefreshAgoInterval=null;
 // Live feed tracking: {trapId: lastKnownHitCount}
 var _devFeedHitCounts={};
 var _devFeedEntries=[];
+// Keyboard shortcut hint panel open state
+var _devKbdHintOpen=false;
 function renderExLog(){
   if(_execLogPaused)return;
   var ul=document.getElementById('execLogList');
@@ -1491,16 +1511,25 @@ document.getElementById('devBack').addEventListener('click',function(){
   // Stop session timer
   if(_devSessionTimerInterval){clearInterval(_devSessionTimerInterval);_devSessionTimerInterval=null;}
   _devSessionLoginTime=null;
-  // Stop auto-refresh
+  // Stop auto-refresh (trap)
   if(_devTrapAutoRefreshInterval){clearInterval(_devTrapAutoRefreshInterval);_devTrapAutoRefreshInterval=null;}
   _devTrapAutoRefresh=false;
   var arBtn=document.getElementById('devTrapAutoRefreshToggle');
   if(arBtn){arBtn.style.color='#555';arBtn.style.borderColor='rgba(255,255,255,.12)';}
+  // Stop auto-refresh (redirect)
+  if(_devRedirectAutoRefreshInterval){clearInterval(_devRedirectAutoRefreshInterval);_devRedirectAutoRefreshInterval=null;}
+  _devRedirectAutoRefresh=false;
+  var rarBtn=document.getElementById('devRedirectAutoRefreshToggle');
+  if(rarBtn){rarBtn.style.color='#555';rarBtn.style.borderColor='rgba(255,255,255,.12)';}
   // Stop refresh-ago interval
   if(_devRefreshAgoInterval){clearInterval(_devRefreshAgoInterval);_devRefreshAgoInterval=null;}
   _devTrapLastRefresh=null;_devRedirectLastRefresh=null;
   var tri=document.getElementById('devTrapRefreshInfo');if(tri)tri.style.display='none';
   var rri=document.getElementById('devRedirectRefreshInfo');if(rri)rri.style.display='none';
+  var rds=document.getElementById('devRedirectSummary');if(rds)rds.style.display='none';
+  // Hide kbd hint panel
+  _devKbdHintOpen=false;
+  var kbdP=document.getElementById('devKbdHintPanel');if(kbdP)kbdP.style.display='none';
   // Reset live feed
   _devFeedHitCounts={};_devFeedEntries=[];
   var feedEl=document.getElementById('devTrapLiveFeed');if(feedEl)feedEl.style.display='none';
@@ -2550,6 +2579,75 @@ document.querySelectorAll('.exec-filter-time').forEach(function(btn){
   });
 });
 
+// ── Exec log JSON export ──
+document.getElementById('execLogExportJson').addEventListener('click',function(){
+  fetch(execLogUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
+    var arr=Array.isArray(data)?data:(data&&typeof data==='object'?Object.values(data):[]);
+    arr.sort(function(a,b){return (a.t||'').localeCompare(b.t||'');});
+    var who=_execLogFilterWho;
+    var srch=(_execLogFilterSearch||'').toLowerCase();
+    if(who!=='all'){arr=arr.filter(function(e){var w=e.who||'?';if(who==='dev')return w.startsWith('dev ');return w===who;});}
+    if(srch){arr=arr.filter(function(e){return (e.action||'').toLowerCase().indexOf(srch)>=0||(e.detail||'').toLowerCase().indexOf(srch)>=0||(e.who||'').toLowerCase().indexOf(srch)>=0;});}
+    if(_execLogFilterHours>0){var cutoff=Date.now()-(_execLogFilterHours*3600000);arr=arr.filter(function(e){return e.t&&(new Date(e.t).getTime()>=cutoff);});}
+    if(!arr.length){alert('No events to export.');return;}
+    var blob=new Blob([JSON.stringify(arr,null,2)],{type:'application/json'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='sc6-execlog-'+new Date().toISOString().slice(0,10)+'.json';
+    a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);},60000);
+  });
+});
+
+// ── Keyboard shortcut hint toggle ──
+document.getElementById('devKbdHintBtn').addEventListener('click',function(){
+  _devKbdHintOpen=!_devKbdHintOpen;
+  var panel=document.getElementById('devKbdHintPanel');
+  if(panel)panel.style.display=_devKbdHintOpen?'':'none';
+  this.style.color=_devKbdHintOpen?'#f5c800':'';
+  this.style.borderColor=_devKbdHintOpen?'rgba(245,200,0,.4)':'rgba(255,255,255,.12)';
+});
+
+// ── Dev keyboard shortcuts ──
+document.addEventListener('keydown',function(e){
+  // Only fire when dev panel is visible and no input is focused
+  var dv=document.getElementById('devView');
+  var dc=document.getElementById('devContent');
+  if(!dv||dv.style.display==='none')return;
+  if(!dc||dc.style.display==='none')return;
+  var tag=(document.activeElement||{}).tagName||'';
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  if(e.key==='g'||e.key==='G'){
+    // Generate trap link
+    var genBtn=document.getElementById('devTrapGen');if(genBtn){genBtn.click();}
+  } else if(e.key==='c'||e.key==='C'){
+    // Focus convert input
+    var ci=document.getElementById('devConvertInput');
+    if(ci){ci.focus();ci.select();}
+  } else if(e.key==='r'||e.key==='R'){
+    // Refresh trap + redirect lists
+    loadDevTrapList();loadDevRedirectList();
+  } else if(e.key==='Escape'){
+    // Back to main
+    var backBtn=document.getElementById('devBack');if(backBtn)backBtn.click();
+  }
+});
+
+// ── Redirect list auto-refresh toggle ──
+document.getElementById('devRedirectAutoRefreshToggle').addEventListener('click',function(){
+  _devRedirectAutoRefresh=!_devRedirectAutoRefresh;
+  var btn=this;
+  if(_devRedirectAutoRefresh){
+    btn.style.color='#4fc';btn.style.borderColor='rgba(79,255,204,.4)';
+    loadDevRedirectList();
+    _devRedirectAutoRefreshInterval=setInterval(function(){if(_devRedirectAutoRefresh)loadDevRedirectList();},30000);
+  } else {
+    btn.style.color='#555';btn.style.borderColor='rgba(255,255,255,.12)';
+    if(_devRedirectAutoRefreshInterval){clearInterval(_devRedirectAutoRefreshInterval);_devRedirectAutoRefreshInterval=null;}
+  }
+});
+
 // ── Lock ──
 function refreshOpLock(){
   fetch(devLockedUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(v){
@@ -3486,7 +3584,13 @@ function loadDevRedirectList(){
     _startRefreshAgoUpdater();
     var obj=data&&typeof data==='object'&&!Array.isArray(data)?data:{};
     var keys=Object.keys(obj);
-    if(!keys.length){list.innerHTML='<li style="color:#888;font-size:.7rem">No redirect links yet.</li>';return;}
+    if(!keys.length){
+      var sumElE=document.getElementById('devRedirectSummary');if(sumElE)sumElE.style.display='none';
+      list.innerHTML='<li style="color:#888;font-size:.7rem">No redirect links yet.</li>';return;
+    }
+    // Show summary
+    var sumEl=document.getElementById('devRedirectSummary');
+    if(sumEl){sumEl.style.display='';sumEl.textContent=keys.length+' link'+(keys.length!==1?'s':'');}
     var sc=getSyncCode();
     list.innerHTML=keys.map(function(id){
       var e=obj[id];
@@ -3504,15 +3608,26 @@ function loadDevRedirectList(){
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" id="devrhitbtn-'+esc(id)+'" data-redir-hits="'+esc(id)+'">Hits</button>'
         +'<button class="btn-sm danger" style="font-size:.65rem;padding:2px 7px" data-redir-del="'+esc(id)+'">Del</button>'
         +'</div>'
+        +'<div style="display:flex;align-items:center;gap:5px;margin-top:5px">'
+        +'<input type="text" class="redir-note-input" data-redir-note-id="'+esc(id)+'" maxlength="80" placeholder="Add note…" value="'+esc(note)+'" style="flex:1;font-size:.65rem;padding:3px 7px;background:rgba(255,255,255,.05);border:1px solid var(--faint);border-radius:5px;color:inherit;outline:none">'
+        +'<button class="btn-sm redir-note-save" data-redir-note-id="'+esc(id)+'" style="font-size:.62rem;padding:2px 7px">Save</button>'
+        +'</div>'
         +'<ul class="devlist" id="devrhits-'+esc(id)+'" style="display:none;margin-top:5px"></ul>'
         +'</li>';
     }).join('');
-    // Async: fetch hit counts and update button labels
+    // Async: fetch hit counts and update button labels + summary total
+    var _totalHits=0;var _hitLoadsDone=0;
     keys.forEach(function(id){
       fetch(redirectLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
         var n=logs?(Array.isArray(logs)?logs.length:Object.keys(logs).length):0;
+        _totalHits+=n;_hitLoadsDone++;
         var btn=document.getElementById('devrhitbtn-'+id);
         if(btn)btn.textContent='Hits'+(n>0?' ('+n+')':'');
+        // Update summary once all loaded
+        if(_hitLoadsDone===keys.length){
+          var sumEl2=document.getElementById('devRedirectSummary');
+          if(sumEl2)sumEl2.textContent=keys.length+' link'+(keys.length!==1?'s':'')+(_totalHits>0?' · '+_totalHits+' total hit'+(_totalHits!==1?'s':''):'');
+        }
       });
     });
     list.querySelectorAll('[data-redir-copy]').forEach(function(btn){
@@ -3606,6 +3721,28 @@ function loadDevRedirectList(){
           exLog('Device banned from hit','Tag: '+tag,'dev '+_currentDevCode,true);
           btn.textContent='Banned';btn.disabled=true;
         }).catch(function(e){alert('Failed: '+e.message);});
+      });
+    });
+    // Note save for redirect links
+    list.querySelectorAll('.redir-note-save').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var id=btn.getAttribute('data-redir-note-id');
+        var inp=list.querySelector('.redir-note-input[data-redir-note-id="'+id+'"]');
+        if(!inp)return;
+        var note=inp.value.trim();
+        btn.textContent='…';btn.disabled=true;
+        fetch(fbUrl('_sc6/workspaces/'+getSyncCode()+'/redirectLinks/'+id+'/note'),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(note)})
+          .then(function(){btn.textContent='✓';setTimeout(function(){btn.textContent='Save';btn.disabled=false;},1500);})
+          .catch(function(){btn.textContent='!';btn.disabled=false;});
+      });
+    });
+    // Note input: save on Enter
+    list.querySelectorAll('.redir-note-input').forEach(function(inp){
+      inp.addEventListener('keydown',function(e){
+        if(e.key!=='Enter')return;
+        var id=inp.getAttribute('data-redir-note-id');
+        var btn=list.querySelector('.redir-note-save[data-redir-note-id="'+id+'"]');
+        if(btn)btn.click();
       });
     });
   });
