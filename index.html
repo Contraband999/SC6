@@ -170,7 +170,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.39</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.40</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -215,6 +215,8 @@ ul.devlist li:last-child{border-bottom:none}
 
   <!-- Dev content (shown after auth) -->
   <div id="devContent" style="display:none">
+  <!-- Session info bar -->
+  <div id="devSessionInfoBar" style="display:none;font-size:.62rem;color:#555;text-align:right;padding:4px 2px 0;letter-spacing:.03em"></div>
 
     <section>
       <div class="sec-head"><h3>Workspace</h3><p class="note" style="margin:4px 0 0">Your workspace determines which error links you see. Each workspace is isolated.</p></div>
@@ -369,8 +371,8 @@ ul.devlist li:last-child{border-bottom:none}
         <!-- Live visitor stream -->
         <section>
           <div class="sec-head">
-            <h3>Live visitor stream <span id="liveStreamDot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#333;margin-left:6px;vertical-align:middle;transition:background .3s"></span></h3>
-            <p class="note" style="margin:4px 0 0">Real-time feed of visitor hits across ALL workspaces. Updates every 5 s.</p>
+            <h3>Live visitor stream <span id="liveStreamDot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#333;margin-left:6px;vertical-align:middle;transition:background .3s"></span> <span id="liveStreamHitBadge" style="display:none;background:rgba(255,107,107,.18);color:#ff6b6b;border:1px solid rgba(255,107,107,.4);border-radius:10px;font-size:.6rem;font-weight:700;padding:1px 7px;margin-left:4px;vertical-align:middle"></span></h3>
+            <p class="note" style="margin:4px 0 0">Real-time feed of visitor hits across ALL workspaces. Auto-starts when panel opens. Updates every 5 s.</p>
           </div>
           <div class="sec-body">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
@@ -380,7 +382,7 @@ ul.devlist li:last-child{border-bottom:none}
               <button class="btn-sm danger" id="liveStreamClear" style="font-size:.65rem">Clear</button>
             </div>
             <div id="liveStreamDebug" style="font-size:.6rem;color:#444;margin-bottom:4px;min-height:14px"></div>
-            <ul class="devlist" id="liveStreamList" style="max-height:300px;overflow-y:auto;padding-right:2px"><li style="color:#555;font-size:.72rem">Not running — press Start.</li></ul>
+            <ul class="devlist" id="liveStreamList" style="max-height:300px;overflow-y:auto;padding-right:2px"><li style="color:#555;font-size:.72rem">Starting…</li></ul>
           </div>
         </section>
 
@@ -612,6 +614,7 @@ ul.devlist li:last-child{border-bottom:none}
               <span style="font-size:.65rem;color:#555" id="execLogCount"></span>
               <span style="flex:1"></span>
               <button class="btn-sm" id="execLogPause" style="font-size:.65rem">Pause</button>
+              <button class="btn-sm" id="execLogExportCsv" style="font-size:.65rem">Export CSV</button>
               <button class="btn-sm danger" id="execLogClear" style="font-size:.65rem">Clear</button>
             </div>
             <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
@@ -1087,10 +1090,12 @@ function renderExLog(){
       var actionColor=e.action&&e.action.startsWith('ERR')?'#ff6b6b':'#eee';
       var hasDetail=!!(e.os||e.br||e.ip||e.country||e.tag||e.region);
       var did='exdet-'+i;
+      var copyData=(e.action||'')+(e.detail?' | '+e.detail:'')+(e.ip&&e.ip!=='?'?' | '+e.ip:'')+(e.country&&e.country!=='?'?' | '+e.country:'');
       return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.7rem">'
         +'<div style="display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap">'
         +'<span style="color:'+whoColor+';font-weight:700;min-width:52px;text-transform:uppercase;font-size:.62rem">'+esc(whoLabel)+'</span>'
         +'<span style="color:'+actionColor+';flex:1;word-break:break-word">'+esc(e.action||'?')+'</span>'
+        +'<button title="Copy" onclick="(function(b,s){navigator.clipboard.writeText(s).then(function(){b.textContent=\'✓\';setTimeout(function(){b.textContent=\'⎘\';},1200)}).catch(function(){});})(this,'+JSON.stringify(copyData)+')" style="background:none;border:1px solid rgba(255,255,255,.12);border-radius:3px;color:#666;font-size:.62rem;padding:0 5px;cursor:pointer;line-height:1.6;font-family:Manrope,sans-serif;flex-shrink:0">⎘</button>'
         +'<span style="color:#555;white-space:nowrap;font-size:.62rem">'+esc(ts)+'</span>'
         +'</div>'
         +(e.detail?'<div style="color:#888;font-size:.65rem;padding-left:60px;margin-top:1px;word-break:break-all">'+esc(e.detail)+'</div>':'')
@@ -1521,6 +1526,13 @@ function openDev(whichCode){
   exLog('Dev panel opened','Code: '+codeDisplay,'dev '+_currentDevCode);
   fireGlobalAlerts('dev_panel_opened',_currentDevCode,'Dev panel opened — Code: '+codeDisplay,'');
   _devSessionStats={hits:0,tracker:0,msgs:0,links:0};
+  // Show session info bar with login time
+  var bar=document.getElementById('devSessionInfoBar');
+  if(bar){
+    var loginTime=new Date();
+    bar.textContent='Session started: '+loginTime.toLocaleTimeString()+' · '+loginTime.toLocaleDateString();
+    bar.style.display='';
+  }
   renderDevSync();
   loadDevTrapList();
   loadDevRedirectList();
@@ -1921,6 +1933,8 @@ function loadOpAll(){
   loadFailedLogins();
   loadOpBindings();
   initOpCollapse();
+  // Auto-start live stream when operator panel opens
+  liveStreamStart();
 }
 
 // ── Op log ──
@@ -1987,7 +2001,10 @@ function loadOpRedirectList(){
       var creator=e.createdBy?esc(e.createdBy):'?';
       var note=e.note?esc(e.note):'';
       return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
-        +'<div style="font-size:.62rem;color:#555;margin-bottom:2px">'+esc(created)+' · by '+creator+'</div>'
+        +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">'
+        +'<span style="font-size:.62rem;color:#555">'+esc(created)+' · by '+creator+'</span>'
+        +'<span style="margin-left:auto;font-size:.62rem;background:rgba(79,255,204,.1);color:#4fc;border:1px solid rgba(79,255,204,.25);border-radius:10px;padding:1px 8px;font-weight:600" id="oprhitcount-'+esc(id)+'">— hits</span>'
+        +'</div>'
         +(note?'<div style="font-size:.7rem;color:#9f7aea;margin-bottom:3px;font-style:italic">🏷 '+note+'</div>':'')
         +'<div style="font-size:.68rem;color:#aaa;margin-bottom:3px">→ '+esc(dest)+'</div>'
         +'<code style="font-size:.62rem;color:#f5c800;background:rgba(255,200,0,.08);padding:1px 5px;border-radius:3px;word-break:break-all;display:block;margin-bottom:5px">'+esc(url)+'</code>'
@@ -2000,12 +2017,19 @@ function loadOpRedirectList(){
         +'</li>';
     }).join('');
 
-    // Async: show hit counts on buttons
+    // Async: show hit counts on buttons and inline badge
     keys.forEach(function(id){
       fetch(opRedirectLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
         var n=logs?(Array.isArray(logs)?logs.length:Object.keys(logs).length):0;
         var btn=document.getElementById('oprhitbtn-'+id);
         if(btn)btn.textContent='Hits'+(n>0?' ('+n+')':'');
+        var badge=document.getElementById('oprhitcount-'+id);
+        if(badge){
+          badge.textContent=n===0?'0 hits':n+(n===1?' hit':' hits');
+          badge.style.background=n>0?'rgba(79,255,204,.18)':'rgba(255,255,255,.05)';
+          badge.style.color=n>0?'#4fc':'#555';
+          badge.style.borderColor=n>0?'rgba(79,255,204,.4)':'rgba(255,255,255,.1)';
+        }
       });
     });
 
@@ -2262,6 +2286,28 @@ document.getElementById('execLogClear').addEventListener('click',function(){
     fetch(execLogUrl(),{method:'DELETE',headers:{'Content-Type':'application/json'}})
       .then(function(){renderExLog();}).catch(function(e){alert('Failed: '+e.message);});
   },800);
+});
+
+// ── Exec log CSV export ──
+document.getElementById('execLogExportCsv').addEventListener('click',function(){
+  fetch(execLogUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
+    var arr=Array.isArray(data)?data:(data&&typeof data==='object'?Object.values(data):[]);
+    arr.sort(function(a,b){return (a.t||'').localeCompare(b.t||'');});
+    var who=_execLogFilterWho;
+    var srch=(_execLogFilterSearch||'').toLowerCase();
+    if(who!=='all'){arr=arr.filter(function(e){var w=e.who||'?';if(who==='dev')return w.startsWith('dev ');return w===who;});}
+    if(srch){arr=arr.filter(function(e){return (e.action||'').toLowerCase().indexOf(srch)>=0||(e.detail||'').toLowerCase().indexOf(srch)>=0||(e.who||'').toLowerCase().indexOf(srch)>=0;});}
+    if(!arr.length){alert('No events to export.');return;}
+    var cols=['time','who','action','detail','ip','country','region','os','br','tag'];
+    var csvEsc=function(v){var s=String(v===undefined||v===null?'':v);if(s.indexOf(',')>=0||s.indexOf('"')>=0||s.indexOf('\n')>=0){s='"'+s.replace(/"/g,'""')+'"';}return s;};
+    var rows=[cols.join(',')].concat(arr.map(function(e){return cols.map(function(c){return csvEsc(e[c]||'');}).join(',');}));
+    var blob=new Blob([rows.join('\r\n')],{type:'text/csv'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='sc6-execlog-'+new Date().toISOString().slice(0,10)+'.csv';
+    a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);},60000);
+  });
 });
 
 // ── Exec log filters ──
@@ -3278,8 +3324,14 @@ function _liveStreamPoll(){
 function _renderLiveStream(){
   var ul=document.getElementById('liveStreamList');
   if(!ul)return;
+  // Update hit badge
+  var badge=document.getElementById('liveStreamHitBadge');
+  if(badge){
+    if(_liveStreamEntries.length){badge.textContent=_liveStreamEntries.length+' hit'+(_liveStreamEntries.length===1?'':'s');badge.style.display='';}
+    else{badge.style.display='none';}
+  }
   if(!_liveStreamEntries.length){ul.innerHTML='<li style="color:#555;font-size:.72rem">No visitor hits yet.</li>';return;}
-  ul.innerHTML=_liveStreamEntries.map(function(e){
+  ul.innerHTML=_liveStreamEntries.map(function(e,ei){
     var t=e.time?new Date(e.time).toLocaleString():'?';
     var loc=[e.city,e.region,e.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
     var dev=[e.device,e.os,e.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
@@ -3288,19 +3340,37 @@ function _renderLiveStream(){
     var isGeoBlocked=e.action&&e.action.indexOf('Geo-blocked')>=0;
     var isVpn=e.isVpn===true||isVpnBlocked;
     var dotColor=isVpnBlocked||isGeoBlocked?'#ff3333':isVpn?'#ff6b6b':'#4fc';
-    return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+    var hasIp=e.ip&&e.ip!=='?';
+    return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
       +'<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">'
       +'<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:'+dotColor+';flex-shrink:0"></span>'
       +(isVpnBlocked?'<span style="font-size:.58rem;background:rgba(255,40,40,.2);color:#ff3333;border:1px solid #ff3333;border-radius:3px;padding:0 4px">🚫 VPN BLOCKED</span>':isGeoBlocked?'<span style="font-size:.58rem;background:rgba(255,165,0,.18);color:#ffaa33;border:1px solid rgba(255,165,0,.5);border-radius:3px;padding:0 4px">🌍 GEO BLOCKED</span>':isVpn?'<span style="font-size:.58rem;background:rgba(255,80,80,.15);color:#ff6b6b;border:1px solid rgba(255,107,107,.4);border-radius:3px;padding:0 4px">⚠ VPN</span>':'')
       +'<span style="font-size:.7rem;color:#ccc;font-weight:600">'+esc(t)+'</span>'
       +(e.country&&e.country!=='?'?'<span style="font-size:.68rem;color:#f5c800">'+esc(e.country)+'</span>':'')
+      +'<span style="margin-left:auto"></span>'
+      +(hasIp?'<button class="btn-sm ls-ban-btn" data-ip="'+esc(e.ip)+'" style="font-size:.6rem;padding:1px 7px;border-color:rgba(255,107,107,.4);color:#ff6b6b">Ban IP</button>':'')
       +'</div>'
       +'<div style="font-size:.72rem;color:#4fc;margin-top:2px">📍 '+esc(loc)+'</div>'
       +'<div style="font-size:.68rem;color:#888;margin-top:1px">🖥 '+esc(dev)+'</div>'
-      +(e.ip&&e.ip!=='?'?'<div style="font-size:.65rem;color:#f5c800;margin-top:1px">🌐 '+esc(e.ip)+(isp?' · <span style="color:#888">'+esc(isp)+'</span>':'')+'</div>':'')
+      +(hasIp?'<div style="font-size:.65rem;color:#f5c800;margin-top:1px">🌐 '+esc(e.ip)+(isp?' · <span style="color:#888">'+esc(isp)+'</span>':'')+'</div>':'')
       +(isVpnBlocked||isGeoBlocked?'<div style="font-size:.62rem;color:#666;margin-top:1px">'+esc(e.action||'')+'</div>':'')
       +'</li>';
   }).join('');
+  // Wire ban buttons
+  ul.querySelectorAll('.ls-ban-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var ip=btn.getAttribute('data-ip');
+      if(!ip||!confirm('Ban IP '+ip+' (adds to dev bans)?'))return;
+      fetch(devBansUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+        var a=Array.isArray(d)?d:[];
+        if(a.indexOf(ip)===-1)a.push(ip);
+        return fetch(devBansUrl(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(a)});
+      }).then(function(){
+        btn.textContent='Banned';btn.disabled=true;btn.style.opacity='.5';
+        exLog('IP banned from live stream','IP: '+ip,'operator',true);
+      }).catch(function(e){alert('Failed: '+e.message);});
+    });
+  });
 }
 document.getElementById('liveStreamToggle').addEventListener('click',function(){
   if(_liveStreamTimer)liveStreamStop();else liveStreamStart();

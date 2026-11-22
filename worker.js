@@ -1,4 +1,4 @@
-// SC6 Redirect Tracker Worker — v1.9.38
+// SC6 Redirect Tracker Worker — v1.9.39
 // Deploy at: media.sharelink-1.workers.dev
 
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
@@ -221,6 +221,19 @@ export default {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dwell)
           }));
+          // Also write a dwell exec log entry so it appears in the live stream / exec log
+          if (dwell > 0) {
+            const dwellStr = dwell < 60 ? dwell + 's' : Math.floor(dwell / 60) + 'm ' + (dwell % 60) + 's';
+            const dwellEntry = {
+              time: new Date().toISOString(),
+              t: new Date().toISOString(),
+              action: '⏱ Dwell time recorded',
+              detail: 'Link: ' + linkId + ' | Dwell: ' + dwellStr + ' WS:' + ws,
+              who: 'visitor',
+              tag: '?'
+            };
+            ctx.waitUntil(writeExecLog(dwellEntry));
+          }
         }
       } catch(e) {}
       return new Response('ok', { status: 200, headers: { 'Access-Control-Allow-Origin': '*' } });
