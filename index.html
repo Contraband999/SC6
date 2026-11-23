@@ -183,7 +183,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.68</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.69</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -3905,6 +3905,7 @@ function loadDevRedirectList(){
         +(redirExpiryStr?' <span style="font-size:.58rem;color:'+(redirExpiryOver?'#ff4444':'#555')+';border:1px solid '+(redirExpiryOver?'rgba(255,68,68,.35)':'rgba(255,255,255,.1)')+';border-radius:3px;padding:1px 5px">'+esc(redirExpiryStr)+'</span>':'')
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" data-redir-copy="'+esc(url)+'">Copy</button>'
         +'<a href="'+esc(e.target||'')+'" target="_blank" rel="noopener" class="btn-sm" style="font-size:.65rem;padding:2px 7px;text-decoration:none;color:inherit" title="Open destination">↗</a>'
+        +'<span id="devrdiractive-'+esc(id)+'" style="display:none;font-size:.58rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 6px;animation:hitpulse 2s infinite">🟢 active</span>'
         +'<span style="font-size:.58rem;color:#3a3a3a" id="devrdrlast-'+esc(id)+'"></span>'
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" id="devrhitbtn-'+esc(id)+'" data-redir-hits="'+esc(id)+'">Hits</button>'
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px;color:#777" data-dup-redir="'+esc(id)+'" title="Duplicate this redirect link">Dup</button>'
@@ -3961,6 +3962,13 @@ function loadDevRedirectList(){
           lastREl.textContent=(rlocHint?rlocHint+' · ':'')+rlastAgo;
           lastREl.style.color='#444';
           lastREl.title='Last click: '+(rlast.city||'?')+', '+(rlast.country||'?')+' at '+(rlast.time?new Date(rlast.time).toLocaleString():'?');
+        }
+        // Active badge: any hit in last 15 minutes
+        var rActiveEl=document.getElementById('devrdiractive-'+id);
+        if(rActiveEl){
+          var rRecentCutoff=Date.now()-15*60000;
+          var rRecentHit=raw.some(function(h){return h.time&&(new Date(h.time).getTime()>=rRecentCutoff);});
+          rActiveEl.style.display=rRecentHit?'':'none';
         }
         // Store hit count on <li> for sorting
         var rli=list.querySelector('[data-redir-id="'+id+'"]');
