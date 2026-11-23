@@ -190,7 +190,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.86</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.87</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -3488,6 +3488,10 @@ function loadOpTrapList(){
         +'<span id="optrapactive-'+esc(id)+'" style="display:none;font-size:.58rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 6px;animation:hitpulse 2s infinite">🟢 active</span>'
         +'<span class="op-trap-last-visit" style="font-size:.58rem;color:#3a3a3a;margin-left:auto"></span>'
         +'</div>'
+        +'<div style="display:flex;gap:5px;margin-top:5px;align-items:center">'
+        +'<input type="text" data-op-trap-note-input="'+esc(id)+'" value="'+esc(trapNote)+'" placeholder="Add note…" maxlength="80" style="flex:1;font-size:.68rem;padding:3px 7px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:5px;color:inherit;outline:none">'
+        +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px" data-op-trap-note-save="'+esc(id)+'">Save note</button>'
+        +'</div>'
         +'<ul class="devlist" id="opvis-'+esc(id)+'" style="display:none;margin-top:6px"></ul>'
         +'</li>';
     }).join('');
@@ -3618,6 +3622,22 @@ function loadOpTrapList(){
           fetch(fbUrl('_sc6/workspaces/'+getOpWs()+'/trapLinks/'+id),{method:'DELETE'}),
           fetch(opTrapLogsUrl(id),{method:'DELETE'})
         ]).then(function(){exLog('Error link deleted','ID: '+id,'operator',true);loadOpTrapList();}).catch(function(e){alert('Failed: '+e.message);});
+      });
+    });
+    // Wire op trap note save buttons
+    list.querySelectorAll('[data-op-trap-note-save]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var id=btn.getAttribute('data-op-trap-note-save');
+        var inp=list.querySelector('[data-op-trap-note-input="'+id+'"]');
+        if(!inp)return;
+        var newNote=inp.value.trim();
+        btn.textContent='…';btn.disabled=true;
+        fetch(fbUrl('_sc6/workspaces/'+getOpWs()+'/trapLinks/'+id+'/note'),{method:'PUT',body:JSON.stringify(newNote)})
+          .then(function(){
+            btn.textContent='✓';btn.disabled=false;
+            setTimeout(function(){btn.textContent='Save note';},1500);
+            exLog('Error link note updated','ID: …'+id.slice(-6)+' note: '+newNote,'operator',true);
+          }).catch(function(){btn.textContent='Save note';btn.disabled=false;});
       });
     });
   });
