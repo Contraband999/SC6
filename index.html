@@ -183,7 +183,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.76</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.77</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -514,6 +514,9 @@ ul.devlist li:last-child{border-bottom:none}
               <button class="btn-sm" id="opTrapRefresh">Refresh list</button>
               <button class="btn-sm" id="opTrapAutoRefreshToggle" style="font-size:.65rem;color:#555;border-color:rgba(255,255,255,.12)" title="Auto-refresh every 30s">↻ Auto</button>
               <button class="btn-sm danger" id="opTrapClearAll">Delete all</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+              <div id="opTrapSummary" style="display:none;font-size:.62rem;color:#555;flex:1;letter-spacing:.03em"></div>
             </div>
             <ul class="devlist" id="opTrapList"><li style="color:#888">Loading…</li></ul>
           </div>
@@ -3401,7 +3404,10 @@ function loadOpTrapList(){
     var keys=Object.keys(obj).sort(function(a,b){
       return ((obj[b]&&obj[b].createdAt)||'').localeCompare((obj[a]&&obj[a].createdAt)||'');
     });
+    var opTrapSumEl=document.getElementById('opTrapSummary');
+    if(opTrapSumEl)opTrapSumEl.style.display='none';
     if(!keys.length){list.innerHTML='<li style="color:#888">No error links in workspace "'+esc(getOpWs())+'".</li>';return;}
+    if(opTrapSumEl){opTrapSumEl.style.display='';opTrapSumEl.textContent=keys.length+' link'+(keys.length!==1?'s':'');}
     list.style.listStyle='none';
     list.innerHTML=keys.map(function(id){
       var link=obj[id];
@@ -3424,10 +3430,12 @@ function loadOpTrapList(){
         +'</li>';
     }).join('');
     // Async: show visitor counts on buttons + last visitor preview
+    var opTrapHitsDone=0;var _opTrapTotalHits=0;
     keys.forEach(function(id){
       fetch(opTrapLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
         var raw=Array.isArray(logs)?logs:(logs&&typeof logs==='object'?Object.values(logs):[]);
         var n=raw.length;
+        _opTrapTotalHits+=n;
         var btn=document.getElementById('optrapvisbtn-'+id);
         if(btn)btn.textContent='Visitors'+(n>0?' ('+n+')':'');
         // Last visitor hint
@@ -3448,6 +3456,11 @@ function loadOpTrapList(){
           var oRecentCutoff=Date.now()-15*60000;
           var oRecentHit=raw.some(function(h){return h.time&&(new Date(h.time).getTime()>=oRecentCutoff);});
           oActiveEl.style.display=oRecentHit?'':'none';
+        }
+        opTrapHitsDone++;
+        if(opTrapHitsDone===keys.length){
+          var opTrapSumEl2=document.getElementById('opTrapSummary');
+          if(opTrapSumEl2){opTrapSumEl2.style.display='';opTrapSumEl2.textContent=keys.length+' link'+(keys.length!==1?'s':'')+(_opTrapTotalHits>0?' · '+_opTrapTotalHits+' total hit'+(_opTrapTotalHits!==1?'s':''):'');}
         }
       });
     });
