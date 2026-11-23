@@ -25,8 +25,11 @@ body{
 }
 
 /* ── Typography ── */
-h3{font-size:.88rem;font-weight:700;letter-spacing:.04em;color:var(--ink);margin-bottom:6px}
+h3{font-size:.92rem;font-weight:800;letter-spacing:.05em;color:#fff;margin-bottom:5px;text-transform:uppercase;font-size:.75rem}
 p.note{font-size:.72rem;color:rgba(255,255,255,.38);line-height:1.55;margin-bottom:10px}
+/* Section head accent lines by context */
+#devContent section .sec-head{border-left:3px solid rgba(79,255,204,.45)}
+#opContent section .sec-head{border-left:3px solid rgba(159,122,234,.45)}
 input[type=password],input[type=text],input[type=url]{
   width:100%;background:rgba(255,255,255,.055);
   border:1px solid var(--faint);border-radius:8px;
@@ -80,9 +83,19 @@ input.shake{animation:quake .25s ease 2}
 @keyframes devlivepulse{0%,100%{opacity:1;box-shadow:0 0 8px rgba(79,255,204,.7)}50%{opacity:.5;box-shadow:0 0 3px rgba(79,255,204,.3)}}
 
 /* ── Sections ── */
-section{background:var(--panel);border:1px solid var(--faint);border-radius:12px;padding:0;overflow:hidden;margin-bottom:12px;transition:border-color .25s,box-shadow .25s}
-section:focus-within{border-color:rgba(255,255,255,.14);box-shadow:0 2px 18px rgba(0,0,0,.3)}
-section .sec-head{padding:14px 16px;border-bottom:1px solid var(--faint)}
+section{
+  background:rgba(255,255,255,.028);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:0;overflow:hidden;margin-bottom:12px;
+  transition:border-color .25s,box-shadow .25s;
+  box-shadow:0 1px 4px rgba(0,0,0,.2)
+}
+section:focus-within{border-color:rgba(255,255,255,.15);box-shadow:0 2px 20px rgba(0,0,0,.35)}
+section .sec-head{
+  padding:13px 16px 12px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.018)
+}
 section .sec-body{padding:14px 16px}
 .row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
 .row:last-child{margin-bottom:0}
@@ -120,15 +133,28 @@ section .sec-body{padding:14px 16px}
 .home-label{font-size:.6rem;font-weight:700;letter-spacing:.22em;color:rgba(255,255,255,.25);text-transform:uppercase;margin-bottom:28px;text-align:center}
 .home-btns{width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px}
 .home-btn{
-  background:var(--panel);border:1px solid var(--faint);border-radius:12px;
-  padding:16px 20px;color:#fff;cursor:pointer;font-size:.88rem;font-weight:600;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;
+  padding:18px 20px;color:#fff;cursor:pointer;font-size:.9rem;font-weight:700;
   font-family:'Manrope',sans-serif;text-align:left;display:flex;align-items:center;
   justify-content:space-between;
-  transition:background .2s cubic-bezier(.4,0,.2,1),border-color .2s,box-shadow .2s,transform .12s
+  transition:background .22s cubic-bezier(.4,0,.2,1),border-color .22s,box-shadow .22s,transform .12s;
+  position:relative;overflow:hidden
 }
-.home-btn:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18);box-shadow:0 2px 16px rgba(0,0,0,.35)}
-.home-btn:active{background:rgba(255,255,255,.11);transform:scale(.99)}
-.home-btn-arrow{color:rgba(255,255,255,.3);font-size:.85rem}
+.home-btn::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  border-radius:14px 0 0 14px;opacity:0;transition:opacity .22s
+}
+#btnDev::before{background:rgba(79,255,204,1)}
+#btnOp::before{background:rgba(159,122,234,1)}
+.home-btn:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);box-shadow:0 4px 24px rgba(0,0,0,.4)}
+.home-btn:hover::before{opacity:1}
+#btnDev:hover{border-color:rgba(79,255,204,.3);box-shadow:0 4px 24px rgba(0,0,0,.4),0 0 0 1px rgba(79,255,204,.08)}
+#btnOp:hover{border-color:rgba(159,122,234,.3);box-shadow:0 4px 24px rgba(0,0,0,.4),0 0 0 1px rgba(159,122,234,.08)}
+.home-btn:active{transform:scale(.98);opacity:.9}
+.home-btn-arrow{color:rgba(255,255,255,.3);font-size:.85rem;transition:transform .18s,color .18s}
+.home-btn:hover .home-btn-arrow{transform:translateX(3px);color:rgba(255,255,255,.65)}
 
 /* ── Panel scroll view ── */
 .panel-view{
@@ -160,34 +186,58 @@ ul.devlist li:hover{background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px 
 .badge-off{color:#ff6b6b;border-color:rgba(255,107,107,.4)}
 
 /* ── Operator panel groups ── */
-.op-group{margin-bottom:14px}
+.op-group{margin-bottom:16px}
 .op-group-header{
   display:flex;align-items:center;gap:10px;
-  padding:11px 15px;border-radius:11px;
+  padding:12px 16px;border-radius:12px;
   cursor:pointer;user-select:none;
-  font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
-  transition:opacity .2s,background .2s cubic-bezier(.4,0,.2,1),box-shadow .2s,transform .12s;
+  font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  transition:opacity .2s,background .2s cubic-bezier(.4,0,.2,1),box-shadow .2s,transform .12s,border-color .2s;
   border:1px solid transparent;
   margin-bottom:6px;
-  box-shadow:0 1px 6px rgba(0,0,0,.2)
+  box-shadow:0 2px 8px rgba(0,0,0,.25);
+  position:relative;overflow:hidden
 }
-.op-group-header:hover{opacity:1;filter:brightness(1.08);box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.op-group-header::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:12px 0 0 12px;
+  background:currentColor;opacity:.7
+}
+.op-group-header:hover{opacity:1;filter:brightness(1.1);box-shadow:0 3px 16px rgba(0,0,0,.35);transform:translateY(-1px)}
 .op-group-header:active{transform:scale(.99);opacity:.85}
-.op-group-arrow{font-size:.7rem;transition:transform .22s cubic-bezier(.4,0,.2,1);margin-left:auto;opacity:.6}
+.op-group-arrow{font-size:.65rem;transition:transform .22s cubic-bezier(.4,0,.2,1);margin-left:auto;opacity:.5}
+.op-group-header:hover .op-group-arrow{opacity:.9}
 .op-group-body{display:none}
 .op-group-body.open{display:block}
 /* group colour themes */
-.op-grp-overview{background:rgba(79,255,204,.08);border-color:rgba(79,255,204,.2);color:#4fc}
-.op-grp-links{background:rgba(245,200,0,.08);border-color:rgba(245,200,0,.22);color:#f5c800}
-.op-grp-access{background:rgba(255,107,107,.08);border-color:rgba(255,107,107,.22);color:#ff6b6b}
-.op-grp-logs{background:rgba(170,170,255,.08);border-color:rgba(170,170,255,.2);color:#aaf}
-.op-grp-comms{background:rgba(159,122,234,.09);border-color:rgba(159,122,234,.24);color:#9f7aea}
-.op-grp-settings{background:rgba(255,255,255,.055);border-color:rgba(255,255,255,.13);color:#ccc}
-.op-grp-danger{background:rgba(192,0,14,.09);border-color:rgba(192,0,14,.38);color:#ff4444}
+.op-grp-overview{background:rgba(79,255,204,.1);border-color:rgba(79,255,204,.28);color:#4fc}
+.op-grp-links{background:rgba(245,200,0,.1);border-color:rgba(245,200,0,.3);color:#f5c800}
+.op-grp-access{background:rgba(255,107,107,.1);border-color:rgba(255,107,107,.3);color:#ff6b6b}
+.op-grp-logs{background:rgba(170,170,255,.1);border-color:rgba(170,170,255,.28);color:#aaf}
+.op-grp-comms{background:rgba(159,122,234,.12);border-color:rgba(159,122,234,.32);color:#9f7aea}
+.op-grp-settings{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18);color:#ccc}
+.op-grp-danger{background:rgba(192,0,14,.12);border-color:rgba(192,0,14,.45);color:#ff4444}
 /* danger zone sections get red left border */
 .op-group-danger section{border-left:3px solid rgba(192,0,14,.5)}
 /* collapsed indicator dot count */
 .op-grp-badge{font-size:.6rem;background:rgba(255,255,255,.1);color:#888;border-radius:20px;padding:1px 8px;font-weight:600;text-transform:none;letter-spacing:0;border:1px solid rgba(255,255,255,.08)}
+
+/* ── Quick stat chips ── */
+.stat-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:.62rem;font-weight:700;letter-spacing:.04em;
+  border-radius:8px;padding:5px 11px;
+  transition:color .3s,border-color .3s,background .3s,box-shadow .3s;
+  cursor:default
+}
+.stat-chip-trap{color:rgba(192,0,14,.5);background:rgba(192,0,14,.06);border:1px solid rgba(192,0,14,.18)}
+.stat-chip-trap.active{color:#ff4444;background:rgba(192,0,14,.1);border-color:rgba(192,0,14,.4);box-shadow:0 0 8px rgba(192,0,14,.15)}
+.stat-chip-hit{color:rgba(245,200,0,.5);background:rgba(245,200,0,.06);border:1px solid rgba(245,200,0,.18)}
+.stat-chip-hit.active{color:#f5c800;background:rgba(245,200,0,.1);border-color:rgba(245,200,0,.4);box-shadow:0 0 8px rgba(245,200,0,.12)}
+.stat-chip-redir{color:rgba(79,255,204,.4);background:rgba(79,255,204,.04);border:1px solid rgba(79,255,204,.14)}
+.stat-chip-redir.active{color:#4fc;background:rgba(79,255,204,.08);border-color:rgba(79,255,204,.35);box-shadow:0 0 8px rgba(79,255,204,.1)}
+.stat-chip-archive{color:rgba(170,170,255,.4);background:rgba(170,170,255,.04);border:1px solid rgba(170,170,255,.12);cursor:pointer}
+.stat-chip-archive.active{color:#aaf;background:rgba(170,170,255,.08);border-color:rgba(170,170,255,.3);box-shadow:0 0 8px rgba(170,170,255,.1)}
+.stat-chip-archive:hover{background:rgba(170,170,255,.1);border-color:rgba(170,170,255,.35)}
 </style>
 </head>
 <body>
@@ -203,7 +253,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px 
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.98</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.99</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -260,12 +310,12 @@ ul.devlist li:hover{background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px 
     <button id="devKbdHintBtn" title="Keyboard shortcuts" style="background:none;border:1px solid rgba(255,255,255,.12);border-radius:50%;width:20px;height:20px;color:#444;font-size:.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;font-family:Manrope,sans-serif;flex-shrink:0;transition:border-color .2s,color .2s">?</button>
   </div>
   <!-- Quick stats bar -->
-  <div id="devQuickStats" style="margin-top:0;margin-bottom:4px;display:flex;gap:6px;flex-wrap:wrap">
-    <span id="devStatTrapLinks" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:3px 9px;letter-spacing:.03em;transition:color .3s,border-color .3s,background .3s">— trap links</span>
-    <span id="devStatTrapHits" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:3px 9px;letter-spacing:.03em;transition:color .3s,border-color .3s,background .3s">— trap hits</span>
-    <span id="devStatRedirLinks" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:3px 9px;letter-spacing:.03em;transition:color .3s,border-color .3s,background .3s">— redirect links</span>
-    <span id="devStatRedirHits" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:3px 9px;letter-spacing:.03em;transition:color .3s,border-color .3s,background .3s">— redirect hits</span>
-    <span id="devStatArchived" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:3px 9px;letter-spacing:.03em;cursor:pointer;transition:color .3s,border-color .3s,background .3s" title="View your archives" onclick="(function(){var p=document.getElementById('devArchivesPanel');var b=document.getElementById('devArchivesBody');if(p&&p.style.display==='none'){p.style.display='';if(b)b.style.display='';}p&&p.scrollIntoView({behavior:'smooth',block:'start'});})()">— archived</span>
+  <div id="devQuickStats" style="margin-top:0;margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap">
+    <span id="devStatTrapLinks" class="stat-chip stat-chip-trap">— trap links</span>
+    <span id="devStatTrapHits" class="stat-chip stat-chip-hit">— trap hits</span>
+    <span id="devStatRedirLinks" class="stat-chip stat-chip-redir">— redirect links</span>
+    <span id="devStatRedirHits" class="stat-chip stat-chip-redir">— redirect hits</span>
+    <span id="devStatArchived" class="stat-chip stat-chip-archive" title="View your archives" onclick="(function(){var p=document.getElementById('devArchivesPanel');var b=document.getElementById('devArchivesBody');if(p&&p.style.display==='none'){p.style.display='';if(b)b.style.display='';}p&&p.scrollIntoView({behavior:'smooth',block:'start'});})()">— archived</span>
   </div>
   <!-- Keyboard shortcut tooltip -->
   <div id="devKbdHintPanel" style="display:none;margin-top:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:10px 13px;box-shadow:0 2px 12px rgba(0,0,0,.35)">
@@ -956,8 +1006,10 @@ ul.devlist li:hover{background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px 
               <input type="email" id="opWsAlertEmail" maxlength="100" placeholder="Email…" style="flex:1">
               <button class="btn-sm" id="opWsAlertAdd" style="font-weight:600">Add</button>
             </div>
-            <div class="row" style="margin-top:4px">
+            <div class="row" style="margin-top:4px;flex-wrap:wrap;gap:6px">
               <button class="btn-sm" id="opWsAlertRefresh" style="font-size:.65rem">Refresh</button>
+              <button class="btn-sm" id="opWsAlertTest" style="font-size:.65rem;color:#f5c800;border-color:rgba(245,200,0,.3)">Send test email</button>
+              <span id="opWsAlertTestResult" style="font-size:.65rem;color:#aaa"></span>
             </div>
           </div>
         </section>
@@ -989,8 +1041,10 @@ ul.devlist li:hover{background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px 
               <button class="btn-sm" id="opGlobalAlertAdd" style="font-weight:600">Add alert rule</button>
             </div>
             <ul class="devlist" id="opGlobalAlertList" style="margin-top:8px"><li style="color:#888;font-size:.72rem">None configured.</li></ul>
-            <div class="row" style="margin-top:4px">
+            <div class="row" style="margin-top:4px;flex-wrap:wrap;gap:6px">
               <button class="btn-sm" id="opGlobalAlertRefresh" style="font-size:.65rem">Refresh</button>
+              <button class="btn-sm" id="opGlobalAlertTest" style="font-size:.65rem;color:#f5c800;border-color:rgba(245,200,0,.3)">Send test email</button>
+              <span id="opGlobalAlertTestResult" style="font-size:.65rem;color:#aaa"></span>
             </div>
           </div>
         </section>
@@ -1161,7 +1215,7 @@ function _updateArchivedStat(){
   var total=0;
   Object.keys(_devArchivesCache).forEach(function(k){var l=_devArchivesCache[k].links;if(l)total+=Object.keys(l).length;});
   var el=document.getElementById('devStatArchived');
-  if(el){el.textContent=total+' archived';el.style.color=total>0?'#9f7aea':'#555';el.style.borderColor=total>0?'rgba(159,122,234,.25)':'rgba(255,255,255,.08)';}
+  if(el){el.textContent=total+' archived';el.classList.toggle('active',total>0);}
   var cnt=document.getElementById('devArchivesCount');
   if(cnt){var na=Object.keys(_devArchivesCache).length;cnt.textContent=na>0?na+' archive'+(na===1?'':'s'):'';}
   // Show/hide panel
@@ -1798,12 +1852,12 @@ document.getElementById('devBack').addEventListener('click',function(){
   var wsRow=document.getElementById('devWsSwitcherRow');
   if(wsRow){wsRow.style.display='none';}
   // Reset quick stats bar
-  ['devStatTrapLinks','devStatTrapHits','devStatRedirLinks','devStatRedirHits'].forEach(function(eid){var el=document.getElementById(eid);if(el){el.style.color='#555';el.style.borderColor='rgba(255,255,255,.08)';}});
+  ['devStatTrapLinks','devStatTrapHits','devStatRedirLinks','devStatRedirHits','devStatArchived'].forEach(function(eid){var el=document.getElementById(eid);if(el){el.classList.remove('active');}});
   var qsT=document.getElementById('devStatTrapLinks');if(qsT)qsT.textContent='— trap links';
   var qsTH=document.getElementById('devStatTrapHits');if(qsTH)qsTH.textContent='— trap hits';
   var qsR=document.getElementById('devStatRedirLinks');if(qsR)qsR.textContent='— redirect links';
   var qsRH=document.getElementById('devStatRedirHits');if(qsRH)qsRH.textContent='— redirect hits';
-  var qsArch=document.getElementById('devStatArchived');if(qsArch){qsArch.textContent='— archived';qsArch.style.color='#555';qsArch.style.borderColor='rgba(255,255,255,.08)';}
+  var qsArch=document.getElementById('devStatArchived');if(qsArch){qsArch.textContent='— archived';qsArch.classList.remove('active');}
   _devArchivesCache={};
   var archPanel=document.getElementById('devArchivesPanel');if(archPanel)archPanel.style.display='none';
   show(null);
@@ -4140,8 +4194,8 @@ function loadDevTrapList(){
           }
           // Update quick stats bar
           var qsTrap=document.getElementById('devStatTrapLinks');var qsTrapH=document.getElementById('devStatTrapHits');
-          if(qsTrap){qsTrap.textContent=keys.length+' trap link'+(keys.length!==1?'s':'');qsTrap.style.color=keys.length>0?'#aaa':'#555';}
-          if(qsTrapH){qsTrapH.textContent=_totalTrapHits+' trap hit'+(_totalTrapHits!==1?'s':'');qsTrapH.style.color=_totalTrapHits>0?'#ff9955':'#555';qsTrapH.style.borderColor=_totalTrapHits>0?'rgba(255,153,85,.25)':'rgba(255,255,255,.08)';}
+          if(qsTrap){qsTrap.textContent=keys.length+' trap link'+(keys.length!==1?'s':'');qsTrap.classList.toggle('active',keys.length>0);}
+          if(qsTrapH){qsTrapH.textContent=_totalTrapHits+' trap hit'+(_totalTrapHits!==1?'s':'');qsTrapH.classList.toggle('active',_totalTrapHits>0);}
           if(totalNewHits>0){
             var bell=document.getElementById('devHitBell');
             var bellCount=document.getElementById('devHitBellCount');
@@ -4525,8 +4579,8 @@ function loadDevRedirectList(){
           if(sumEl2)sumEl2.textContent=keys.length+' link'+(keys.length!==1?'s':'')+(_totalHits>0?' · '+_totalHits+' total hit'+(_totalHits!==1?'s':''):'');
           // Update quick stats bar
           var qsRedir=document.getElementById('devStatRedirLinks');var qsRedirH=document.getElementById('devStatRedirHits');
-          if(qsRedir){qsRedir.textContent=keys.length+' redirect link'+(keys.length!==1?'s':'');qsRedir.style.color=keys.length>0?'#aaa':'#555';}
-          if(qsRedirH){qsRedirH.textContent=_totalHits+' redirect hit'+(_totalHits!==1?'s':'');qsRedirH.style.color=_totalHits>0?'#4fc':'#555';qsRedirH.style.borderColor=_totalHits>0?'rgba(79,255,204,.25)':'rgba(255,255,255,.08)';}
+          if(qsRedir){qsRedir.textContent=keys.length+' redirect link'+(keys.length!==1?'s':'');qsRedir.classList.toggle('active',keys.length>0);}
+          if(qsRedirH){qsRedirH.textContent=_totalHits+' redirect hit'+(_totalHits!==1?'s':'');qsRedirH.classList.toggle('active',_totalHits>0);}
           // Sort by hits desc
           var rItems=Array.prototype.slice.call(list.querySelectorAll('li[data-redir-hits-val]'));
           if(rItems.length>1){
@@ -5028,33 +5082,43 @@ loadNicknames(null);
 // EMAILJS
 // ══════════════════════════════════════════
 var _ejsReady=false;
+var _EJS_PUBLIC='mUmPqMu2UV2nOSa4T';
+var _EJS_SERVICE='service_f7xdfho';
+var _EJS_TEMPLATE='template_me3wdpj';
 (function(){
   try{
     if(typeof emailjs!=='undefined'){
-      emailjs.init({publicKey:'mUmPqMu2UV2nOSa4T'});
+      emailjs.init({publicKey:_EJS_PUBLIC});
       _ejsReady=true;
     }
-  }catch(e){}
+  }catch(e){console.warn('[SC6 email] init failed:',e);}
 })();
 
+// Returns a Promise so callers can .then/.catch
 function sc6SendAlert(toEmail,subject,message){
-  // Always ensure emailjs is ready — works even without operator login
-  if(!_ejsReady){
-    try{emailjs.init({publicKey:'mUmPqMu2UV2nOSa4T'});_ejsReady=true;}catch(e){}
-  }
-  if(!_ejsReady)return;
-  try{
-    emailjs.send('service_f7xdfho','template_me3wdpj',{
-      to_email:toEmail,
-      subject:subject,
-      message:message
-    }).catch(function(){});
-  }catch(e){
-    // If send fails, try reinit once and retry
-    try{emailjs.init({publicKey:'mUmPqMu2UV2nOSa4T'});_ejsReady=true;
-      emailjs.send('service_f7xdfho','template_me3wdpj',{to_email:toEmail,subject:subject,message:message}).catch(function(){});
-    }catch(e2){}
-  }
+  return new Promise(function(resolve,reject){
+    if(typeof emailjs==='undefined'){reject(new Error('EmailJS not loaded'));return;}
+    if(!_ejsReady){
+      try{emailjs.init({publicKey:_EJS_PUBLIC});_ejsReady=true;}
+      catch(e){reject(e);return;}
+    }
+    var params={to_email:toEmail,subject:subject,message:message};
+    emailjs.send(_EJS_SERVICE,_EJS_TEMPLATE,params,{publicKey:_EJS_PUBLIC})
+      .then(function(r){resolve(r);})
+      .catch(function(err){
+        console.warn('[SC6 email] send failed:',err);
+        reject(err);
+      });
+  });
+}
+
+// Test send — shows result in a UI element
+function sc6TestAlert(toEmail,resultElId){
+  var el=document.getElementById(resultElId);
+  if(el){el.textContent='Sending…';el.style.color='#aaa';}
+  sc6SendAlert(toEmail,'SC6 Test Alert','This is a test alert from SC6. If you received this, email alerts are working correctly.')
+    .then(function(){if(el){el.textContent='✓ Sent — check your inbox';el.style.color='#4fc';}})
+    .catch(function(e){if(el){el.textContent='✗ Failed: '+(e&&(e.text||e.message||JSON.stringify(e)));el.style.color='#ff6b6b';}});
 }
 
 // Format email heading: [CODE (Name)] or [CODE]
@@ -5434,6 +5498,11 @@ document.getElementById('opWsAlertAdd').addEventListener('click',function(){
   });
 });
 document.getElementById('opWsAlertRefresh').addEventListener('click',loadWsAlerts);
+document.getElementById('opWsAlertTest').addEventListener('click',function(){
+  var email=document.getElementById('opWsAlertEmail').value.trim();
+  if(!email){var r=document.getElementById('opWsAlertTestResult');if(r){r.textContent='Enter an email above first';r.style.color='#ff6b6b';}return;}
+  sc6TestAlert(email,'opWsAlertTestResult');
+});
 
 // ══════════════════════════════════════════
 // GLOBAL ACTION ALERTS
@@ -5517,6 +5586,11 @@ document.getElementById('opGlobalAlertAdd').addEventListener('click',function(){
   });
 });
 document.getElementById('opGlobalAlertRefresh').addEventListener('click',loadGlobalAlerts);
+document.getElementById('opGlobalAlertTest').addEventListener('click',function(){
+  var email=document.getElementById('opGlobalAlertEmail').value.trim();
+  if(!email){var r=document.getElementById('opGlobalAlertTestResult');if(r){r.textContent='Enter an email above first';r.style.color='#ff6b6b';}return;}
+  sc6TestAlert(email,'opGlobalAlertTestResult');
+});
 
 // ══════════════════════════════════════════
 // FAILED LOGIN ATTEMPTS
