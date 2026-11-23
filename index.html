@@ -190,7 +190,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.96</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.97</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -248,6 +248,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
     <span id="devStatTrapHits" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:3px 9px;letter-spacing:.03em">— trap hits</span>
     <span id="devStatRedirLinks" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:3px 9px;letter-spacing:.03em">— redirect links</span>
     <span id="devStatRedirHits" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:3px 9px;letter-spacing:.03em">— redirect hits</span>
+    <span id="devStatArchived" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:3px 9px;letter-spacing:.03em;cursor:pointer" title="View your archives" onclick="(function(){var p=document.getElementById('devArchivesPanel');var b=document.getElementById('devArchivesBody');if(p&&p.style.display==='none'){p.style.display='';if(b)b.style.display='';}p&&p.scrollIntoView({behavior:'smooth',block:'start'});})()">— archived</span>
   </div>
   <!-- Keyboard shortcut tooltip -->
   <div id="devKbdHintPanel" style="display:none;margin-top:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px">
@@ -389,6 +390,22 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
           <a id="devTrapSelectNone" href="#" style="color:#555;text-decoration:none;cursor:pointer">None</a>
         </div>
         <ul class="devlist" id="devTrapList"></ul>
+      </div>
+    </section>
+
+    <!-- My Archives -->
+    <section class="panel" id="devArchivesPanel" style="display:none">
+      <div class="sec-head" style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none" id="devArchivesToggleHead">
+        <h3 style="margin:0;flex:1">🗂 My Archives</h3>
+        <span id="devArchivesCount" style="font-size:.6rem;color:#555"></span>
+        <span id="devArchivesArrow" style="font-size:.8rem;color:#555;transition:transform .2s">▼</span>
+      </div>
+      <div class="sec-body" id="devArchivesBody">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+          <button class="btn-sm" id="devArchiveNewBtn" style="font-size:.68rem;padding:3px 10px">+ New Archive</button>
+          <span style="font-size:.6rem;color:#444">Create a named archive to organize your links</span>
+        </div>
+        <div id="devArchivesList" style="display:flex;flex-direction:column;gap:8px"></div>
       </div>
     </section>
 
@@ -1097,6 +1114,118 @@ function redirectLogsUrl(id){return fbUrl('_sc6/workspaces/'+getSyncCode()+'/red
 var ERROR_PAGE_BASE=location.origin+location.pathname.replace(/[^/]*$/,'')+'error.html';
 var WORKER_BASE='https://media.sharelink-1.workers.dev';
 
+// ── Dev archives ──
+function devArchivesUrl(code){return fbUrl('_sc6/devArchives/'+(code||_currentDevCode))}
+function devArchiveUrl(code,archId){return fbUrl('_sc6/devArchives/'+(code||_currentDevCode)+'/'+archId)}
+var _devArchivesCache={};// archId→{name,createdAt,links:{linkId:type}}
+
+function loadDevArchives(cb){
+  if(!_currentDevCode||_currentDevCode==='?')return;
+  fetch(devArchivesUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
+    _devArchivesCache={};
+    if(data&&typeof data==='object'){Object.keys(data).forEach(function(k){_devArchivesCache[k]=data[k];});}
+    _updateArchivedStat();
+    renderDevArchives();
+    if(cb)cb(_devArchivesCache);
+  });
+}
+
+function _updateArchivedStat(){
+  var total=0;
+  Object.keys(_devArchivesCache).forEach(function(k){var l=_devArchivesCache[k].links;if(l)total+=Object.keys(l).length;});
+  var el=document.getElementById('devStatArchived');
+  if(el){el.textContent=total+' archived';el.style.color=total>0?'#9f7aea':'#555';el.style.borderColor=total>0?'rgba(159,122,234,.25)':'rgba(255,255,255,.08)';}
+  var cnt=document.getElementById('devArchivesCount');
+  if(cnt){var na=Object.keys(_devArchivesCache).length;cnt.textContent=na>0?na+' archive'+(na===1?'':'s'):'';}
+  // Show/hide panel
+  var panel=document.getElementById('devArchivesPanel');
+  if(panel)panel.style.display=Object.keys(_devArchivesCache).length>0||total>0?'':'';
+}
+
+function renderDevArchives(){
+  var container=document.getElementById('devArchivesList');
+  if(!container)return;
+  var keys=Object.keys(_devArchivesCache);
+  // Always show panel once logged in
+  var panel=document.getElementById('devArchivesPanel');
+  if(panel)panel.style.display='';
+  if(!keys.length){container.innerHTML='<div style="font-size:.68rem;color:#444;padding:4px 0">No archives yet. Create one to organize your links.</div>';return;}
+  container.innerHTML=keys.map(function(archId){
+    var arch=_devArchivesCache[archId];
+    var links=arch.links&&typeof arch.links==='object'?arch.links:{};
+    var linkCount=Object.keys(links).length;
+    return '<div style="border:1px solid rgba(255,255,255,.09);border-radius:7px;padding:9px 11px;background:rgba(255,255,255,.025)" data-arch-id="'+esc(archId)+'">'
+      +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:'+(linkCount?'7px':'0')+'">'
+      +'<span style="font-size:.72rem;color:#ccc;font-weight:600;flex:1">🗂 '+esc(arch.name||'Archive')+'</span>'
+      +'<span style="font-size:.58rem;color:#555;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:1px 7px">'+linkCount+' link'+(linkCount===1?'':'s')+'</span>'
+      +'<button class="btn-sm danger" style="font-size:.6rem;padding:1px 7px" data-arch-delete="'+esc(archId)+'">Delete archive</button>'
+      +'</div>'
+      +(linkCount?'<ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px">'
+        +Object.keys(links).map(function(linkId){
+          var type=links[linkId];
+          return '<li style="display:flex;align-items:center;gap:6px;font-size:.65rem;color:#888;padding:3px 5px;background:rgba(255,255,255,.03);border-radius:4px">'
+            +'<span style="font-size:.56rem;color:'+(type==='trap'?'#ff9955':'#4fc')+';border:1px solid '+(type==='trap'?'rgba(255,153,85,.25)':'rgba(79,255,204,.25)')+';border-radius:8px;padding:1px 5px;font-weight:600">'+(type==='trap'?'ERROR':'TRACKER')+'</span>'
+            +'<code style="font-size:.62rem;color:#f5c800;background:rgba(255,200,0,.08);padding:1px 5px;border-radius:3px;flex:1;word-break:break-all">'+esc(linkId.slice(-12))+'</code>'
+            +'<button class="btn-sm" style="font-size:.58rem;padding:1px 6px;color:#4fc" data-arch-unarchive-link="'+esc(linkId)+'" data-arch-unarchive-from="'+esc(archId)+'">Restore</button>'
+            +'</li>';
+        }).join('')
+        +'</ul>':'')
+      +'</div>';
+  }).join('');
+  // Wire events
+  container.querySelectorAll('[data-arch-delete]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var archId=btn.getAttribute('data-arch-delete');
+      var arch=_devArchivesCache[archId];
+      if(!arch)return;
+      if(!confirm('Delete archive "'+arch.name+'"? Links will be removed from the archive (they still exist in the workspace).'))return;
+      fetch(devArchiveUrl(null,archId),{method:'DELETE'}).then(function(){loadDevArchives();}).catch(function(){});
+    });
+  });
+  container.querySelectorAll('[data-arch-unarchive-link]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var linkId=btn.getAttribute('data-arch-unarchive-link');
+      var archId=btn.getAttribute('data-arch-unarchive-from');
+      fetch(devArchiveUrl(null,archId)+'/links/'+linkId.replace(/\./g,'%2E')+'.json',{method:'DELETE'}).then(function(){loadDevArchives();}).catch(function(){});
+    });
+  });
+}
+
+function devArchiveLinkPrompt(linkId,type){
+  // Show archive picker modal
+  var keys=Object.keys(_devArchivesCache);
+  if(!keys.length){
+    var name=prompt('No archives yet. Enter a name for a new archive:');
+    if(!name||!name.trim())return;
+    name=name.trim();
+    var newId='arch-'+Date.now();
+    var payload={name:name,createdAt:new Date().toISOString(),links:{}};
+    payload.links[linkId]=type;
+    fetch(devArchiveUrl(null,newId),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(){loadDevArchives();}).catch(function(){});
+    return;
+  }
+  // Build picker prompt string
+  var opts=keys.map(function(k,i){return (i+1)+'. '+(_devArchivesCache[k].name||'Archive');}).join('\n');
+  var choice=prompt('Move to archive:\n'+opts+'\n\nEnter number, or type "new" to create a new archive:');
+  if(!choice||!choice.trim())return;
+  choice=choice.trim();
+  if(choice.toLowerCase()==='new'){
+    var newName=prompt('New archive name:');
+    if(!newName||!newName.trim())return;
+    newName=newName.trim();
+    var nId='arch-'+Date.now();
+    var newPayload={name:newName,createdAt:new Date().toISOString(),links:{}};
+    newPayload.links[linkId]=type;
+    fetch(devArchiveUrl(null,nId),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(newPayload)}).then(function(){loadDevArchives();}).catch(function(){});
+    return;
+  }
+  var idx=parseInt(choice,10)-1;
+  if(isNaN(idx)||idx<0||idx>=keys.length){alert('Invalid selection.');return;}
+  var archId=keys[idx];
+  // Add link to chosen archive
+  fetch(devArchiveUrl(null,archId)+'/links/'+encodeURIComponent(linkId)+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(type)}).then(function(){loadDevArchives();}).catch(function(){});
+}
+
 // ── Device tag ──
 function deviceTag(){
   try{
@@ -1283,6 +1412,35 @@ function stopExLogSync(){
       collapsed=!collapsed;
       body.style.display=collapsed?'none':'';
       arrow.style.transform=collapsed?'rotate(-90deg)':'';
+    });
+  }
+})();
+
+// ── Archives panel toggle + New Archive button ──
+(function(){
+  var head=document.getElementById('devArchivesToggleHead');
+  var body=document.getElementById('devArchivesBody');
+  var arrow=document.getElementById('devArchivesArrow');
+  if(head&&body&&arrow){
+    head.addEventListener('click',function(e){
+      if(e.target.tagName==='BUTTON')return;
+      var open=body.style.display!=='none';
+      body.style.display=open?'none':'';
+      arrow.style.transform=open?'rotate(-90deg)':'';
+    });
+  }
+  var newBtn=document.getElementById('devArchiveNewBtn');
+  if(newBtn){
+    newBtn.addEventListener('click',function(){
+      var name=prompt('Archive name:');
+      if(!name||!name.trim())return;
+      name=name.trim();
+      var newId='arch-'+Date.now();
+      var payload={name:name,createdAt:new Date().toISOString(),links:{}};
+      newBtn.textContent='…';newBtn.disabled=true;
+      fetch(devArchiveUrl(null,newId),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+        .then(function(){newBtn.textContent='+ New Archive';newBtn.disabled=false;loadDevArchives();})
+        .catch(function(){newBtn.textContent='+ New Archive';newBtn.disabled=false;});
     });
   }
 })();
@@ -1616,6 +1774,9 @@ document.getElementById('devBack').addEventListener('click',function(){
   var qsTH=document.getElementById('devStatTrapHits');if(qsTH)qsTH.textContent='— trap hits';
   var qsR=document.getElementById('devStatRedirLinks');if(qsR)qsR.textContent='— redirect links';
   var qsRH=document.getElementById('devStatRedirHits');if(qsRH)qsRH.textContent='— redirect hits';
+  var qsArch=document.getElementById('devStatArchived');if(qsArch){qsArch.textContent='— archived';qsArch.style.color='#555';qsArch.style.borderColor='rgba(255,255,255,.08)';}
+  _devArchivesCache={};
+  var archPanel=document.getElementById('devArchivesPanel');if(archPanel)archPanel.style.display='none';
   show(null);
 });
 document.getElementById('opBack').addEventListener('click',function(){
@@ -1829,6 +1990,8 @@ function openDev(whichCode){
   loadNicknames(function(){updateDevSyncNickname();});
   // Count existing hits for session stats
   _countDevSessionHits();
+  // Load personal archives
+  loadDevArchives();
   // Start watchdog — kick if locked or code disabled
   _devWatchdogStart(_currentDevCode);
 }
@@ -3513,7 +3676,7 @@ function loadOpTrapList(){
       var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws);
       var trapNote=link.note?esc(link.note):'';
       var opHaystack=(id+' '+(link.note||'')+' '+url).toLowerCase();
-      return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)'+(opTrapIsNew?';box-shadow:0 0 0 1px rgba(79,255,204,.2);border-radius:4px':'')+'" data-trap-id-op="'+esc(id)+'" data-op-trap-haystack="'+esc(opHaystack)+'">'
+      return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)'+(opTrapIsNew?';box-shadow:0 0 0 1px rgba(79,255,204,.2);border-radius:4px':'')+'" data-trap-id-op="'+esc(id)+'" data-op-trap-hits-val="0" data-op-trap-haystack="'+esc(opHaystack)+'">'
         +'<div style="font-size:.7rem;color:#888">'+esc(created)+(opTrapIsNew?' <span style="font-size:.56rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em;vertical-align:middle">NEW</span>':'')+'</div>'
         +(trapNote?'<div style="font-size:.7rem;color:#9f7aea;margin:2px 0;font-style:italic">🏷 '+trapNote+'</div>':'')
         +'<div style="font-size:.72rem;color:#ccc;word-break:break-all;margin:2px 0">'+esc(url)+'</div>'
@@ -3558,6 +3721,7 @@ function loadOpTrapList(){
           else if(n<=3){li2.style.borderLeft='3px solid rgba(245,166,0,.45)';li2.style.paddingLeft='8px';}
           else if(n<=10){li2.style.borderLeft='3px solid rgba(255,107,107,.55)';li2.style.paddingLeft='8px';}
           else{li2.style.borderLeft='3px solid rgba(255,58,58,.8)';li2.style.paddingLeft='8px';}
+          li2.setAttribute('data-op-trap-hits-val',String(n));
         }
         // Last visitor hint
         if(li2&&n>0){
@@ -3581,6 +3745,12 @@ function loadOpTrapList(){
         if(opTrapHitsDone===keys.length){
           var opTrapSumEl2=document.getElementById('opTrapSummary');
           if(opTrapSumEl2){opTrapSumEl2.style.display='';opTrapSumEl2.textContent=keys.length+' link'+(keys.length!==1?'s':'')+(_opTrapTotalHits>0?' · '+_opTrapTotalHits+' total hit'+(_opTrapTotalHits!==1?'s':''):'');}
+          // Sort by hits desc
+          var opTItems=Array.prototype.slice.call(list.querySelectorAll('li[data-op-trap-hits-val]'));
+          if(opTItems.length>1){
+            opTItems.sort(function(a,b){return parseInt(b.getAttribute('data-op-trap-hits-val')||'0')-parseInt(a.getAttribute('data-op-trap-hits-val')||'0');});
+            opTItems.forEach(function(li4){list.appendChild(li4);});
+          }
         }
       });
     });
@@ -3825,6 +3995,7 @@ function loadDevTrapList(){
         +'<input type="text" data-trap-note-input="'+esc(id)+'" value="'+esc(note)+'" placeholder="Add note…" maxlength="80" style="flex:1;font-size:.68rem;padding:3px 7px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:5px;color:inherit;outline:none">'
         +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px" data-trap-note-save="'+esc(id)+'">Save note</button>'
         +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px;color:'+(muted?'#4fc':'#777')+'" data-trap-mute="'+esc(id)+'" title="'+(muted?'Unmute link':'Mute / archive link')+'">'+(muted?'Unmute':'Mute')+'</button>'
+        +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px;color:#9f7aea" data-dev-archive-link="'+esc(id)+'" data-dev-archive-type="trap" title="Move to archive">🗂 Archive</button>'
         +'</div>'
         +'<div style="display:flex;gap:5px;margin-top:4px;align-items:center">'
         +'<span style="font-size:.58rem;color:#555;white-space:nowrap;flex-shrink:0">⏳ Expiry</span>'
@@ -4009,6 +4180,13 @@ function loadDevTrapList(){
             exLog('Trap link duplicated','Src: …'+srcId.slice(-6)+' → …'+newId.slice(-6),'dev '+_currentDevCode,true);
             loadDevTrapList();
           }).catch(function(){btn.textContent='Dup';btn.disabled=false;});
+      });
+    });
+    // Wire archive buttons (dev trap)
+    list.querySelectorAll('[data-dev-archive-link][data-dev-archive-type="trap"]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var linkId=btn.getAttribute('data-dev-archive-link');
+        devArchiveLinkPrompt(linkId,'trap');
       });
     });
     // Wire expiry quick-set
@@ -4218,6 +4396,7 @@ function loadDevRedirectList(){
         +'<span style="font-size:.58rem;color:#3a3a3a" id="devrdrlast-'+esc(id)+'"></span>'
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" id="devrhitbtn-'+esc(id)+'" data-redir-hits="'+esc(id)+'">Hits</button>'
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px;color:#777" data-dup-redir="'+esc(id)+'" title="Duplicate this redirect link">Dup</button>'
+        +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px;color:#9f7aea" data-dev-archive-link="'+esc(id)+'" data-dev-archive-type="redir" title="Move to archive">🗂 Archive</button>'
         +'<button class="btn-sm danger" style="font-size:.65rem;padding:2px 7px" data-redir-del="'+esc(id)+'">Del</button>'
         +'</div>'
         +'<div style="display:flex;align-items:center;gap:5px;margin-top:5px">'
@@ -4402,6 +4581,13 @@ function loadDevRedirectList(){
             exLog('Redirect link duplicated','Src: '+srcId+' → '+newId,'dev '+_currentDevCode,true);
             loadDevRedirectList();
           }).catch(function(){btn.textContent='Dup';btn.disabled=false;});
+      });
+    });
+    // Wire archive buttons (dev redirect)
+    list.querySelectorAll('[data-dev-archive-link][data-dev-archive-type="redir"]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var linkId=btn.getAttribute('data-dev-archive-link');
+        devArchiveLinkPrompt(linkId,'redir');
       });
     });
     // Quick-ban from redirect hit detail
