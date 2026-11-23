@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.59</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.60</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -3811,6 +3811,7 @@ function loadDevRedirectList(){
         +'<code style="font-size:.65rem;color:#f5c800;background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;word-break:break-all;flex:1">'+esc(url)+'</code>'
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" data-redir-copy="'+esc(url)+'">Copy</button>'
         +'<a href="'+esc(e.target||'')+'" target="_blank" rel="noopener" class="btn-sm" style="font-size:.65rem;padding:2px 7px;text-decoration:none;color:inherit" title="Open destination">↗</a>'
+        +'<span style="font-size:.58rem;color:#3a3a3a" id="devrdrlast-'+esc(id)+'"></span>'
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" id="devrhitbtn-'+esc(id)+'" data-redir-hits="'+esc(id)+'">Hits</button>'
         +'<button class="btn-sm danger" style="font-size:.65rem;padding:2px 7px" data-redir-del="'+esc(id)+'">Del</button>'
         +'</div>'
@@ -3830,7 +3831,8 @@ function loadDevRedirectList(){
     var _totalHits=0;var _hitLoadsDone=0;
     keys.forEach(function(id){
       fetch(redirectLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
-        var n=logs?(Array.isArray(logs)?logs.length:Object.keys(logs).length):0;
+        var raw=logs?(Array.isArray(logs)?logs:Object.values(logs)):[];
+        var n=raw.length;
         _totalHits+=n;_hitLoadsDone++;
         var btn=document.getElementById('devrhitbtn-'+id);
         if(btn){
@@ -3838,6 +3840,20 @@ function loadDevRedirectList(){
           if(n===0){btn.style.color='';btn.style.borderColor='';}
           else if(n<=3){btn.style.color='#f5a600';btn.style.borderColor='rgba(245,166,0,.35)';}
           else{btn.style.color='#ff6b6b';btn.style.borderColor='rgba(255,107,107,.35)';}
+        }
+        // Last visitor preview
+        var lastREl=document.getElementById('devrdrlast-'+id);
+        if(lastREl&&n>0){
+          var rsorted=raw.slice().sort(function(a,b){return (b.time||'').localeCompare(a.time||'');});
+          var rlast=rsorted[0];
+          var rflag=rlast.country&&rlast.country!=='?'?getFlagEmoji(rlast.country):'';
+          var rcity=rlast.city&&rlast.city!=='?'?rlast.city:'';
+          var rlocHint=(rflag?rflag+' ':'')+rcity;
+          var rlastAgo='';
+          if(rlast.time){var rd=Date.now()-new Date(rlast.time).getTime();if(rd<60000)rlastAgo='just now';else if(rd<3600000)rlastAgo=Math.floor(rd/60000)+'m ago';else if(rd<86400000)rlastAgo=Math.floor(rd/3600000)+'h ago';else rlastAgo=Math.floor(rd/86400000)+'d ago';}
+          lastREl.textContent=(rlocHint?rlocHint+' · ':'')+rlastAgo;
+          lastREl.style.color='#444';
+          lastREl.title='Last click: '+(rlast.city||'?')+', '+(rlast.country||'?')+' at '+(rlast.time?new Date(rlast.time).toLocaleString():'?');
         }
         // Store hit count on <li> for sorting
         var rli=list.querySelector('[data-redir-id="'+id+'"]');
