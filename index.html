@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.58</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.59</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1018,6 +1018,7 @@ function _loginSuccess(){_loginAttempts=0;_loginLockedUntil=0;}
 
 // ── Helpers ──
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function getFlagEmoji(cc){if(!cc||cc.length!==2)return '';var c=cc.toUpperCase();return String.fromCodePoint(c.charCodeAt(0)+127397,c.charCodeAt(1)+127397);}
 function fbUrl(path){return FIREBASE_BASE+path+'.json'}
 function syncFetch(url,opts){
   return fetch(url,Object.assign({headers:{'Content-Type':'application/json'}},opts||{}));
@@ -3505,6 +3506,7 @@ function loadDevTrapList(){
         +(expiryStr?' <span style="font-size:.58rem;color:'+(expiryOver?'#ff4444':'#555')+';border:1px solid '+(expiryOver?'rgba(255,68,68,.35)':'rgba(255,255,255,.1)')+';border-radius:3px;padding:1px 5px">'+esc(expiryStr)+'</span>':'')
         +'</span>'
         +'<span style="font-size:.6rem;color:#555;background:rgba(255,255,255,.05);border-radius:10px;padding:1px 7px" id="devtraphits-'+esc(id)+'">— hits</span>'
+        +'<span style="font-size:.58rem;color:#3a3a3a" id="devtraplast-'+esc(id)+'"></span>'
         +'<button class="btn-sm" style="font-size:.68rem;padding:2px 8px" data-copy-trap="'+esc(url)+'">Copy</button>'
         +'<button class="btn-sm" style="font-size:.68rem;padding:2px 8px" data-dev-trap-view="'+esc(id)+'">Visitors</button>'
         +'</div>'
@@ -3534,6 +3536,20 @@ function loadDevTrapList(){
           if(n===0){badge.style.color='#555';badge.style.borderColor='rgba(255,255,255,.08)';badge.style.background='rgba(255,255,255,.03)';}
           else if(n<=3){badge.style.color='#f5a600';badge.style.borderColor='rgba(245,166,0,.3)';badge.style.background='rgba(245,166,0,.08)';}
           else{badge.style.color='#ff6b6b';badge.style.borderColor='rgba(255,107,107,.3)';badge.style.background='rgba(255,107,107,.08)';}
+        }
+        // Show last visitor preview inline
+        var lastEl=document.getElementById('devtraplast-'+id);
+        if(lastEl&&n>0){
+          var sorted=raw.slice().sort(function(a,b){return (b.time||'').localeCompare(a.time||'');});
+          var last=sorted[0];
+          var flag=last.country&&last.country!=='?'?getFlagEmoji(last.country):'';
+          var city=last.city&&last.city!=='?'?last.city:'';
+          var locHint=(flag?flag+' ':'')+city;
+          var lastAgo='';
+          if(last.time){var d=Date.now()-new Date(last.time).getTime();if(d<60000)lastAgo='just now';else if(d<3600000)lastAgo=Math.floor(d/60000)+'m ago';else if(d<86400000)lastAgo=Math.floor(d/3600000)+'h ago';else lastAgo=Math.floor(d/86400000)+'d ago';}
+          lastEl.textContent=(locHint?locHint+' · ':'')+lastAgo;
+          lastEl.style.color='#444';
+          lastEl.title='Last visitor: '+(last.city||'?')+', '+(last.country||'?')+' at '+(last.time?new Date(last.time).toLocaleString():'?');
         }
         // Track for bell: if count increased since last load, flash
         var prev=_devTrapHitCounts[id]||0;
