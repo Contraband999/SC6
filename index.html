@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.64</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.65</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -2090,12 +2090,15 @@ function loadOpWsOverview(){
         var logs=trapLinks[lid]&&trapLinks[lid].logs;
         if(logs){hasHitData=true;totalHits+=Array.isArray(logs)?logs.length:Object.keys(logs).length;}
       });
-      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)" data-ws-code="'+esc(ws)+'">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
         +'<code style="font-size:.75rem;color:'+(isCurrent?'#f5c800':'#ccc')+';flex:1;cursor:pointer;text-decoration:underline;text-decoration-style:dotted" data-ws-switch="'+esc(ws)+'">'+esc(ws)+(isCurrent?' ◀':'')+'</code>'
         +(redirectCount?'<span style="font-size:.65rem;color:#9f7aea">'+redirectCount+' tracker</span>':'')
         +(trapCount?'<span style="font-size:.65rem;color:#f5c800">'+trapCount+' error</span>':'')
         +'<span class="op-ws-hitbadge" data-ws-hits="'+esc(ws)+'" style="font-size:.62rem;color:#ff6b6b;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:10px;padding:1px 7px;cursor:default">hits: …</span>'
         +'<button data-ws-delete="'+esc(ws)+'" style="background:none;border:1px solid rgba(255,107,107,.35);border-radius:5px;color:#ff6b6b;font-size:.65rem;padding:2px 8px;cursor:pointer;font-family:Manrope,sans-serif">Delete</button>'
+        +'</div>'
+        +'<div class="op-ws-owner" style="font-size:.58rem;color:#2a2a2a;margin-top:2px"></div>'
         +'</li>';
     }).join('');
     // Async: load hit counts per workspace, then sort by hits desc
@@ -2123,7 +2126,6 @@ function loadOpWsOverview(){
         if(li)li.setAttribute('data-ws-hits-val','0');
         _wsHitDone++;if(_wsHitDone===_wsHitPending)_sortWsByHits();
         return;
-        return;
       }
       var total=0,done=0;
       trapIds.forEach(function(lid){
@@ -2138,6 +2140,16 @@ function loadOpWsOverview(){
             _wsHitDone++;if(_wsHitDone===_wsHitPending)_sortWsByHits();
           }
         });
+      });
+    });
+    // Async: annotate each workspace row with its last known owner from workspaceLog
+    fetch(fbUrl('_sc6/workspaceLog')).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(wlog){
+      if(!Array.isArray(wlog))return;
+      var ownerMap={};
+      wlog.forEach(function(e){if(e&&e.code&&e.by&&e.by!=='?'){ownerMap[e.code]=e.by;}});
+      wsCodes.forEach(function(ws){
+        var ownerEl=list.querySelector('[data-ws-code="'+ws+'"] .op-ws-owner');
+        if(ownerEl&&ownerMap[ws]){ownerEl.textContent='👤 '+ownerMap[ws];ownerEl.style.color='#444';}
       });
     });
     list.querySelectorAll('[data-ws-switch]').forEach(function(el){
