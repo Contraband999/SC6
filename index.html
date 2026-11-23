@@ -190,7 +190,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.95</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.96</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1225,6 +1225,8 @@ function renderExLog(){
     ul.innerHTML=rev.map(function(e,i){
       var d=new Date(e.t);
       var ts=isNaN(d)?e.t:d.toLocaleTimeString()+' '+d.toLocaleDateString();
+      var relTs='';
+      if(!isNaN(d)){var dAgo=Date.now()-d.getTime();if(dAgo<60000)relTs='just now';else if(dAgo<3600000)relTs=Math.floor(dAgo/60000)+'m ago';else if(dAgo<86400000)relTs=Math.floor(dAgo/3600000)+'h ago';else relTs=Math.floor(dAgo/86400000)+'d ago';}
       var whoRaw=e.who||'?';
       // Extract code from "dev XXXX" for nickname lookup
       var devCode=whoRaw.startsWith('dev ')?whoRaw.slice(4):null;
@@ -1242,7 +1244,7 @@ function renderExLog(){
         +'<span style="color:'+whoColor+';font-weight:700;min-width:52px;text-transform:uppercase;font-size:.62rem;cursor:pointer" title="Filter by this actor" data-exec-who-filter="'+esc(whoKey)+'">'+esc(whoLabel)+'</span>'
         +'<span style="color:'+actionColor+';flex:1;word-break:break-word">'+esc(e.action||'?')+'</span>'
         +'<button title="Copy" onclick="(function(b,s){navigator.clipboard.writeText(s).then(function(){b.textContent=\'✓\';setTimeout(function(){b.textContent=\'⎘\';},1200)}).catch(function(){});})(this,'+JSON.stringify(copyData)+')" style="background:none;border:1px solid rgba(255,255,255,.12);border-radius:3px;color:#666;font-size:.62rem;padding:0 5px;cursor:pointer;line-height:1.6;font-family:Manrope,sans-serif;flex-shrink:0">⎘</button>'
-        +'<span style="color:#555;white-space:nowrap;font-size:.62rem">'+esc(ts)+'</span>'
+        +'<span style="color:#444;white-space:nowrap;font-size:.62rem;cursor:default" title="'+esc(ts)+'">'+(relTs?esc(relTs):esc(ts))+'</span>'
         +'</div>'
         +(e.detail?'<div style="color:#888;font-size:.65rem;padding-left:60px;margin-top:1px;word-break:break-all">'+esc(e.detail)+'</div>':'')
         +(hasDetail?'<div style="padding-left:60px;margin-top:3px">'
