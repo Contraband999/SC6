@@ -183,7 +183,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.70</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.71</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -353,6 +353,7 @@ ul.devlist li:last-child{border-bottom:none}
           </select>
           <button class="btn-sm" id="devTrapCopyAll" style="font-size:.68rem;display:none">Copy all</button>
           <button class="btn-sm danger" id="devTrapBulkDelete" style="font-size:.68rem;display:none">Delete checked (<span id="devTrapBulkCount">0</span>)</button>
+          <button class="btn-sm danger" id="devTrapPurgeExpired" style="font-size:.68rem;display:none" title="Delete all expired trap links">🗑 Purge expired</button>
           <button class="btn-sm" id="devTrapAutoRefreshToggle" style="font-size:.68rem;color:#555;border-color:rgba(255,255,255,.12)" title="Auto-refresh every 30s">↻ Auto</button>
         </div>
         <!-- Trap refresh indicator -->
@@ -3498,7 +3499,14 @@ function loadDevTrapList(){
     // Show/hide copy-all button
     var copyAllBtn=document.getElementById('devTrapCopyAll');
     if(copyAllBtn){copyAllBtn.style.display=keys.length>0?'':'none';copyAllBtn.textContent='Copy all ('+keys.length+')';}
-
+    // Show purge-expired button if there are expired links
+    var purgeBtn=document.getElementById('devTrapPurgeExpired');
+    if(purgeBtn){
+      var expiredIds=keys.filter(function(k){var e=obj[k];return e&&e.expiresAt&&(new Date(e.expiresAt).getTime()<Date.now());});
+      purgeBtn.style.display=expiredIds.length>0?'':'none';
+      purgeBtn.textContent='🗑 Purge expired ('+expiredIds.length+')';
+      purgeBtn._expiredIds=expiredIds;
+    }
     var bulkBar=document.getElementById('devTrapBulkBar');
     if(bulkBar)bulkBar.style.display=keys.length>0?'':'none';
     var searchEl=document.getElementById('devTrapSearch');
@@ -4291,6 +4299,19 @@ document.getElementById('devTrapCopyAll').addEventListener('click',function(){
   }).catch(function(){alert('Could not copy:\n\n'+urls.join('\n'));});
 });
 
+// ── Purge expired trap links ──
+document.getElementById('devTrapPurgeExpired').addEventListener('click',function(){
+  var ids=this._expiredIds||[];
+  if(!ids.length){alert('No expired links found.');return;}
+  if(!confirm('Delete '+ids.length+' expired trap link'+(ids.length===1?'':'s')+'?\n\nThis cannot be undone.'))return;
+  var sc=getSyncCode();var done=0;var btn=this;
+  btn.textContent='Deleting…';btn.disabled=true;
+  ids.forEach(function(id){
+    fetch(fbUrl('_sc6/workspaces/'+sc+'/trapLinks/'+id),{method:'DELETE'})
+      .then(function(){done++;if(done===ids.length){exLog('Expired trap links purged',ids.length+' links deleted','dev '+_currentDevCode,true);loadDevTrapList();}})
+      .catch(function(){done++;if(done===ids.length)loadDevTrapList();});
+  });
+});
 // ── Auto-refresh toggle ──
 document.getElementById('devTrapAutoRefreshToggle').addEventListener('click',function(){
   _devTrapAutoRefresh=!_devTrapAutoRefresh;
