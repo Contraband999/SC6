@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.52</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.53</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1206,7 +1206,7 @@ function renderExLog(){
           +'<button class="btn-sm" style="font-size:.58rem;padding:1px 6px;opacity:.6" onclick="(function(el,id){var d=document.getElementById(id);var open=d.style.display!==\'none\';d.style.display=open?\'none\':\'\';el.textContent=open?\'Details\':\'Hide\';el.style.opacity=open?\'.6\':\'1\';})(this,\''+did+'\')" >Details</button>'
           +'</div>':'')
         +(hasDetail?'<div id="'+did+'" style="display:none;padding-left:60px;margin-top:4px;background:rgba(255,255,255,.03);border-left:2px solid rgba(255,255,255,.08);padding-top:5px;padding-bottom:5px;padding-right:8px;font-size:.63rem;line-height:2;color:#777">'
-          +(e.ip&&e.ip!=='?'?'<div><span style="color:#f5c800;font-family:monospace">🌐 '+esc(e.ip)+'</span>'+(e.country?' <span style="color:#666">'+(e.country.length===2?String.fromCodePoint(e.country.toUpperCase().charCodeAt(0)+127397,e.country.toUpperCase().charCodeAt(1)+127397)+' ':'')+esc(e.country)+(e.region&&e.region!=='?'?' · '+esc(e.region):'')+'</span>':'')+'</div>':'')
+          +(e.ip&&e.ip!=='?'?'<div><span style="color:#f5c800;font-family:monospace;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px" title="Filter log by this IP" onclick="(function(ip){var inp=document.getElementById(\'execLogSearch\');if(inp){var cur=(_execLogFilterSearch||\'\')==ip?\'\':ip;inp.value=cur;_execLogFilterSearch=cur;renderExLog();}})('+JSON.stringify(e.ip||'')+')" data-exec-ip="'+esc(e.ip||'')+'">🌐 '+esc(e.ip)+'</span>'+(e.country?' <span style="color:#666">'+(e.country.length===2?String.fromCodePoint(e.country.toUpperCase().charCodeAt(0)+127397,e.country.toUpperCase().charCodeAt(1)+127397)+' ':'')+esc(e.country)+(e.region&&e.region!=='?'?' · '+esc(e.region):'')+'</span>':'')+'</div>':'')
           +((e.os||e.br)?'<div>'+(e.os&&e.os!=='?'?'💻 <span style="color:#ccc">'+esc(e.os)+'</span>':'')+((e.os&&e.br)?' &nbsp;·&nbsp; ':'')+(e.br&&e.br!=='?'?'🌏 <span style="color:#ccc">'+esc(e.br)+'</span>':'')+'</div>':'')
           +(e.tag&&e.tag!=='?'?'<div>🔖 <span style="color:#888">Device tag:</span> <span style="color:#9f7aea">'+esc(e.tag)+'</span></div>':'')
           +'</div>':'')
