@@ -190,7 +190,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.91</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.92</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -2519,7 +2519,6 @@ function loadOpRedirectList(){
           if(!arr.length){sub.innerHTML='<li style="color:#888;font-size:.7rem">No hits yet.</li>';return;}
           sub.innerHTML='<li style="color:#4fc;font-size:.65rem;padding:3px 0">'+arr.length+' hit'+(arr.length===1?'':'s')+'</li>'+arr.map(function(h,hi){
             var loc=[h.city,h.region,h.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
-            var coordStr=(h.lat&&h.lat!=='?'&&h.lon&&h.lon!=='?')?' ('+h.lat+', '+h.lon+')':'';
             var dev=[h.device,h.os,h.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
             var isp=h.isp&&h.isp!=='?'?h.isp:'';
             var tz=h.timezone&&h.timezone!=='?'?h.timezone:'';
@@ -2563,7 +2562,6 @@ function loadOpRedirectList(){
               +(screen?'<div>🖥 <span style="color:#aaa">Screen:</span> <span style="color:#ccc">'+esc(screen)+'</span></div>':'')
               +'</div>'
               +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
-              +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(h.lat)+', '+esc(h.lon)+'</span> <a href="https://www.openstreetmap.org/?mlat='+encodeURIComponent(h.lat)+'&mlon='+encodeURIComponent(h.lon)+'#map=13/'+encodeURIComponent(h.lat)+'/'+encodeURIComponent(h.lon)+'" target="_blank" rel="noopener" style="font-size:.6rem;color:#4fc;text-decoration:none;border:1px solid rgba(79,255,204,.3);border-radius:3px;padding:0 4px;margin-left:4px">↗ Map</a></div>':'')
               +'<div>'+srcIcon+' <span style="color:#aaa">Opened from:</span> <span style="color:#c8b8ff">'+esc(openedFrom)+'</span></div>'
               +(tz?'<div>🕐 <span style="color:#aaa">Timezone:</span> <span style="color:#ccc">'+esc(tz)+'</span></div>':'')
               +(lang?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(lang)+'</span></div>':'')
@@ -3602,7 +3600,6 @@ function loadOpTrapList(){
             var t=e.time?new Date(e.time).toLocaleString():'?';
             var did='opvd-'+idx;
             var loc=[e.city,e.region,e.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
-            var coordStr=(e.lat&&e.lat!=='?'&&e.lon&&e.lon!=='?')?' ('+e.lat+', '+e.lon+')':'';
             var dev=[e.device,e.os,e.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
             var isp=e.isp&&e.isp!=='?'?e.isp:'';
             var tz=e.tz||e.timezone||'';
@@ -3632,7 +3629,6 @@ function loadOpTrapList(){
               +'<div>'+esc(dev)+'</div>'
               +'</div>'
               +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
-              +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(e.lat)+', '+esc(e.lon)+'</span> <a href="https://www.openstreetmap.org/?mlat='+encodeURIComponent(e.lat)+'&mlon='+encodeURIComponent(e.lon)+'#map=13/'+encodeURIComponent(e.lat)+'/'+encodeURIComponent(e.lon)+'" target="_blank" rel="noopener" style="font-size:.6rem;color:#4fc;text-decoration:none;border:1px solid rgba(79,255,204,.3);border-radius:3px;padding:0 4px;margin-left:4px">↗ Map</a></div>':'')
               +(ref?'<div>🔗 <span style="color:#aaa">Referrer:</span> <span style="color:#c8b8ff">'+esc(ref.slice(0,80))+'</span></div>':'')
               +(tz?'<div>🕐 <span style="color:#aaa">Timezone:</span> <span style="color:#ccc">'+esc(tz)+'</span></div>':'')
               +(lang?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(lang)+'</span></div>':'')
@@ -4033,7 +4029,7 @@ function loadDevTrapList(){
             var t=e.time?new Date(e.time).toLocaleString():'?';
             var did='dvd-'+idx;
             var loc=[e.city,e.region,e.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
-            var coordStr=(e.lat&&e.lat!=='?'&&e.lon&&e.lon!=='?')?' ('+e.lat+', '+e.lon+')':'';
+
             var dev=[e.device,e.os,e.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
             var isp=e.isp&&e.isp!=='?'?e.isp:'';
             var tz=e.tz||e.timezone||'';
@@ -4060,7 +4056,6 @@ function loadDevTrapList(){
               +'<div>'+esc(dev)+'</div>'
               +'</div>'
               +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
-              +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(e.lat)+', '+esc(e.lon)+'</span> <a href="https://www.openstreetmap.org/?mlat='+encodeURIComponent(e.lat)+'&mlon='+encodeURIComponent(e.lon)+'#map=13/'+encodeURIComponent(e.lat)+'/'+encodeURIComponent(e.lon)+'" target="_blank" rel="noopener" style="font-size:.6rem;color:#4fc;text-decoration:none;border:1px solid rgba(79,255,204,.3);border-radius:3px;padding:0 4px;margin-left:4px">↗ Map</a></div>':'')
               +(ref?'<div>🔗 <span style="color:#aaa">Referrer:</span> <span style="color:#c8b8ff">'+esc(ref.slice(0,80))+'</span></div>':'')
               +(tz?'<div>🕐 <span style="color:#aaa">Timezone:</span> <span style="color:#ccc">'+esc(tz)+'</span></div>':'')
               +(lang?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(lang)+'</span></div>':'')
@@ -4321,7 +4316,7 @@ function loadDevRedirectList(){
           if(!arr.length){sub.innerHTML='<li style="color:#888;font-size:.7rem">No hits yet.</li>';return;}
           sub.innerHTML=arr.map(function(h,hi){
             var loc=[h.city,h.region,h.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
-            var coordStr=(h.lat&&h.lat!=='?'&&h.lon&&h.lon!=='?')?' ('+h.lat+', '+h.lon+')':'';
+
             var dev=[h.device,h.os,h.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
             var isp=h.isp&&h.isp!=='?'?h.isp:'';
             var tz=h.timezone&&h.timezone!=='?'?h.timezone:'';
@@ -4357,7 +4352,6 @@ function loadDevRedirectList(){
               +(screen?'<div>🖥 <span style="color:#aaa">Screen:</span> <span style="color:#ccc">'+esc(screen)+'</span></div>':'')
               +'</div>'
               +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
-              +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(h.lat)+', '+esc(h.lon)+'</span> <a href="https://www.openstreetmap.org/?mlat='+encodeURIComponent(h.lat)+'&mlon='+encodeURIComponent(h.lon)+'#map=13/'+encodeURIComponent(h.lat)+'/'+encodeURIComponent(h.lon)+'" target="_blank" rel="noopener" style="font-size:.6rem;color:#4fc;text-decoration:none;border:1px solid rgba(79,255,204,.3);border-radius:3px;padding:0 4px;margin-left:4px">↗ Map</a></div>':'')
               +'<div>'+srcIcon+' <span style="color:#aaa">Opened from:</span> <span style="color:#c8b8ff">'+esc(openedFrom)+'</span></div>'
               +(tz?'<div>🕐 <span style="color:#aaa">Timezone:</span> <span style="color:#ccc">'+esc(tz)+'</span></div>':'')
               +(lang?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(lang)+'</span></div>':'')
@@ -5315,7 +5309,6 @@ function loadFailedLogins(){
         +(e.os&&e.os!=='?'?'<div>💻 <span style="color:#aaa">OS:</span> <span style="color:#ccc">'+esc(e.os)+'</span></div>':'')
         +(e.browser&&e.browser!=='?'?'<div>🌐 <span style="color:#aaa">Browser:</span> <span style="color:#ccc">'+esc(e.browser)+'</span></div>':'')
         +(e.lang&&e.lang!=='?'?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(e.lang)+'</span></div>':'')
-        +((e.lat&&e.lat!=='?'&&e.lon&&e.lon!=='?')?'<div>🗺 <span style="color:#aaa">Coords:</span> <span style="color:#ccc">'+esc(e.lat)+', '+esc(e.lon)+'</span> <a href="https://www.openstreetmap.org/?mlat='+encodeURIComponent(e.lat)+'&mlon='+encodeURIComponent(e.lon)+'#map=13/'+encodeURIComponent(e.lat)+'/'+encodeURIComponent(e.lon)+'" target="_blank" rel="noopener" style="font-size:.6rem;color:#4fc;text-decoration:none;border:1px solid rgba(79,255,204,.3);border-radius:3px;padding:0 4px;margin-left:4px">↗ Map</a></div>':'')
         +(vpn?'<div style="color:#ff5050;margin-top:2px">⚠ VPN / Proxy / Hosting IP detected</div>':'')
         +'</div>'
         +'</li>';
