@@ -183,7 +183,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.71</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.72</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -327,6 +327,7 @@ ul.devlist li:last-child{border-bottom:none}
         </div>
         <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
           <div id="devRedirectSummary" style="display:none;font-size:.62rem;color:#555;flex:1;letter-spacing:.03em"></div>
+          <button class="btn-sm danger" id="devRedirPurgeExpired" style="font-size:.68rem;display:none" title="Delete all expired redirect links">🗑 Purge expired</button>
           <button class="btn-sm" id="devRedirectAutoRefreshToggle" style="font-size:.68rem;color:#555;border-color:rgba(255,255,255,.12)" title="Auto-refresh every 30s">↻ Auto</button>
         </div>
         <div id="devRedirectRefreshInfo" style="display:none;font-size:.6rem;color:#444;margin-top:4px;letter-spacing:.03em"></div>
@@ -3891,6 +3892,14 @@ function loadDevRedirectList(){
     if(sumEl){sumEl.style.display='';sumEl.textContent=keys.length+' link'+(keys.length!==1?'s':'');}
     var redirSearchEl=document.getElementById('devRedirSearch');
     if(redirSearchEl){redirSearchEl.style.display=keys.length>2?'':'none';}
+    // Purge expired button
+    var purgeRBtn=document.getElementById('devRedirPurgeExpired');
+    if(purgeRBtn){
+      var expiredRIds=keys.filter(function(k){var e=obj[k];return e&&e.expiresAt&&(new Date(e.expiresAt).getTime()<Date.now());});
+      purgeRBtn.style.display=expiredRIds.length>0?'':'none';
+      purgeRBtn.textContent='🗑 Purge expired ('+expiredRIds.length+')';
+      purgeRBtn._expiredIds=expiredRIds;
+    }
     var sc=getSyncCode();
     list.innerHTML=keys.map(function(id){
       var e=obj[id];
@@ -4180,6 +4189,23 @@ function loadDevRedirectList(){
         }
       });
     });
+    // Purge expired redirect links
+    var purgeRBtnH=document.getElementById('devRedirPurgeExpired');
+    if(purgeRBtnH){
+      purgeRBtnH.onclick=null;
+      purgeRBtnH.addEventListener('click',function(){
+        var ids=this._expiredIds||[];
+        if(!ids.length){alert('No expired links found.');return;}
+        if(!confirm('Delete '+ids.length+' expired redirect link'+(ids.length===1?'':'s')+'?\n\nThis cannot be undone.'))return;
+        var sc=getSyncCode();var done=0;var btn=this;
+        btn.textContent='Deleting…';btn.disabled=true;
+        ids.forEach(function(id){
+          fetch(fbUrl('_sc6/workspaces/'+sc+'/redirectLinks/'+id),{method:'DELETE'})
+            .then(function(){done++;if(done===ids.length){exLog('Expired redirect links purged',ids.length+' links deleted','dev '+_currentDevCode,true);loadDevRedirectList();}})
+            .catch(function(){done++;if(done===ids.length)loadDevRedirectList();});
+        });
+      });
+    }
   });
 }
 
