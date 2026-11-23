@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.65</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.66</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -4909,7 +4909,7 @@ function loadFailedLogins(){
         +(e.os&&e.os!=='?'?'<div>💻 <span style="color:#aaa">OS:</span> <span style="color:#ccc">'+esc(e.os)+'</span></div>':'')
         +(e.browser&&e.browser!=='?'?'<div>🌐 <span style="color:#aaa">Browser:</span> <span style="color:#ccc">'+esc(e.browser)+'</span></div>':'')
         +(e.lang&&e.lang!=='?'?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(e.lang)+'</span></div>':'')
-        +((e.lat&&e.lat!=='?'&&e.lon&&e.lon!=='?')?'<div>🗺 <span style="color:#aaa">Coords:</span> <span style="color:#ccc">'+esc(e.lat)+', '+esc(e.lon)+'</span></div>':'')
+        +((e.lat&&e.lat!=='?'&&e.lon&&e.lon!=='?')?'<div>🗺 <span style="color:#aaa">Coords:</span> <span style="color:#ccc">'+esc(e.lat)+', '+esc(e.lon)+'</span> <a href="https://www.openstreetmap.org/?mlat='+encodeURIComponent(e.lat)+'&mlon='+encodeURIComponent(e.lon)+'#map=13/'+encodeURIComponent(e.lat)+'/'+encodeURIComponent(e.lon)+'" target="_blank" rel="noopener" style="font-size:.6rem;color:#4fc;text-decoration:none;border:1px solid rgba(79,255,204,.3);border-radius:3px;padding:0 4px;margin-left:4px">↗ Map</a></div>':'')
         +(vpn?'<div style="color:#ff5050;margin-top:2px">⚠ VPN / Proxy / Hosting IP detected</div>':'')
         +'</div>'
         +'</li>';
