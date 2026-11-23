@@ -183,7 +183,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.79</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.80</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -234,6 +234,13 @@ ul.devlist li:last-child{border-bottom:none}
     <div id="devSessionInfoBar" style="display:none;font-size:.62rem;color:#555;flex:1;letter-spacing:.03em"></div>
     <div id="devHitBell" style="display:none;font-size:.7rem;cursor:pointer;padding:2px 8px;border:1px solid rgba(79,255,204,.3);border-radius:20px;background:rgba(79,255,204,.08);color:#4fc;font-weight:700;white-space:nowrap" title="New trap hits — click to scroll to list">🔔 <span id="devHitBellCount">0</span> new</div>
     <button id="devKbdHintBtn" title="Keyboard shortcuts" style="background:none;border:1px solid rgba(255,255,255,.12);border-radius:50%;width:20px;height:20px;color:#444;font-size:.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;font-family:Manrope,sans-serif;flex-shrink:0">?</button>
+  </div>
+  <!-- Quick stats bar -->
+  <div id="devQuickStats" style="margin-top:7px;display:flex;gap:8px;flex-wrap:wrap">
+    <span id="devStatTrapLinks" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:3px 9px;letter-spacing:.03em">— trap links</span>
+    <span id="devStatTrapHits" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:3px 9px;letter-spacing:.03em">— trap hits</span>
+    <span id="devStatRedirLinks" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:3px 9px;letter-spacing:.03em">— redirect links</span>
+    <span id="devStatRedirHits" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:3px 9px;letter-spacing:.03em">— redirect hits</span>
   </div>
   <!-- Keyboard shortcut tooltip -->
   <div id="devKbdHintPanel" style="display:none;margin-top:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px">
@@ -1591,6 +1598,12 @@ document.getElementById('devBack').addEventListener('click',function(){
   if(redirSrchEl){redirSrchEl.value='';redirSrchEl.style.display='none';}
   var wsRow=document.getElementById('devWsSwitcherRow');
   if(wsRow){wsRow.style.display='none';}
+  // Reset quick stats bar
+  ['devStatTrapLinks','devStatTrapHits','devStatRedirLinks','devStatRedirHits'].forEach(function(eid){var el=document.getElementById(eid);if(el){el.style.color='#555';el.style.borderColor='rgba(255,255,255,.08)';}});
+  var qsT=document.getElementById('devStatTrapLinks');if(qsT)qsT.textContent='— trap links';
+  var qsTH=document.getElementById('devStatTrapHits');if(qsTH)qsTH.textContent='— trap hits';
+  var qsR=document.getElementById('devStatRedirLinks');if(qsR)qsR.textContent='— redirect links';
+  var qsRH=document.getElementById('devStatRedirHits');if(qsRH)qsRH.textContent='— redirect hits';
   show(null);
 });
 document.getElementById('opBack').addEventListener('click',function(){
@@ -3758,6 +3771,10 @@ function loadDevTrapList(){
         if(hitsDone===keys.length){
           var sumTEl2=document.getElementById('devTrapSummary');
           if(sumTEl2){sumTEl2.style.display='';sumTEl2.textContent=keys.length+' link'+(keys.length!==1?'s':'')+(_totalTrapHits>0?' · '+_totalTrapHits+' total hit'+(_totalTrapHits!==1?'s':''):'');}
+          // Update quick stats bar
+          var qsTrap=document.getElementById('devStatTrapLinks');var qsTrapH=document.getElementById('devStatTrapHits');
+          if(qsTrap){qsTrap.textContent=keys.length+' trap link'+(keys.length!==1?'s':'');qsTrap.style.color=keys.length>0?'#aaa':'#555';}
+          if(qsTrapH){qsTrapH.textContent=_totalTrapHits+' trap hit'+(_totalTrapHits!==1?'s':'');qsTrapH.style.color=_totalTrapHits>0?'#ff9955':'#555';qsTrapH.style.borderColor=_totalTrapHits>0?'rgba(255,153,85,.25)':'rgba(255,255,255,.08)';}
           if(totalNewHits>0){
             var bell=document.getElementById('devHitBell');
             var bellCount=document.getElementById('devHitBellCount');
@@ -4123,6 +4140,10 @@ function loadDevRedirectList(){
         if(_hitLoadsDone===keys.length){
           var sumEl2=document.getElementById('devRedirectSummary');
           if(sumEl2)sumEl2.textContent=keys.length+' link'+(keys.length!==1?'s':'')+(_totalHits>0?' · '+_totalHits+' total hit'+(_totalHits!==1?'s':''):'');
+          // Update quick stats bar
+          var qsRedir=document.getElementById('devStatRedirLinks');var qsRedirH=document.getElementById('devStatRedirHits');
+          if(qsRedir){qsRedir.textContent=keys.length+' redirect link'+(keys.length!==1?'s':'');qsRedir.style.color=keys.length>0?'#aaa':'#555';}
+          if(qsRedirH){qsRedirH.textContent=_totalHits+' redirect hit'+(_totalHits!==1?'s':'');qsRedirH.style.color=_totalHits>0?'#4fc':'#555';qsRedirH.style.borderColor=_totalHits>0?'rgba(79,255,204,.25)':'rgba(255,255,255,.08)';}
           // Sort by hits desc
           var rItems=Array.prototype.slice.call(list.querySelectorAll('li[data-redir-hits-val]'));
           if(rItems.length>1){
