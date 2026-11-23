@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.49</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.50</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -2051,7 +2051,7 @@ function loadOpWsOverview(){
         +'</li>';
     }).join('');
     // Async: load hit counts per workspace, then sort by hits desc
-    var _wsHitTotals={};var _wsHitDone=0;var _wsHitPending=wsCodes.length;
+    var _wsHitTotals={};var _wsHitDone=0;var _wsHitPending=wsCodes.length;var _wsHitGrandTotal=0;
     function _applyWsHitStyle(badge,total){
       if(total===0){badge.style.color='#555';badge.style.borderColor='rgba(255,255,255,.1)';badge.style.background='';}
       else if(total<=10){badge.style.color='#f5a600';badge.style.borderColor='rgba(245,166,0,.4)';badge.style.background='rgba(245,166,0,.08)';}
@@ -2062,6 +2062,7 @@ function loadOpWsOverview(){
       if(items.length<2)return;
       items.sort(function(a,b){return parseInt(b.getAttribute('data-ws-hits-val')||'0')-parseInt(a.getAttribute('data-ws-hits-val')||'0');});
       items.forEach(function(li){list.appendChild(li);});
+      if(status&&_wsHitGrandTotal>0)status.textContent=wsCodes.length+' workspace'+(wsCodes.length===1?'':'s')+' · '+_wsHitGrandTotal+' total hit'+(_wsHitGrandTotal===1?'':'s');
     }
     wsCodes.forEach(function(ws){
       var trapLinks2=data[ws]&&data[ws].trapLinks?data[ws].trapLinks:{};
@@ -2074,6 +2075,7 @@ function loadOpWsOverview(){
         if(li)li.setAttribute('data-ws-hits-val','0');
         _wsHitDone++;if(_wsHitDone===_wsHitPending)_sortWsByHits();
         return;
+        return;
       }
       var total=0,done=0;
       trapIds.forEach(function(lid){
@@ -2083,6 +2085,7 @@ function loadOpWsOverview(){
           if(done===trapIds.length){
             badge.textContent=total+(total===1?' hit':' hits');
             _applyWsHitStyle(badge,total);
+            _wsHitGrandTotal+=total;
             if(li)li.setAttribute('data-ws-hits-val',String(total));
             _wsHitDone++;if(_wsHitDone===_wsHitPending)_sortWsByHits();
           }
@@ -3381,7 +3384,8 @@ function loadDevTrapList(){
     var keys=Object.keys(obj);
     // Show/hide copy-all button
     var copyAllBtn=document.getElementById('devTrapCopyAll');
-    if(copyAllBtn)copyAllBtn.style.display=keys.length>0?'':'none';
+    if(copyAllBtn){copyAllBtn.style.display=keys.length>0?'':'none';copyAllBtn.textContent='Copy all ('+keys.length+')';}
+
     var bulkBar=document.getElementById('devTrapBulkBar');
     if(bulkBar)bulkBar.style.display=keys.length>0?'':'none';
     var searchEl=document.getElementById('devTrapSearch');
@@ -3706,7 +3710,7 @@ function loadDevRedirectList(){
         else redirAgeStr=Math.floor(ra/86400000)+'d ago';
       }
       var note=e.note?e.note:'';
-      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)" data-redir-id="'+esc(id)+'" data-redir-hits-val="0">'
         +'<div style="font-size:.65rem;color:#888;margin-bottom:2px">→ '+esc(dest)+(redirAgeStr?' <span style="font-size:.58rem;color:#3a3a3a">'+esc(redirAgeStr)+'</span>':'')+(created?' <span style="color:#333;font-size:.6rem" title="Created: '+esc(created)+'">·</span>':'')+'</div>'
         +(note?'<div style="font-size:.65rem;color:#9f7aea;margin-bottom:3px;font-style:italic">🏷 '+esc(note)+'</div>':'')
         +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
@@ -3736,10 +3740,19 @@ function loadDevRedirectList(){
           else if(n<=3){btn.style.color='#f5a600';btn.style.borderColor='rgba(245,166,0,.35)';}
           else{btn.style.color='#ff6b6b';btn.style.borderColor='rgba(255,107,107,.35)';}
         }
-        // Update summary once all loaded
+        // Store hit count on <li> for sorting
+        var rli=list.querySelector('[data-redir-id="'+id+'"]');
+        if(rli)rli.setAttribute('data-redir-hits-val',String(n));
+        // Update summary + sort once all loaded
         if(_hitLoadsDone===keys.length){
           var sumEl2=document.getElementById('devRedirectSummary');
           if(sumEl2)sumEl2.textContent=keys.length+' link'+(keys.length!==1?'s':'')+(_totalHits>0?' · '+_totalHits+' total hit'+(_totalHits!==1?'s':''):'');
+          // Sort by hits desc
+          var rItems=Array.prototype.slice.call(list.querySelectorAll('li[data-redir-hits-val]'));
+          if(rItems.length>1){
+            rItems.sort(function(a,b){return parseInt(b.getAttribute('data-redir-hits-val')||'0')-parseInt(a.getAttribute('data-redir-hits-val')||'0');});
+            rItems.forEach(function(li2){list.appendChild(li2);});
+          }
         }
       });
     });
