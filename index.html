@@ -183,7 +183,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.82</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.83</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -525,6 +525,7 @@ ul.devlist li:last-child{border-bottom:none}
             <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
               <div id="opTrapSummary" style="display:none;font-size:.62rem;color:#555;flex:1;letter-spacing:.03em"></div>
             </div>
+            <input type="text" id="opTrapSearch" placeholder="Filter links…" maxlength="80" autocomplete="off" style="width:100%;font-size:.72rem;padding:5px 9px;background:rgba(255,255,255,.05);border:1px solid var(--faint);border-radius:6px;color:inherit;outline:none;margin-top:6px;display:none">
             <ul class="devlist" id="opTrapList"><li style="color:#888">Loading…</li></ul>
           </div>
         </section>
@@ -1656,6 +1657,16 @@ document.getElementById('opBack').addEventListener('click',function(){
   if(!searchEl)return;
   searchEl.addEventListener('input',function(){_applyDevRedirSearch();});
   searchEl.addEventListener('keydown',function(e){if(e.key==='Escape'){searchEl.value='';_applyDevRedirSearch();}});
+})();
+
+// ══════════════════════════════════════════
+// OP TRAP SEARCH WIRING
+// ══════════════════════════════════════════
+(function(){
+  var searchEl=document.getElementById('opTrapSearch');
+  if(!searchEl)return;
+  searchEl.addEventListener('input',function(){_applyOpTrapSearch();});
+  searchEl.addEventListener('keydown',function(e){if(e.key==='Escape'){searchEl.value='';_applyOpTrapSearch();}});
 })();
 
 // ══════════════════════════════════════════
@@ -3430,8 +3441,11 @@ function loadOpTrapList(){
     });
     var opTrapSumEl=document.getElementById('opTrapSummary');
     if(opTrapSumEl)opTrapSumEl.style.display='none';
+    var opTrapSrchEl=document.getElementById('opTrapSearch');
+    if(opTrapSrchEl){opTrapSrchEl.style.display='none';opTrapSrchEl.value='';}
     if(!keys.length){list.innerHTML='<li style="color:#888">No error links in workspace "'+esc(getOpWs())+'".</li>';return;}
     if(opTrapSumEl){opTrapSumEl.style.display='';opTrapSumEl.textContent=keys.length+' link'+(keys.length!==1?'s':'');}
+    if(opTrapSrchEl)opTrapSrchEl.style.display=keys.length>2?'':'none';
     list.style.listStyle='none';
     list.innerHTML=keys.map(function(id){
       var link=obj[id];
@@ -3439,7 +3453,8 @@ function loadOpTrapList(){
       var ws=link.workspace||getOpWs();
       var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws);
       var trapNote=link.note?esc(link.note):'';
-      return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)" data-trap-id-op="'+esc(id)+'">'
+      var opHaystack=(id+' '+(link.note||'')+' '+url).toLowerCase();
+      return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)" data-trap-id-op="'+esc(id)+'" data-op-trap-haystack="'+esc(opHaystack)+'">'
         +'<div style="font-size:.7rem;color:#888">'+esc(created)+'</div>'
         +(trapNote?'<div style="font-size:.7rem;color:#9f7aea;margin:2px 0;font-style:italic">🏷 '+trapNote+'</div>':'')
         +'<div style="font-size:.72rem;color:#ccc;word-break:break-all;margin:2px 0">'+esc(url)+'</div>'
@@ -3598,6 +3613,16 @@ function _applyDevRedirSearch(){
   var q=(searchEl.value||'').trim().toLowerCase();
   list.querySelectorAll('li[data-redir-id]').forEach(function(li){
     var haystack=li.getAttribute('data-redir-haystack')||'';
+    li.style.display=(!q||haystack.indexOf(q)>=0)?'':'none';
+  });
+}
+function _applyOpTrapSearch(){
+  var searchEl=document.getElementById('opTrapSearch');
+  var list=document.getElementById('opTrapList');
+  if(!list||!searchEl)return;
+  var q=(searchEl.value||'').trim().toLowerCase();
+  list.querySelectorAll('li[data-trap-id-op]').forEach(function(li){
+    var haystack=li.getAttribute('data-op-trap-haystack')||'';
     li.style.display=(!q||haystack.indexOf(q)>=0)?'':'none';
   });
 }
