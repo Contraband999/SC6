@@ -190,7 +190,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.87</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.88</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -2439,6 +2439,10 @@ function loadOpRedirectList(){
         +'<span id="opractive-'+esc(id)+'" style="display:none;font-size:.58rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 6px;animation:hitpulse 2s infinite">🟢 active</span>'
         +'<span id="oprlast-'+esc(id)+'" style="font-size:.58rem;color:#3a3a3a;margin-left:auto"></span>'
         +'</div>'
+        +'<div style="display:flex;align-items:center;gap:5px;margin-top:5px">'
+        +'<input type="text" class="op-redir-note-input" data-op-redir-note-id="'+esc(id)+'" value="'+esc(note)+'" placeholder="Add note…" maxlength="80" style="flex:1;font-size:.68rem;padding:3px 7px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:5px;color:inherit;outline:none">'
+        +'<button class="btn-sm op-redir-note-save" data-op-redir-note-id="'+esc(id)+'" style="font-size:.62rem;padding:2px 7px">Save note</button>'
+        +'</div>'
         +'<ul class="devlist" id="oprhits-'+esc(id)+'" style="display:none;margin-top:5px"></ul>'
         +'</li>';
     }).join('');
@@ -2586,6 +2590,28 @@ function loadOpRedirectList(){
           fetch(fbUrl('_sc6/workspaces/'+getOpWs()+'/redirectLinks/'+id),{method:'DELETE'}),
           fetch(opRedirectLogsUrl(id),{method:'DELETE'})
         ]).then(function(){exLog('Redirect link deleted (op)','ID: '+id,'operator',true);loadOpRedirectList();}).catch(function(e){alert('Failed: '+e.message);});
+      });
+    });
+    // Wire op redirect note save buttons
+    list.querySelectorAll('.op-redir-note-save').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var id=btn.getAttribute('data-op-redir-note-id');
+        var inp=list.querySelector('.op-redir-note-input[data-op-redir-note-id="'+id+'"]');
+        if(!inp)return;
+        var note=inp.value.trim();
+        btn.textContent='…';btn.disabled=true;
+        fetch(fbUrl('_sc6/workspaces/'+getOpWs()+'/redirectLinks/'+id+'/note'),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(note)})
+          .then(function(){btn.textContent='✓';setTimeout(function(){btn.textContent='Save note';btn.disabled=false;},1500);exLog('Redirect note updated (op)','ID: …'+id.slice(-6),'operator',true);})
+          .catch(function(){btn.textContent='!';btn.disabled=false;});
+      });
+    });
+    // Note input: save on Enter
+    list.querySelectorAll('.op-redir-note-input').forEach(function(inp){
+      inp.addEventListener('keydown',function(e){
+        if(e.key!=='Enter')return;
+        var id=inp.getAttribute('data-op-redir-note-id');
+        var btn=list.querySelector('.op-redir-note-save[data-op-redir-note-id="'+id+'"]');
+        if(btn)btn.click();
       });
     });
   });
