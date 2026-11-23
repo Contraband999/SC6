@@ -438,7 +438,7 @@ ul.devlist li:hover{
       <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(79,255,204,.5);text-transform:uppercase">Control Panel</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(79,255,204,.3),transparent)"></div>
     </div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(192,0,14,.55);font-family:'Manrope',sans-serif;margin-top:2px">v2.0.01</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(192,0,14,.55);font-family:'Manrope',sans-serif;margin-top:2px">v2.0.02</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -5279,6 +5279,25 @@ var _EJS_TEMPLATE='template_me3wdpj';
   }catch(e){console.warn('[SC6 email] init failed:',e);}
 })();
 
+// Translate raw EmailJS error objects into readable strings
+function sc6EmailErrMsg(e){
+  if(!e) return 'Unknown error';
+  var txt=e.text||e.message||'';
+  var status=e.status||0;
+  if(typeof txt==='string'){
+    var tl=txt.toLowerCase();
+    if(tl.indexOf('limit')>-1||tl.indexOf('quota')>-1||tl.indexOf('subscribers')>-1||status===429)
+      return 'Monthly quota reached — upgrade EmailJS plan or wait for reset';
+    if(tl.indexOf('invalid')>-1||status===400)
+      return 'Config error (invalid key/service/template)';
+    if(tl.indexOf('network')>-1||tl.indexOf('failed to fetch')>-1)
+      return 'Network error — check connection';
+    if(txt.length>0&&txt.length<120) return txt;
+  }
+  if(status) return 'EmailJS error (status '+status+')';
+  return JSON.stringify(e).slice(0,120);
+}
+
 // Returns a Promise so callers can .then/.catch
 function sc6SendAlert(toEmail,subject,message){
   return new Promise(function(resolve,reject){
@@ -5303,7 +5322,7 @@ function sc6TestAlert(toEmail,resultElId){
   if(el){el.textContent='Sending…';el.style.color='#aaa';}
   sc6SendAlert(toEmail,'SC6 Test Alert','This is a test alert from SC6. If you received this, email alerts are working correctly.')
     .then(function(){if(el){el.textContent='✓ Sent — check your inbox';el.style.color='#4fc';}})
-    .catch(function(e){if(el){el.textContent='✗ Failed: '+(e&&(e.text||e.message||JSON.stringify(e)));el.style.color='#ff6b6b';}});
+    .catch(function(e){if(el){el.textContent='✗ '+sc6EmailErrMsg(e);el.style.color='#ff6b6b';}});
 }
 
 // Format email heading: [CODE (Name)] or [CODE]
