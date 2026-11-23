@@ -190,7 +190,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.90</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.91</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -4274,8 +4274,15 @@ function loadDevRedirectList(){
           var rRecentHit=raw.some(function(h){return h.time&&(new Date(h.time).getTime()>=rRecentCutoff);});
           rActiveEl.style.display=rRecentHit?'':'none';
         }
-        // Store hit count on <li> for sorting
+        // Heat strip (left border by tier)
         var rli=list.querySelector('[data-redir-id="'+id+'"]');
+        if(rli){
+          if(n===0){rli.style.borderLeft='';}
+          else if(n<=3){rli.style.borderLeft='3px solid rgba(79,255,204,.3)';rli.style.paddingLeft='8px';}
+          else if(n<=10){rli.style.borderLeft='3px solid rgba(79,255,204,.55)';rli.style.paddingLeft='8px';}
+          else{rli.style.borderLeft='3px solid rgba(79,255,204,.85)';rli.style.paddingLeft='8px';}
+        }
+        // Store hit count on <li> for sorting
         if(rli)rli.setAttribute('data-redir-hits-val',String(n));
         // Update summary + sort once all loaded
         if(_hitLoadsDone===keys.length){
