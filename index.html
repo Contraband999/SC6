@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.62</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.63</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -3522,6 +3522,7 @@ function loadDevTrapList(){
         +'<span style="font-size:.6rem;color:#555;background:rgba(255,255,255,.05);border-radius:10px;padding:1px 7px" id="devtraphits-'+esc(id)+'">— hits</span>'
         +'<span style="font-size:.58rem;color:#3a3a3a" id="devtraplast-'+esc(id)+'"></span>'
         +'<button class="btn-sm" style="font-size:.68rem;padding:2px 8px" data-copy-trap="'+esc(url)+'">Copy</button>'
+        +'<button class="btn-sm" style="font-size:.68rem;padding:2px 8px;color:#777" data-dup-trap="'+esc(id)+'" title="Duplicate this link">Dup</button>'
         +'<button class="btn-sm" style="font-size:.68rem;padding:2px 8px" data-dev-trap-view="'+esc(id)+'">Visitors</button>'
         +'</div>'
         // Note editor row
@@ -3664,6 +3665,22 @@ function loadDevTrapList(){
             exLog('Trap link '+(newMuted?'muted':'unmuted'),'ID: …'+id.slice(-6),'dev '+_currentDevCode,true);
             loadDevTrapList();
           }).catch(function(){btn.textContent=currentMuted?'Unmute':'Mute';btn.disabled=false;});
+      });
+    });
+    // Wire duplicate button
+    list.querySelectorAll('[data-dup-trap]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var srcId=btn.getAttribute('data-dup-trap');
+        var srcData=obj[srcId]||{};
+        var newId='lnk-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6);
+        var sc=getSyncCode();
+        var entry={createdAt:new Date().toISOString(),workspace:sc,note:srcData.note||''};
+        btn.textContent='…';btn.disabled=true;
+        fetch(fbUrl('_sc6/workspaces/'+sc+'/trapLinks/'+newId),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)})
+          .then(function(){
+            exLog('Trap link duplicated','Src: …'+srcId.slice(-6)+' → …'+newId.slice(-6),'dev '+_currentDevCode,true);
+            loadDevTrapList();
+          }).catch(function(){btn.textContent='Dup';btn.disabled=false;});
       });
     });
     // Wire expiry quick-set
