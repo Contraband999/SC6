@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.61</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.62</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -3530,6 +3530,18 @@ function loadDevTrapList(){
         +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px" data-trap-note-save="'+esc(id)+'">Save note</button>'
         +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px;color:'+(muted?'#4fc':'#777')+'" data-trap-mute="'+esc(id)+'" title="'+(muted?'Unmute link':'Mute / archive link')+'">'+(muted?'Unmute':'Mute')+'</button>'
         +'</div>'
+        +'<div style="display:flex;gap:5px;margin-top:4px;align-items:center">'
+        +'<span style="font-size:.58rem;color:#555;white-space:nowrap;flex-shrink:0">⏳ Expiry</span>'
+        +'<select class="trap-expiry-sel" data-trap-expiry-id="'+esc(id)+'" style="flex:1;font-size:.6rem;padding:3px 6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:5px;color:#888;outline:none;cursor:pointer">'
+        +'<option value="">— quick set —</option>'
+        +'<option value="1">1 hour</option>'
+        +'<option value="6">6 hours</option>'
+        +'<option value="24">24 hours</option>'
+        +'<option value="72">3 days</option>'
+        +'<option value="168">7 days</option>'
+        +'<option value="remove">Remove expiry</option>'
+        +'</select>'
+        +'</div>'
         +'<ul class="devlist" id="devvis-'+esc(id)+'" style="display:none;margin-top:6px"></ul>'
         +'</li>';
     }).join('');
@@ -3652,6 +3664,22 @@ function loadDevTrapList(){
             exLog('Trap link '+(newMuted?'muted':'unmuted'),'ID: …'+id.slice(-6),'dev '+_currentDevCode,true);
             loadDevTrapList();
           }).catch(function(){btn.textContent=currentMuted?'Unmute':'Mute';btn.disabled=false;});
+      });
+    });
+    // Wire expiry quick-set
+    list.querySelectorAll('.trap-expiry-sel').forEach(function(sel){
+      sel.addEventListener('change',function(){
+        var val=sel.value;if(!val)return;
+        var id=sel.getAttribute('data-trap-expiry-id');
+        var url=fbUrl('_sc6/workspaces/'+getSyncCode()+'/trapLinks/'+id+'/expiresAt');
+        if(val==='remove'){
+          fetch(url,{method:'DELETE'}).then(function(){exLog('Expiry removed','Link …'+id.slice(-6),'dev '+_currentDevCode,true);loadDevTrapList();}).catch(function(){sel.value='';});
+        } else {
+          var exp=new Date(Date.now()+parseInt(val)*3600000).toISOString();
+          fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(exp)})
+            .then(function(){exLog('Expiry set',parseInt(val)+'h → link …'+id.slice(-6),'dev '+_currentDevCode,true);loadDevTrapList();})
+            .catch(function(){sel.value='';});
+        }
       });
     });
     // Wire visitors buttons
