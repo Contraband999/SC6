@@ -12,8 +12,8 @@
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --red:#c0000e;--red2:#8a000a;
-  --ink:#fff;--dim:rgba(255,255,255,.65);--faint:rgba(255,255,255,.13);
-  --panel:rgba(255,255,255,.06);--bg:#0a0a0a;
+  --ink:#f0f0f0;--dim:rgba(255,255,255,.55);--faint:rgba(255,255,255,.10);
+  --panel:rgba(255,255,255,.042);--bg:#060608;
   color-scheme:dark
 }
 html{overflow-x:hidden;max-width:100%}body{width:100%;max-width:100%;min-height:100%;background:var(--bg);font-family:'Manrope',sans-serif;color:var(--ink);overflow-x:hidden}
@@ -28,9 +28,9 @@ body{
 h3{font-size:.88rem;font-weight:700;letter-spacing:.04em;color:var(--ink);margin-bottom:6px}
 p.note{font-size:.72rem;color:var(--dim);line-height:1.55;margin-bottom:10px}
 input[type=password],input[type=text]{
-  width:100%;background:rgba(255,255,255,.07);
+  width:100%;background:rgba(255,255,255,.055);
   border:1px solid var(--faint);border-radius:8px;
-  padding:9px 12px;color:#fff;font-size:16px;
+  padding:9px 12px;color:#f0f0f0;font-size:16px;
   font-family:'Manrope',sans-serif;outline:none;
   transition:border-color .2s
 }
@@ -87,7 +87,7 @@ section .sec-body{padding:14px 16px}
 }
 .modal.open{display:flex}
 .modal-box{
-  background:#111;border:1px solid var(--faint);border-radius:16px;
+  background:#0b0b0d;border:1px solid var(--faint);border-radius:16px;
   width:100%;max-width:400px;padding:22px 20px;
   max-height:calc(100dvh - 80px);overflow-y:auto
 }
@@ -134,7 +134,7 @@ section .sec-body{padding:14px 16px}
 
 /* ── Lists ── */
 ul.devlist{list-style:none;margin:6px 0 0}
-ul.devlist li{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:.78rem;color:#ccc}
+ul.devlist li{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.055);font-size:.78rem;color:#bbb}
 ul.devlist li:last-child{border-bottom:none}
 
 /* ── Status badge ── */
@@ -183,7 +183,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.81</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.82</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
