@@ -190,7 +190,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.89</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.90</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -2483,6 +2483,14 @@ function loadOpRedirectList(){
           var recentCutoff=Date.now()-15*60000;
           var recentHit=raw.some(function(h){return h.time&&(new Date(h.time).getTime()>=recentCutoff);});
           actEl.style.display=recentHit?'':'none';
+        }
+        // Heat strip (left border by tier)
+        var liHeatR=list.querySelector('[data-op-redir-id="'+id+'"]');
+        if(liHeatR){
+          if(n===0){liHeatR.style.borderLeft='';}
+          else if(n<=5){liHeatR.style.borderLeft='3px solid rgba(79,255,204,.35)';liHeatR.style.paddingLeft='8px';}
+          else if(n<=20){liHeatR.style.borderLeft='3px solid rgba(79,255,204,.6)';liHeatR.style.paddingLeft='8px';}
+          else{liHeatR.style.borderLeft='3px solid rgba(79,255,204,.9)';liHeatR.style.paddingLeft='8px';}
         }
         opRdrHitsDone++;
         if(opRdrHitsDone===keys.length){
