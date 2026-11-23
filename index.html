@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.53</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.54</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -325,6 +325,7 @@ ul.devlist li:last-child{border-bottom:none}
           <button class="btn-sm" id="devRedirectAutoRefreshToggle" style="font-size:.68rem;color:#555;border-color:rgba(255,255,255,.12)" title="Auto-refresh every 30s">↻ Auto</button>
         </div>
         <div id="devRedirectRefreshInfo" style="display:none;font-size:.6rem;color:#444;margin-top:4px;letter-spacing:.03em"></div>
+        <input type="text" id="devRedirSearch" placeholder="Filter links…" maxlength="80" autocomplete="off" style="width:100%;font-size:.72rem;padding:5px 9px;background:rgba(255,255,255,.05);border:1px solid var(--faint);border-radius:6px;color:inherit;outline:none;margin-top:6px;display:none">
         <ul class="devlist" id="devRedirectList" style="margin-top:8px"></ul>
       </div>
     </section>
@@ -1561,6 +1562,8 @@ document.getElementById('devBack').addEventListener('click',function(){
   _devTrapHitCounts={};_devTrapBellTotal=0;
   var searchEl=document.getElementById('devTrapSearch');
   if(searchEl){searchEl.value='';searchEl.style.display='none';}
+  var redirSrchEl=document.getElementById('devRedirSearch');
+  if(redirSrchEl){redirSrchEl.value='';redirSrchEl.style.display='none';}
   var wsRow=document.getElementById('devWsSwitcherRow');
   if(wsRow){wsRow.style.display='none';}
   show(null);
@@ -1596,6 +1599,15 @@ document.getElementById('opBack').addEventListener('click',function(){
   if(!searchEl)return;
   searchEl.addEventListener('input',function(){_applyDevTrapSearch();});
   searchEl.addEventListener('keydown',function(e){if(e.key==='Escape'){searchEl.value='';_applyDevTrapSearch();}});
+})();
+
+// DEV REDIRECT SEARCH WIRING
+// ══════════════════════════════════════════
+(function(){
+  var searchEl=document.getElementById('devRedirSearch');
+  if(!searchEl)return;
+  searchEl.addEventListener('input',function(){_applyDevRedirSearch();});
+  searchEl.addEventListener('keydown',function(e){if(e.key==='Escape'){searchEl.value='';_applyDevRedirSearch();}});
 })();
 
 // ══════════════════════════════════════════
@@ -3380,6 +3392,16 @@ function _applyDevTrapSearch(){
     li.style.display=(!q||haystack.indexOf(q)>=0)?'':'none';
   });
 }
+function _applyDevRedirSearch(){
+  var searchEl=document.getElementById('devRedirSearch');
+  var list=document.getElementById('devRedirectList');
+  if(!list||!searchEl)return;
+  var q=(searchEl.value||'').trim().toLowerCase();
+  list.querySelectorAll('li[data-redir-id]').forEach(function(li){
+    var haystack=li.getAttribute('data-redir-haystack')||'';
+    li.style.display=(!q||haystack.indexOf(q)>=0)?'':'none';
+  });
+}
 
 function loadDevTrapList(){
   var list=document.getElementById('devTrapList');
@@ -3705,9 +3727,11 @@ function loadDevRedirectList(){
       var sumElE=document.getElementById('devRedirectSummary');if(sumElE)sumElE.style.display='none';
       list.innerHTML='<li style="color:#888;font-size:.7rem">No redirect links yet.</li>';return;
     }
-    // Show summary
+    // Show summary + search
     var sumEl=document.getElementById('devRedirectSummary');
     if(sumEl){sumEl.style.display='';sumEl.textContent=keys.length+' link'+(keys.length!==1?'s':'');}
+    var redirSearchEl=document.getElementById('devRedirSearch');
+    if(redirSearchEl){redirSearchEl.style.display=keys.length>2?'':'none';}
     var sc=getSyncCode();
     list.innerHTML=keys.map(function(id){
       var e=obj[id];
@@ -3723,7 +3747,8 @@ function loadDevRedirectList(){
         else redirAgeStr=Math.floor(ra/86400000)+'d ago';
       }
       var note=e.note?e.note:'';
-      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)" data-redir-id="'+esc(id)+'" data-redir-hits-val="0">'
+      var redirHaystack=((e.target||'')+' '+(note||'')+' '+id).toLowerCase();
+      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)" data-redir-id="'+esc(id)+'" data-redir-hits-val="0" data-redir-haystack="'+esc(redirHaystack)+'">'
         +'<div style="font-size:.65rem;color:#888;margin-bottom:2px">→ '+esc(dest)+(redirAgeStr?' <span style="font-size:.58rem;color:#3a3a3a">'+esc(redirAgeStr)+'</span>':'')+(created?' <span style="color:#333;font-size:.6rem" title="Created: '+esc(created)+'">·</span>':'')+'</div>'
         +(note?'<div style="font-size:.65rem;color:#9f7aea;margin-bottom:3px;font-style:italic">🏷 '+esc(note)+'</div>':'')
         +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
