@@ -69,6 +69,7 @@ input.shake{animation:quake .25s ease 2}
 /* ── New-hit flash ── */
 @keyframes hitflash{0%{background:rgba(79,255,204,.4)}100%{background:transparent}}
 .hit-flash{animation:hitflash .6s ease-out}
+@keyframes hitpulse{0%,100%{opacity:1}50%{opacity:.4}}
 
 /* ── Sections ── */
 section{background:var(--panel);border:1px solid var(--faint);border-radius:12px;padding:0;overflow:hidden;margin-bottom:12px}
@@ -182,7 +183,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.67</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.68</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -3539,6 +3540,7 @@ function loadDevTrapList(){
         +(expiryStr?' <span style="font-size:.58rem;color:'+(expiryOver?'#ff4444':'#555')+';border:1px solid '+(expiryOver?'rgba(255,68,68,.35)':'rgba(255,255,255,.1)')+';border-radius:3px;padding:1px 5px">'+esc(expiryStr)+'</span>':'')
         +'</span>'
         +'<span style="font-size:.6rem;color:#555;background:rgba(255,255,255,.05);border-radius:10px;padding:1px 7px" id="devtraphits-'+esc(id)+'">— hits</span>'
+        +'<span id="devtrapactive-'+esc(id)+'" style="display:none;font-size:.58rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 6px;animation:hitpulse 2s infinite">🟢 active</span>'
         +'<span style="font-size:.58rem;color:#3a3a3a" id="devtraplast-'+esc(id)+'"></span>'
         +'<button class="btn-sm" style="font-size:.68rem;padding:2px 8px" data-copy-trap="'+esc(url)+'">Copy</button>'
         +'<button class="btn-sm" style="font-size:.68rem;padding:2px 8px;color:#777" data-dup-trap="'+esc(id)+'" title="Duplicate this link">Dup</button>'
@@ -3596,6 +3598,13 @@ function loadDevTrapList(){
           lastEl.textContent=(locHint?locHint+' · ':'')+lastAgo;
           lastEl.style.color='#444';
           lastEl.title='Last visitor: '+(last.city||'?')+', '+(last.country||'?')+' at '+(last.time?new Date(last.time).toLocaleString():'?');
+        }
+        // "Active" badge: any hit in last 15 minutes
+        var activeEl=document.getElementById('devtrapactive-'+id);
+        if(activeEl){
+          var recentCutoff=Date.now()-15*60000;
+          var recentHit=raw.some(function(h){return h.time&&(new Date(h.time).getTime()>=recentCutoff);});
+          if(recentHit){activeEl.style.display='';}else{activeEl.style.display='none';}
         }
         // Track for bell: if count increased since last load, flash
         var prev=_devTrapHitCounts[id]||0;
