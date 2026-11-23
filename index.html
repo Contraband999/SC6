@@ -34,7 +34,7 @@ input[type=password],input[type=text]{
   font-family:'Manrope',sans-serif;outline:none;
   transition:border-color .2s
 }
-input:focus{border-color:rgba(255,255,255,.35)}
+input:focus{border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.07)}
 
 /* ── Buttons ── */
 button{touch-action:manipulation;font-family:'Manrope',sans-serif}
@@ -44,14 +44,17 @@ button{touch-action:manipulation;font-family:'Manrope',sans-serif}
   padding:14px 16px;text-align:left;color:#fff;cursor:pointer;
   font-size:.85rem;font-weight:500;transition:background .15s,border-color .15s
 }
+.btn:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18)}
 .btn:active{background:rgba(255,255,255,.12)}
 .btn-sm{
   background:none;border:1px solid var(--faint);border-radius:7px;
   color:#ccc;cursor:pointer;font-size:.72rem;padding:5px 11px;
-  transition:border-color .15s,color .15s
+  transition:border-color .15s,color .15s,background .15s
 }
+.btn-sm:hover{color:#eee;border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.05)}
 .btn-sm:active{color:#fff;border-color:rgba(255,255,255,.4)}
 .btn-sm.danger{color:#ff6b6b;border-color:rgba(255,107,107,.4)}
+.btn-sm.danger:hover{color:#ff8888;border-color:rgba(255,107,107,.65);background:rgba(255,107,107,.07)}
 .btn-sm.danger:active{color:#ff4444;border-color:rgba(255,68,68,.7)}
 
 /* ── Shake ── */
@@ -111,8 +114,9 @@ section .sec-body{padding:14px 16px}
   background:var(--panel);border:1px solid var(--faint);border-radius:12px;
   padding:16px 20px;color:#fff;cursor:pointer;font-size:.88rem;font-weight:600;
   font-family:'Manrope',sans-serif;text-align:left;display:flex;align-items:center;
-  justify-content:space-between;transition:background .15s
+  justify-content:space-between;transition:background .15s,border-color .15s
 }
+.home-btn:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18)}
 .home-btn:active{background:rgba(255,255,255,.12)}
 .home-btn-arrow{color:rgba(255,255,255,.3);font-size:.85rem}
 
@@ -125,8 +129,9 @@ section .sec-body{padding:14px 16px}
 .panel-back{
   display:inline-flex;align-items:center;gap:5px;background:none;border:none;
   color:var(--dim);font-size:.82rem;font-family:'Manrope',sans-serif;
-  cursor:pointer;padding:4px 0 16px;font-weight:500
+  cursor:pointer;padding:4px 0 16px;font-weight:500;transition:color .15s
 }
+.panel-back:hover{color:rgba(255,255,255,.75)}
 .panel-back:active{color:#fff}
 
 /* ── Code entry ── */
@@ -134,8 +139,9 @@ section .sec-body{padding:14px 16px}
 
 /* ── Lists ── */
 ul.devlist{list-style:none;margin:6px 0 0}
-ul.devlist li{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.055);font-size:.78rem;color:#bbb}
+ul.devlist li{padding:5px 4px;border-bottom:1px solid rgba(255,255,255,.055);font-size:.78rem;color:#bbb;border-radius:4px;transition:background .12s}
 ul.devlist li:last-child{border-bottom:none}
+ul.devlist li:hover{background:rgba(255,255,255,.03)}
 
 /* ── Status badge ── */
 .badge-status{display:inline-block;font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:20px;border:1px solid;vertical-align:middle;margin-left:6px}
@@ -149,9 +155,10 @@ ul.devlist li:last-child{border-bottom:none}
   padding:10px 14px;border-radius:10px;
   cursor:pointer;user-select:none;
   font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
-  transition:opacity .15s;border:1px solid transparent;
+  transition:opacity .15s,background .15s;border:1px solid transparent;
   margin-bottom:6px
 }
+.op-group-header:hover{background:rgba(255,255,255,.04)}
 .op-group-header:active{opacity:.7}
 .op-group-arrow{font-size:.7rem;transition:transform .2s;margin-left:auto;opacity:.6}
 .op-group-body{display:none}
@@ -183,7 +190,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.84</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.85</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
