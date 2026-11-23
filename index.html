@@ -62,7 +62,9 @@ body::after{
 #home,#devView,#opView,.modal{position:relative;z-index:2}
 
 /* ── Typography ── */
-h3{font-size:.92rem;font-weight:800;letter-spacing:.05em;color:#fff;margin-bottom:5px;text-transform:uppercase;font-size:.75rem}
+h3{font-size:.75rem;font-weight:800;letter-spacing:.05em;color:#fff;margin-bottom:5px;text-transform:uppercase}
+#devContent h3{text-shadow:0 0 10px rgba(79,255,204,.35),0 0 30px rgba(79,255,204,.12)}
+#opContent h3{text-shadow:0 0 10px rgba(159,122,234,.35),0 0 30px rgba(159,122,234,.12)}
 p.note{font-size:.72rem;color:rgba(255,255,255,.38);line-height:1.55;margin-bottom:10px}
 /* Section head accent lines by context */
 #devContent section .sec-head{border-left:3px solid rgba(79,255,204,.45)}
@@ -133,8 +135,21 @@ input.shake{animation:quake .25s ease 2}
 
 /* ── Triangle animations ── */
 @keyframes tri-enter{0%{opacity:0;transform:scale(.7) translateY(16px)}100%{opacity:1;transform:scale(1) translateY(0)}}
-@keyframes tri-pulse{0%,100%{filter:drop-shadow(0 0 0px rgba(192,0,14,0))}50%{filter:drop-shadow(0 0 10px rgba(192,0,14,.55))}}
-.tri-static svg{animation:tri-enter .55s cubic-bezier(.22,1,.36,1) both,tri-pulse 3.5s ease-in-out 1s infinite}
+@keyframes tri-pulse{0%,100%{filter:drop-shadow(0 0 2px rgba(192,0,14,.4)) drop-shadow(0 0 8px rgba(192,0,14,.25))}50%{filter:drop-shadow(0 0 12px rgba(192,0,14,.7)) drop-shadow(0 0 24px rgba(192,0,14,.35))}}
+.tri-static svg{animation:tri-enter .55s cubic-bezier(.22,1,.36,1) both,tri-pulse 3s ease-in-out 1s infinite}
+
+/* ── SC6 title glitch ── */
+@keyframes glitch1{0%,88%,100%{clip-path:none;transform:none}90%{clip-path:polygon(0 20%,100% 20%,100% 40%,0 40%);transform:translate(-2px,1px);color:rgba(79,255,204,.9)}93%{clip-path:polygon(0 55%,100% 55%,100% 70%,0 70%);transform:translate(2px,-1px);color:rgba(255,0,80,.8)}96%{clip-path:none;transform:none;color:#fff}}
+.sc6-title{animation:glitch1 7s ease-in-out infinite}
+
+/* ── Home scan beam ── */
+@keyframes scanbeam{0%{top:-2px;opacity:0}5%{opacity:1}90%{opacity:.4}100%{top:100%;opacity:0}}
+#homeScanBeam{
+  position:absolute;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent 0%,rgba(79,255,204,.4) 30%,rgba(79,255,204,.8) 50%,rgba(79,255,204,.4) 70%,transparent 100%);
+  box-shadow:0 0 8px rgba(79,255,204,.5);pointer-events:none;
+  animation:scanbeam 4s ease-in-out 1.5s infinite
+}
 
 /* ── Home clock ── */
 #homeClock{
@@ -155,19 +170,32 @@ input.shake{animation:quake .25s ease 2}
 
 /* ── Sections ── */
 section{
-  background:linear-gradient(160deg,rgba(255,255,255,.032) 0%,rgba(255,255,255,.018) 100%);
+  background:linear-gradient(160deg,rgba(255,255,255,.032) 0%,rgba(255,255,255,.016) 100%);
   border:1px solid rgba(255,255,255,.08);
-  border-radius:14px;padding:0;overflow:hidden;margin-bottom:12px;
-  transition:border-color .25s,box-shadow .25s;
-  box-shadow:0 2px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.05)
+  border-radius:14px;padding:0;overflow:visible;margin-bottom:12px;
+  transition:border-color .3s,box-shadow .3s;
+  box-shadow:0 2px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.05);
+  position:relative
 }
+/* corner brackets */
+section::before,section::after{
+  content:'';position:absolute;width:10px;height:10px;
+  border-color:rgba(255,255,255,.18);border-style:solid;
+  z-index:2;transition:border-color .3s,opacity .3s;pointer-events:none
+}
+section::before{top:-1px;left:-1px;border-width:1.5px 0 0 1.5px;border-radius:14px 0 0 0}
+section::after{bottom:-1px;right:-1px;border-width:0 1.5px 1.5px 0;border-radius:0 0 14px 0}
+#devContent section::before,#devContent section::after{border-color:rgba(79,255,204,.3)}
+#opContent section::before,#opContent section::after{border-color:rgba(159,122,234,.3)}
+#devContent section:hover::before,#devContent section:hover::after{border-color:rgba(79,255,204,.7)}
+#opContent section:hover::before,#opContent section:hover::after{border-color:rgba(159,122,234,.7)}
 #devContent section:focus-within{
-  border-color:rgba(79,255,204,.3);
-  box-shadow:0 2px 24px rgba(0,0,0,.4),0 0 0 1px rgba(79,255,204,.08),inset 0 1px 0 rgba(79,255,204,.05)
+  border-color:rgba(79,255,204,.35);
+  box-shadow:0 2px 24px rgba(0,0,0,.4),0 0 0 1px rgba(79,255,204,.1),0 0 30px rgba(79,255,204,.04)
 }
 #opContent section:focus-within{
-  border-color:rgba(159,122,234,.3);
-  box-shadow:0 2px 24px rgba(0,0,0,.4),0 0 0 1px rgba(159,122,234,.08),inset 0 1px 0 rgba(159,122,234,.05)
+  border-color:rgba(159,122,234,.35);
+  box-shadow:0 2px 24px rgba(0,0,0,.4),0 0 0 1px rgba(159,122,234,.1),0 0 30px rgba(159,122,234,.04)
 }
 section .sec-head{
   padding:13px 16px 12px;
@@ -356,13 +384,35 @@ ul.devlist li:hover{
 .stat-chip-archive{color:rgba(170,170,255,.4);background:rgba(170,170,255,.04);border:1px solid rgba(170,170,255,.12);cursor:pointer}
 .stat-chip-archive.active{color:#aaf;background:rgba(170,170,255,.08);border-color:rgba(170,170,255,.3);box-shadow:0 0 8px rgba(170,170,255,.1)}
 .stat-chip-archive:hover{background:rgba(170,170,255,.1);border-color:rgba(170,170,255,.35)}
+
+/* ── Active stat chip pulse ── */
+@keyframes chip-pulse-red{0%,100%{box-shadow:0 0 8px rgba(192,0,14,.15)}50%{box-shadow:0 0 14px rgba(192,0,14,.5),0 0 24px rgba(192,0,14,.2)}}
+@keyframes chip-pulse-amber{0%,100%{box-shadow:0 0 8px rgba(245,200,0,.12)}50%{box-shadow:0 0 14px rgba(245,200,0,.4),0 0 24px rgba(245,200,0,.18)}}
+@keyframes chip-pulse-teal{0%,100%{box-shadow:0 0 8px rgba(79,255,204,.1)}50%{box-shadow:0 0 14px rgba(79,255,204,.4),0 0 24px rgba(79,255,204,.14)}}
+.stat-chip-trap.active{animation:chip-pulse-red 2.4s ease-in-out infinite}
+.stat-chip-hit.active{animation:chip-pulse-amber 2.6s ease-in-out infinite}
+.stat-chip-redir.active{animation:chip-pulse-teal 2.8s ease-in-out infinite}
+
+/* ── Panel ambient top-edge glow ── */
+#devContent::before{
+  content:'';position:absolute;top:0;left:10%;right:10%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(79,255,204,.4),transparent);
+  box-shadow:0 0 12px 2px rgba(79,255,204,.18);pointer-events:none;z-index:0
+}
+#opContent::before{
+  content:'';position:absolute;top:0;left:10%;right:10%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(159,122,234,.4),transparent);
+  box-shadow:0 0 12px 2px rgba(159,122,234,.18);pointer-events:none;z-index:0
+}
+#devContent,#opContent{position:relative}
 </style>
 </head>
 <body>
 <div id="scanlines" aria-hidden="true"></div>
 
 <!-- ══════════ HOME ══════════ -->
-<div id="home">
+<div id="home" style="position:relative;overflow:hidden">
+<div id="homeScanBeam" aria-hidden="true"></div>
   <div class="tri-static">
     <svg viewBox="0 0 120 107" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -382,13 +432,13 @@ ul.devlist li:hover{
     </svg>
   </div>
   <div style="display:flex;flex-direction:column;align-items:center;gap:5px;margin-bottom:28px">
-    <div style="font-size:2rem;font-weight:800;letter-spacing:.18em;color:#fff;text-shadow:0 0 20px rgba(255,255,255,.35),0 0 60px rgba(79,255,204,.2)">SC6</div>
+    <div class="sc6-title" style="font-size:2rem;font-weight:800;letter-spacing:.18em;color:#fff;text-shadow:0 0 20px rgba(255,255,255,.35),0 0 60px rgba(79,255,204,.2)">SC6</div>
     <div style="display:flex;align-items:center;gap:10px;width:100%">
       <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(79,255,204,.3))"></div>
       <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(79,255,204,.5);text-transform:uppercase">Control Panel</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(79,255,204,.3),transparent)"></div>
     </div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(192,0,14,.55);font-family:'Manrope',sans-serif;margin-top:2px">v2.0.00</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(192,0,14,.55);font-family:'Manrope',sans-serif;margin-top:2px">v2.0.01</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
