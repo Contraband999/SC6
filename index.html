@@ -183,7 +183,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.75</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.76</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -357,6 +357,9 @@ ul.devlist li:last-child{border-bottom:none}
           <button class="btn-sm danger" id="devTrapBulkDelete" style="font-size:.68rem;display:none">Delete checked (<span id="devTrapBulkCount">0</span>)</button>
           <button class="btn-sm danger" id="devTrapPurgeExpired" style="font-size:.68rem;display:none" title="Delete all expired trap links">🗑 Purge expired</button>
           <button class="btn-sm" id="devTrapAutoRefreshToggle" style="font-size:.68rem;color:#555;border-color:rgba(255,255,255,.12)" title="Auto-refresh every 30s">↻ Auto</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+          <div id="devTrapSummary" style="display:none;font-size:.62rem;color:#555;flex:1;letter-spacing:.03em"></div>
         </div>
         <!-- Trap refresh indicator -->
         <div id="devTrapRefreshInfo" style="display:none;font-size:.6rem;color:#444;margin-top:4px;letter-spacing:.03em"></div>
@@ -3586,7 +3589,10 @@ function loadDevTrapList(){
     if(bulkBar)bulkBar.style.display=keys.length>0?'':'none';
     var searchEl=document.getElementById('devTrapSearch');
     if(searchEl)searchEl.style.display=keys.length>2?'':'none';
+    var sumTEl=document.getElementById('devTrapSummary');
+    if(sumTEl)sumTEl.style.display='none';
     if(!keys.length){list.innerHTML='<li style="color:#888">No links yet.</li>';return;}
+    if(sumTEl){sumTEl.style.display='';sumTEl.textContent=keys.length+' link'+(keys.length!==1?'s':'');}
     var now=Date.now();
     list.innerHTML=keys.map(function(id){
       var e=data[id]||{};
@@ -3661,6 +3667,7 @@ function loadDevTrapList(){
     // Async: load hit counts per link + update live feed
     var totalNewHits=0;
     var hitsDone=0;
+    var _totalTrapHits=0;
     var allUrls=[];
     keys.forEach(function(id){
       var e=obj[id]||{};
@@ -3714,8 +3721,11 @@ function loadDevTrapList(){
         }
         _devFeedHitCounts[id]=n;
         _devTrapHitCounts[id]=n;
+        _totalTrapHits+=n;
         hitsDone++;
         if(hitsDone===keys.length){
+          var sumTEl2=document.getElementById('devTrapSummary');
+          if(sumTEl2){sumTEl2.style.display='';sumTEl2.textContent=keys.length+' link'+(keys.length!==1?'s':'')+(_totalTrapHits>0?' · '+_totalTrapHits+' total hit'+(_totalTrapHits!==1?'s':''):'');}
           if(totalNewHits>0){
             var bell=document.getElementById('devHitBell');
             var bellCount=document.getElementById('devHitBellCount');
