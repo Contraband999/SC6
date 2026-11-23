@@ -183,7 +183,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.69</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.70</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -3338,6 +3338,7 @@ function loadOpTrapList(){
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" data-trap-copy="'+esc(url)+'">Copy</button>'
         +'<button class="btn-sm" style="font-size:.68rem;padding:2px 8px" id="optrapvisbtn-'+esc(id)+'" data-trap-view="'+esc(id)+'">Visitors</button>'
         +'<button class="btn-sm danger" style="font-size:.68rem;padding:2px 8px" data-trap-del="'+esc(id)+'">Delete</button>'
+        +'<span id="optrapactive-'+esc(id)+'" style="display:none;font-size:.58rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 6px;animation:hitpulse 2s infinite">🟢 active</span>'
         +'<span class="op-trap-last-visit" style="font-size:.58rem;color:#3a3a3a;margin-left:auto"></span>'
         +'</div>'
         +'<ul class="devlist" id="opvis-'+esc(id)+'" style="display:none;margin-top:6px"></ul>'
@@ -3361,6 +3362,13 @@ function loadOpTrapList(){
           if(olast.time){var od=Date.now()-new Date(olast.time).getTime();if(od<60000)olastAgo='just now';else if(od<3600000)olastAgo=Math.floor(od/60000)+'m ago';else if(od<86400000)olastAgo=Math.floor(od/3600000)+'h ago';else olastAgo=Math.floor(od/86400000)+'d ago';}
           var oLastEl=li2.querySelector('.op-trap-last-visit');
           if(oLastEl){oLastEl.textContent=(oflag?oflag+' ':'')+ocity+(ocity&&olastAgo?' · ':'')+olastAgo;oLastEl.style.color='#555';}
+        }
+        // Active badge: any hit in last 15 minutes
+        var oActiveEl=document.getElementById('optrapactive-'+id);
+        if(oActiveEl){
+          var oRecentCutoff=Date.now()-15*60000;
+          var oRecentHit=raw.some(function(h){return h.time&&(new Date(h.time).getTime()>=oRecentCutoff);});
+          oActiveEl.style.display=oRecentHit?'':'none';
         }
       });
     });
