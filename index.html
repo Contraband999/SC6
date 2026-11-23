@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.47</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.48</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1185,12 +1185,14 @@ function renderExLog(){
       var devCode=whoRaw.startsWith('dev ')?whoRaw.slice(4):null;
       var whoLabel=devCode?nameFor(devCode):whoRaw;
       var whoColor=whoRaw==='operator'?'#ff6b6b':whoRaw.startsWith('dev ')?'#f5c800':whoRaw==='visitor'?'#4fc':'#aaa';
-      var actionColor=e.action&&e.action.startsWith('ERR')?'#ff6b6b':'#eee';
+      var isErr=e.action&&(e.action.startsWith('ERR')||e.action.toLowerCase().indexOf('error')>=0||e.action.toLowerCase().indexOf('error link')>=0||e.action.indexOf('Error link')>=0);
+      var actionColor=isErr?'#ff6b6b':'#eee';
+      var rowStyle='padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.7rem'+(isErr?';border-left:2px solid rgba(192,0,14,.5);padding-left:5px;background:rgba(192,0,14,.04)':';border-left:2px solid transparent;padding-left:5px');
       var hasDetail=!!(e.os||e.br||e.ip||e.country||e.tag||e.region);
       var did='exdet-'+i;
       var copyData=(e.action||'')+(e.detail?' | '+e.detail:'')+(e.ip&&e.ip!=='?'?' | '+e.ip:'')+(e.country&&e.country!=='?'?' | '+e.country:'');
       var whoKey=whoRaw==='operator'?'operator':whoRaw.startsWith('dev ')?'dev':'visitor';
-      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.7rem">'
+      return '<li style="'+rowStyle+'">'
         +'<div style="display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap">'
         +'<span style="color:'+whoColor+';font-weight:700;min-width:52px;text-transform:uppercase;font-size:.62rem;cursor:pointer" title="Filter by this actor" data-exec-who-filter="'+esc(whoKey)+'">'+esc(whoLabel)+'</span>'
         +'<span style="color:'+actionColor+';flex:1;word-break:break-word">'+esc(e.action||'?')+'</span>'
@@ -2046,19 +2048,42 @@ function loadOpWsOverview(){
         +'<button data-ws-delete="'+esc(ws)+'" style="background:none;border:1px solid rgba(255,107,107,.35);border-radius:5px;color:#ff6b6b;font-size:.65rem;padding:2px 8px;cursor:pointer;font-family:Manrope,sans-serif">Delete</button>'
         +'</li>';
     }).join('');
-    // Async: load hit counts per workspace
+    // Async: load hit counts per workspace, then sort by hits desc
+    var _wsHitTotals={};var _wsHitDone=0;var _wsHitPending=wsCodes.length;
+    function _applyWsHitStyle(badge,total){
+      if(total===0){badge.style.color='#555';badge.style.borderColor='rgba(255,255,255,.1)';badge.style.background='';}
+      else if(total<=10){badge.style.color='#f5a600';badge.style.borderColor='rgba(245,166,0,.4)';badge.style.background='rgba(245,166,0,.08)';}
+      else{badge.style.color='#ff6b6b';badge.style.borderColor='rgba(255,107,107,.4)';badge.style.background='rgba(255,107,107,.12)';}
+    }
+    function _sortWsByHits(){
+      var items=Array.prototype.slice.call(list.querySelectorAll('li[data-ws-hits-val]'));
+      if(items.length<2)return;
+      items.sort(function(a,b){return parseInt(b.getAttribute('data-ws-hits-val')||'0')-parseInt(a.getAttribute('data-ws-hits-val')||'0');});
+      items.forEach(function(li){list.appendChild(li);});
+    }
     wsCodes.forEach(function(ws){
       var trapLinks2=data[ws]&&data[ws].trapLinks?data[ws].trapLinks:{};
       var trapIds=Object.keys(trapLinks2);
       var badge=list.querySelector('[data-ws-hits="'+ws+'"]');
-      if(!badge)return;
-      if(!trapIds.length){badge.textContent='0 hits';return;}
+      var li=badge?badge.closest('li'):null;
+      if(!badge){_wsHitDone++;if(_wsHitDone===_wsHitPending)_sortWsByHits();return;}
+      if(!trapIds.length){
+        badge.textContent='0 hits';_applyWsHitStyle(badge,0);
+        if(li)li.setAttribute('data-ws-hits-val','0');
+        _wsHitDone++;if(_wsHitDone===_wsHitPending)_sortWsByHits();
+        return;
+      }
       var total=0,done=0;
       trapIds.forEach(function(lid){
         fetch(fbUrl('_sc6/workspaces/'+ws+'/trapLogs/'+lid)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
           var n=logs?(Array.isArray(logs)?logs.length:Object.keys(logs).length):0;
           total+=n;done++;
-          if(done===trapIds.length){badge.textContent=total+(total===1?' hit':' hits');if(total>0){badge.style.color='#ff6b6b';badge.style.borderColor='rgba(255,107,107,.4)';badge.style.background='rgba(255,107,107,.12)';}}
+          if(done===trapIds.length){
+            badge.textContent=total+(total===1?' hit':' hits');
+            _applyWsHitStyle(badge,total);
+            if(li)li.setAttribute('data-ws-hits-val',String(total));
+            _wsHitDone++;if(_wsHitDone===_wsHitPending)_sortWsByHits();
+          }
         });
       });
     });
@@ -3398,6 +3423,7 @@ function loadDevTrapList(){
         +'🔗 <code style="font-size:.72rem;color:'+(expiryOver?'#555':'#f5c800')+';background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px">'+esc(short)+'</code>'
         +(ageStr?' <span style="font-size:.58rem;color:#3a3a3a;margin-left:2px">'+esc(ageStr)+'</span>':'')
         +(note?' <span style="font-size:.65rem;color:#9f7aea;font-style:italic">'+esc(note)+'</span>':'')
+        +(!e.expiresAt?' <span style="font-size:.56rem;color:#2a2a2a;border:1px solid rgba(255,255,255,.07);border-radius:3px;padding:1px 4px" title="No expiry">🔒</span>':'')
         +(expiryStr?' <span style="font-size:.58rem;color:'+(expiryOver?'#ff4444':'#555')+';border:1px solid '+(expiryOver?'rgba(255,68,68,.35)':'rgba(255,255,255,.1)')+';border-radius:3px;padding:1px 5px">'+esc(expiryStr)+'</span>':'')
         +'</span>'
         +'<span style="font-size:.6rem;color:#555;background:rgba(255,255,255,.05);border-radius:10px;padding:1px 7px" id="devtraphits-'+esc(id)+'">— hits</span>'
