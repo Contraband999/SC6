@@ -183,7 +183,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.72</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.73</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -327,6 +327,7 @@ ul.devlist li:last-child{border-bottom:none}
         </div>
         <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
           <div id="devRedirectSummary" style="display:none;font-size:.62rem;color:#555;flex:1;letter-spacing:.03em"></div>
+          <button class="btn-sm" id="devRedirCopyAll" style="font-size:.68rem;display:none">Copy all</button>
           <button class="btn-sm danger" id="devRedirPurgeExpired" style="font-size:.68rem;display:none" title="Delete all expired redirect links">🗑 Purge expired</button>
           <button class="btn-sm" id="devRedirectAutoRefreshToggle" style="font-size:.68rem;color:#555;border-color:rgba(255,255,255,.12)" title="Auto-refresh every 30s">↻ Auto</button>
         </div>
@@ -2786,6 +2787,18 @@ document.getElementById('devRedirectAutoRefreshToggle').addEventListener('click'
     if(_devRedirectAutoRefreshInterval){clearInterval(_devRedirectAutoRefreshInterval);_devRedirectAutoRefreshInterval=null;}
   }
 });
+// ── Copy all redirect links ──
+document.getElementById('devRedirCopyAll').addEventListener('click',function(){
+  var list=document.getElementById('devRedirectList');
+  var urls=list&&list._allRedirUrls?list._allRedirUrls:[];
+  if(!urls.length){list.querySelectorAll('[data-redir-copy]').forEach(function(b){urls.push(b.getAttribute('data-redir-copy'));});}
+  if(!urls.length){alert('No links to copy.');return;}
+  var btn=this;
+  navigator.clipboard.writeText(urls.join('\n')).then(function(){
+    btn.textContent='Copied '+urls.length+'!';
+    setTimeout(function(){btn.textContent='Copy all';},2000);
+  }).catch(function(){alert('Could not copy:\n\n'+urls.join('\n'));});
+});
 
 // ── Lock ──
 function refreshOpLock(){
@@ -3960,6 +3973,11 @@ function loadDevRedirectList(){
         +'<ul class="devlist" id="devrhits-'+esc(id)+'" style="display:none;margin-top:5px"></ul>'
         +'</li>';
     }).join('');
+    // Store all redirect URLs for copy-all
+    var allRedirUrls=keys.map(function(id){var e=obj[id];var param=e.param||'r';return WORKER_BASE+'/r?'+param+'='+encodeURIComponent(id)+'&ws='+encodeURIComponent(sc);});
+    list._allRedirUrls=allRedirUrls;
+    var copyAllRBtn=document.getElementById('devRedirCopyAll');
+    if(copyAllRBtn){copyAllRBtn.style.display=keys.length>0?'':'none';copyAllRBtn.textContent='Copy all ('+keys.length+')';}
     // Async: fetch hit counts and update button labels + summary total
     var _totalHits=0;var _hitLoadsDone=0;
     keys.forEach(function(id){
