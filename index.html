@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.57</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.58</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -274,8 +274,11 @@ ul.devlist li:last-child{border-bottom:none}
         <!-- Workspace switcher — only shown when this dev code has 2+ known workspaces -->
         <div id="devWsSwitcherRow" style="display:none;margin-top:8px">
           <div style="font-size:.6rem;color:#555;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">Your workspaces</div>
-          <select id="devWsSwitcher" style="width:100%;font-size:.75rem;padding:5px 8px;background:rgba(255,255,255,.06);border:1px solid var(--faint);border-radius:6px;color:inherit;outline:none;cursor:pointer">
-          </select>
+          <div style="display:flex;gap:5px;align-items:center">
+            <select id="devWsSwitcher" style="flex:1;font-size:.75rem;padding:5px 8px;background:rgba(255,255,255,.06);border:1px solid var(--faint);border-radius:6px;color:inherit;outline:none;cursor:pointer">
+            </select>
+            <button id="devWsRemove" title="Remove selected workspace from your list" style="flex-shrink:0;font-size:.65rem;padding:4px 8px;background:rgba(255,255,255,.04);border:1px solid var(--faint);border-radius:5px;color:#666;cursor:pointer;line-height:1">✕</button>
+          </div>
         </div>
         <div class="row">
           <input type="text" id="devSyncInput" maxlength="40" placeholder="Enter workspace code…" style="flex:1">
@@ -1896,6 +1899,23 @@ document.getElementById('devWsSwitcher').addEventListener('change',function(){
   loadDevTrapList();
   loadDevRedirectList();
   loadDevWsSwitcher(); // refresh to update the ✓ marker
+});
+
+document.getElementById('devWsRemove').addEventListener('click',function(){
+  var sel=document.getElementById('devWsSwitcher');
+  if(!sel)return;
+  var val=sel.value;if(!val)return;
+  var cur=getSyncCode();
+  if(val===cur){alert('Cannot remove your active workspace. Switch to another workspace first.');return;}
+  if(!confirm('Remove "'+val+'" from your workspace list?\n(The workspace and its links are NOT deleted — only removed from your switcher.)'))return;
+  var url=fbUrl('_sc6/devWorkspaces/'+encodeURIComponent(_currentDevCode));
+  fetch(url).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var list=Array.isArray(d)?d:[];
+    list=list.filter(function(c){return c!==val;});
+    fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(list)})
+      .then(function(){loadDevWsSwitcher();})
+      .catch(function(e){alert('Failed to remove: '+e.message);});
+  });
 });
 
 function loadDevMessage(){
