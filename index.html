@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.45</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.46</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -314,7 +314,11 @@ ul.devlist li:last-child{border-bottom:none}
         <div id="devConvertResult" style="display:none;margin-top:8px;background:rgba(255,200,0,.07);border:1px solid rgba(255,200,0,.2);border-radius:7px;padding:9px 11px">
           <div style="font-size:.62rem;color:#f5c800;font-weight:700;letter-spacing:.06em;margin-bottom:4px">TRACKER LINK READY</div>
           <div id="devConvertUrl" style="font-size:.7rem;color:#ccc;word-break:break-all;line-height:1.5"></div>
-          <button class="btn-sm" id="devConvertCopy" style="margin-top:7px;font-size:.68rem">Copy link</button>
+          <div style="display:flex;align-items:center;gap:5px;margin-top:7px">
+            <button class="btn-sm" id="devConvertCopy" style="font-size:.68rem">Copy link</button>
+            <input type="text" id="devConvertNoteInput" maxlength="80" placeholder="Add note to this link…" style="flex:1;font-size:.65rem;padding:3px 7px;background:rgba(255,255,255,.05);border:1px solid var(--faint);border-radius:5px;color:inherit;outline:none">
+            <button class="btn-sm" id="devConvertNoteSave" style="font-size:.62rem;padding:2px 7px">Save note</button>
+          </div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
           <div id="devRedirectSummary" style="display:none;font-size:.62rem;color:#555;flex:1;letter-spacing:.03em"></div>
@@ -342,6 +346,7 @@ ul.devlist li:last-child{border-bottom:none}
             <option value="168">7 days</option>
           </select>
           <button class="btn-sm" id="devTrapCopyAll" style="font-size:.68rem;display:none">Copy all</button>
+          <button class="btn-sm danger" id="devTrapBulkDelete" style="font-size:.68rem;display:none">Delete checked (<span id="devTrapBulkCount">0</span>)</button>
           <button class="btn-sm" id="devTrapAutoRefreshToggle" style="font-size:.68rem;color:#555;border-color:rgba(255,255,255,.12)" title="Auto-refresh every 30s">↻ Auto</button>
         </div>
         <!-- Trap refresh indicator -->
@@ -1703,6 +1708,7 @@ function openDev(whichCode){
       var m=Math.floor(elapsed/60);var s=elapsed%60;
       var wsLabel=getSyncCode()||'?';
       bar.textContent='⏱ Logged in '+(m>0?m+'m ':'')+s+'s · '+wsLabel;
+      bar.title='Session started: '+new Date(_devSessionLoginTime).toLocaleString();
     }
     _updateSessionBar();
     _devSessionTimerInterval=setInterval(_updateSessionBar,1000);
@@ -3374,6 +3380,7 @@ function loadDevTrapList(){
       var opacity=muted?'0.38':'1';
       return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07);opacity:'+opacity+'" data-trap-id="'+esc(id)+'" data-trap-haystack="'+esc(haystack)+'" data-trap-muted="'+esc(String(muted))+'">'
         +(muted?'<div style="font-size:.58rem;color:#666;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px">🔇 MUTED / ARCHIVED</div>':'')
+        +'<label style="display:inline-flex;align-items:center;gap:4px;font-size:.6rem;color:#444;cursor:pointer;margin-bottom:2px"><input type="checkbox" class="trap-bulk-chk" data-trap-chk-id="'+esc(id)+'" style="accent-color:#c0000e;width:11px;height:11px;cursor:pointer"> Select</label>'
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
         +'<span style="font-size:.78rem;color:#ccc;flex:1">'
         +'🔗 <code style="font-size:.72rem;color:'+(expiryOver?'#555':'#f5c800')+';background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px">'+esc(short)+'</code>'
@@ -3408,7 +3415,9 @@ function loadDevTrapList(){
         var badge=document.getElementById('devtraphits-'+id);
         if(badge){
           badge.textContent=n+(n===1?' hit':' hits');
-          if(n>0){badge.style.color='#ff6b6b';badge.style.borderColor='rgba(255,107,107,.3)';badge.style.background='rgba(255,107,107,.08)';}
+          if(n===0){badge.style.color='#555';badge.style.borderColor='rgba(255,255,255,.08)';badge.style.background='rgba(255,255,255,.03)';}
+          else if(n<=3){badge.style.color='#f5a600';badge.style.borderColor='rgba(245,166,0,.3)';badge.style.background='rgba(245,166,0,.08)';}
+          else{badge.style.color='#ff6b6b';badge.style.borderColor='rgba(255,107,107,.3)';badge.style.background='rgba(255,107,107,.08)';}
         }
         // Track for bell: if count increased since last load, flash
         var prev=_devTrapHitCounts[id]||0;
@@ -3544,6 +3553,19 @@ function loadDevTrapList(){
         });
       });
     });
+    // Wire bulk-select checkboxes
+    function _updateBulkBar(){
+      var checked=list.querySelectorAll('.trap-bulk-chk:checked');
+      var n=checked.length;
+      var bulkBtn=document.getElementById('devTrapBulkDelete');
+      var bulkCount=document.getElementById('devTrapBulkCount');
+      if(bulkBtn){bulkBtn.style.display=n>0?'':'none';}
+      if(bulkCount){bulkCount.textContent=n;}
+    }
+    list.querySelectorAll('.trap-bulk-chk').forEach(function(chk){
+      chk.addEventListener('change',_updateBulkBar);
+    });
+    _updateBulkBar();
   });
 }
 // ── Live trap feed renderer ──
@@ -3792,6 +3814,8 @@ document.getElementById('devConvertBtn').addEventListener('click',function(){
     devStatInc('links');
     document.getElementById('devConvertUrl').textContent=url;
     document.getElementById('devConvertResult').style.display='';
+    document.getElementById('devConvertResult').setAttribute('data-redir-id',id);
+    var ni=document.getElementById('devConvertNoteInput');if(ni){ni.value='';}
     document.getElementById('devConvertInput').value='';
     loadDevRedirectList();
     navigator.clipboard.writeText(url).catch(function(){});
@@ -3801,6 +3825,19 @@ document.getElementById('devConvertCopy').addEventListener('click',function(){
   var url=document.getElementById('devConvertUrl').textContent;
   navigator.clipboard.writeText(url).catch(function(){});
   this.textContent='✓ Copied';setTimeout(function(){document.getElementById('devConvertCopy').textContent='Copy link';},1500);
+});
+document.getElementById('devConvertNoteSave').addEventListener('click',function(){
+  var res=document.getElementById('devConvertResult');
+  var id=res?res.getAttribute('data-redir-id'):'';
+  if(!id)return;
+  var ni=document.getElementById('devConvertNoteInput');
+  var note=ni?ni.value.trim():'';
+  var sc=getSyncCode();
+  var btn=this;
+  btn.textContent='…';btn.disabled=true;
+  fetch(fbUrl('_sc6/workspaces/'+sc+'/redirectLinks/'+id+'/note'),{method:'PUT',body:JSON.stringify(note)})
+    .then(function(){btn.textContent='✓';btn.disabled=false;setTimeout(function(){btn.textContent='Save note';},1500);loadDevRedirectList();})
+    .catch(function(){btn.textContent='Save note';btn.disabled=false;});
 });
 
 document.getElementById('devTrapGen').addEventListener('click',function(){
@@ -3826,6 +3863,23 @@ document.getElementById('devTrapGen').addEventListener('click',function(){
   });
 });
 
+// ── Bulk delete trap links ──
+document.getElementById('devTrapBulkDelete').addEventListener('click',function(){
+  var list=document.getElementById('devTrapList');
+  var checked=list?list.querySelectorAll('.trap-bulk-chk:checked'):[];
+  if(!checked.length)return;
+  var ids=[];checked.forEach(function(c){ids.push(c.getAttribute('data-trap-chk-id'));});
+  if(!confirm('Delete '+ids.length+' trap link'+(ids.length===1?'':'s')+'? This cannot be undone.'))return;
+  var sc=getSyncCode();
+  var done=0;
+  ids.forEach(function(id){
+    fetch(fbUrl('_sc6/workspaces/'+sc+'/trapLinks/'+id),{method:'DELETE'})
+      .then(function(){
+        exLog('Trap link deleted (bulk)','ID: …'+id.slice(-6),'dev '+_currentDevCode,true);
+        done++;if(done===ids.length)loadDevTrapList();
+      }).catch(function(){done++;if(done===ids.length)loadDevTrapList();});
+  });
+});
 // ── Copy all trap links ──
 document.getElementById('devTrapCopyAll').addEventListener('click',function(){
   var list=document.getElementById('devTrapList');
