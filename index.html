@@ -190,7 +190,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.93</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.94</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -2420,13 +2420,15 @@ function loadOpRedirectList(){
       var url=WORKER_BASE+'/r?'+param+'='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws);
       var dest=e.target?e.target.slice(0,45)+'…':'?';
       var created=e.createdAt?new Date(e.createdAt).toLocaleString():'?';
+      var opRdrIsNew=e.createdAt&&(Date.now()-new Date(e.createdAt).getTime()<86400000);
       var creator=e.createdBy?esc(e.createdBy):'?';
       var note=e.note?esc(e.note):'';
       var opDestIcon=getDestIcon(e.target||'');
       var opRdrHaystack=(id+' '+(e.note||'')+' '+(e.target||'')+' '+url+' '+(e.createdBy||'')).toLowerCase();
-      return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)" data-op-redir-id="'+esc(id)+'" data-op-redir-haystack="'+esc(opRdrHaystack)+'">'
+      return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)'+(opRdrIsNew?';box-shadow:0 0 0 1px rgba(79,255,204,.2);border-radius:4px':'')+'" data-op-redir-id="'+esc(id)+'" data-op-redir-haystack="'+esc(opRdrHaystack)+'">'
         +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">'
         +'<span style="font-size:.62rem;color:#555">'+esc(created)+' · by '+creator+'</span>'
+        +(opRdrIsNew?'<span style="font-size:.56rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em">NEW</span>':'')
         +'<span style="margin-left:auto;font-size:.62rem;background:rgba(79,255,204,.1);color:#4fc;border:1px solid rgba(79,255,204,.25);border-radius:10px;padding:1px 8px;font-weight:600" id="oprhitcount-'+esc(id)+'">— hits</span>'
         +'</div>'
         +(note?'<div style="font-size:.7rem;color:#9f7aea;margin-bottom:3px;font-style:italic">🏷 '+note+'</div>':'')
@@ -3504,12 +3506,13 @@ function loadOpTrapList(){
     list.innerHTML=keys.map(function(id){
       var link=obj[id];
       var created=link.createdAt?new Date(link.createdAt).toLocaleString():'?';
+      var opTrapIsNew=link.createdAt&&(Date.now()-new Date(link.createdAt).getTime()<86400000);
       var ws=link.workspace||getOpWs();
       var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws);
       var trapNote=link.note?esc(link.note):'';
       var opHaystack=(id+' '+(link.note||'')+' '+url).toLowerCase();
-      return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)" data-trap-id-op="'+esc(id)+'" data-op-trap-haystack="'+esc(opHaystack)+'">'
-        +'<div style="font-size:.7rem;color:#888">'+esc(created)+'</div>'
+      return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)'+(opTrapIsNew?';box-shadow:0 0 0 1px rgba(79,255,204,.2);border-radius:4px':'')+'" data-trap-id-op="'+esc(id)+'" data-op-trap-haystack="'+esc(opHaystack)+'">'
+        +'<div style="font-size:.7rem;color:#888">'+esc(created)+(opTrapIsNew?' <span style="font-size:.56rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em;vertical-align:middle">NEW</span>':'')+'</div>'
         +(trapNote?'<div style="font-size:.7rem;color:#9f7aea;margin:2px 0;font-style:italic">🏷 '+trapNote+'</div>':'')
         +'<div style="font-size:.72rem;color:#ccc;word-break:break-all;margin:2px 0">'+esc(url)+'</div>'
         +'<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;align-items:center">'
@@ -3794,7 +3797,7 @@ function loadDevTrapList(){
       }
       var haystack=(short+' '+note+' '+id+(muted?' muted':'')).toLowerCase();
       var opacity=muted?'0.38':'1';
-      var isNew=e.createdAt&&(now-new Date(e.createdAt).getTime()<600000);
+      var isNew=e.createdAt&&(now-new Date(e.createdAt).getTime()<86400000);
       var liExtra=isNew?';box-shadow:0 0 0 1px rgba(79,255,204,.2);border-radius:4px':'';
       return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07);opacity:'+opacity+liExtra+'" data-trap-id="'+esc(id)+'" data-trap-haystack="'+esc(haystack)+'" data-trap-muted="'+esc(String(muted))+'">'
         +(muted?'<div style="font-size:.58rem;color:#666;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px">🔇 MUTED / ARCHIVED</div>':'')
@@ -3803,6 +3806,7 @@ function loadDevTrapList(){
         +'<span style="font-size:.78rem;color:#ccc;flex:1">'
         +'🔗 <code style="font-size:.72rem;color:'+(expiryOver?'#555':'#f5c800')+';background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px">'+esc(short)+'</code>'
         +(ageStr?' <span style="font-size:.58rem;color:#3a3a3a;margin-left:2px">'+esc(ageStr)+'</span>':'')
+        +(isNew?' <span style="font-size:.56rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em">NEW</span>':'')
         +(note?' <span style="font-size:.65rem;color:#9f7aea;font-style:italic">'+esc(note)+'</span>':'')
         +(!e.expiresAt?' <span style="font-size:.56rem;color:#2a2a2a;border:1px solid rgba(255,255,255,.07);border-radius:3px;padding:1px 4px" title="No expiry">🔒</span>':'')
         +(expiryStr?' <span style="font-size:.58rem;color:'+(expiryOver?'#ff4444':'#555')+';border:1px solid '+(expiryOver?'rgba(255,68,68,.35)':'rgba(255,255,255,.1)')+';border-radius:3px;padding:1px 5px">'+esc(expiryStr)+'</span>':'')
@@ -4190,9 +4194,10 @@ function loadDevRedirectList(){
       }
       var note=e.note?e.note:'';
       var destIcon=getDestIcon(e.target||'');
+      var redirIsNew=e.createdAt&&(Date.now()-new Date(e.createdAt).getTime()<86400000);
       var redirHaystack=((e.target||'')+' '+(note||'')+' '+id).toLowerCase();
-      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)" data-redir-id="'+esc(id)+'" data-redir-hits-val="0" data-redir-haystack="'+esc(redirHaystack)+'">'
-        +'<div style="font-size:.65rem;color:'+(redirExpiryOver?'#555':'#888')+';margin-bottom:2px">'+destIcon+' → '+esc(dest)+(redirAgeStr?' <span style="font-size:.58rem;color:#3a3a3a">'+esc(redirAgeStr)+'</span>':'')+(created?' <span style="color:#333;font-size:.6rem" title="Created: '+esc(created)+'">·</span>':'')+'</div>'
+      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)'+(redirIsNew?';box-shadow:0 0 0 1px rgba(79,255,204,.2);border-radius:4px':'')+'" data-redir-id="'+esc(id)+'" data-redir-hits-val="0" data-redir-haystack="'+esc(redirHaystack)+'">'
+        +'<div style="font-size:.65rem;color:'+(redirExpiryOver?'#555':'#888')+';margin-bottom:2px">'+destIcon+' → '+esc(dest)+(redirAgeStr?' <span style="font-size:.58rem;color:#3a3a3a">'+esc(redirAgeStr)+'</span>':'')+(redirIsNew?' <span style="font-size:.56rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em">NEW</span>':'')+(created?' <span style="color:#333;font-size:.6rem" title="Created: '+esc(created)+'">·</span>':'')+'</div>'
         +(note?'<div style="font-size:.65rem;color:#9f7aea;margin-bottom:3px;font-style:italic">🏷 '+esc(note)+'</div>':'')
         +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
         +'<code style="font-size:.65rem;color:'+(redirExpiryOver?'#555':'#f5c800')+';background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;word-break:break-all;flex:1">'+esc(url)+'</code>'
