@@ -183,7 +183,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.74</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.75</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -487,6 +487,7 @@ ul.devlist li:last-child{border-bottom:none}
             <div class="row" style="margin-bottom:10px">
               <span class="label" id="opRedirectCount" style="font-size:.7rem;color:#888">Loading…</span>
               <button class="btn-sm" id="opRedirectRefresh" style="font-size:.65rem">Refresh</button>
+              <button class="btn-sm" id="opRedirectAutoRefreshToggle" style="font-size:.65rem;color:#555;border-color:rgba(255,255,255,.12)" title="Auto-refresh every 30s">↻ Auto</button>
               <button class="btn-sm" id="opRedirectExport" style="font-size:.65rem">Export CSV</button>
               <button class="btn-sm danger" id="opRedirectClearAll" style="font-size:.65rem">Delete all</button>
             </div>
@@ -508,6 +509,7 @@ ul.devlist li:last-child{border-bottom:none}
             </div>
             <div class="row" style="margin-top:4px">
               <button class="btn-sm" id="opTrapRefresh">Refresh list</button>
+              <button class="btn-sm" id="opTrapAutoRefreshToggle" style="font-size:.65rem;color:#555;border-color:rgba(255,255,255,.12)" title="Auto-refresh every 30s">↻ Auto</button>
               <button class="btn-sm danger" id="opTrapClearAll">Delete all</button>
             </div>
             <ul class="devlist" id="opTrapList"><li style="color:#888">Loading…</li></ul>
@@ -1140,6 +1142,10 @@ var _devTrapAutoRefresh=false;
 var _devTrapAutoRefreshInterval=null;
 var _devRedirectAutoRefresh=false;
 var _devRedirectAutoRefreshInterval=null;
+var _opRedirectAutoRefresh=false;
+var _opRedirectAutoRefreshInterval=null;
+var _opTrapAutoRefresh=false;
+var _opTrapAutoRefreshInterval=null;
 // Last refresh timestamps
 var _devTrapLastRefresh=null;
 var _devRedirectLastRefresh=null;
@@ -1586,6 +1592,15 @@ document.getElementById('opBack').addEventListener('click',function(){
   document.getElementById('opContent').style.display='none';
   document.getElementById('opCodeInput').value='';
   stopExLogSync();
+  // Stop op auto-refresh intervals
+  if(_opRedirectAutoRefreshInterval){clearInterval(_opRedirectAutoRefreshInterval);_opRedirectAutoRefreshInterval=null;}
+  _opRedirectAutoRefresh=false;
+  var oraBtn=document.getElementById('opRedirectAutoRefreshToggle');
+  if(oraBtn){oraBtn.style.color='#555';oraBtn.style.borderColor='rgba(255,255,255,.12)';}
+  if(_opTrapAutoRefreshInterval){clearInterval(_opTrapAutoRefreshInterval);_opTrapAutoRefreshInterval=null;}
+  _opTrapAutoRefresh=false;
+  var otaBtn=document.getElementById('opTrapAutoRefreshToggle');
+  if(otaBtn){otaBtn.style.color='#555';otaBtn.style.borderColor='rgba(255,255,255,.12)';}
   show(null);
 });
 
@@ -2514,6 +2529,18 @@ function loadOpRedirectList(){
 }
 
 document.getElementById('opRedirectRefresh').addEventListener('click',function(){loadOpRedirectList();});
+document.getElementById('opRedirectAutoRefreshToggle').addEventListener('click',function(){
+  _opRedirectAutoRefresh=!_opRedirectAutoRefresh;
+  var btn=this;
+  if(_opRedirectAutoRefresh){
+    btn.style.color='#4fc';btn.style.borderColor='rgba(79,255,204,.4)';
+    loadOpRedirectList();
+    _opRedirectAutoRefreshInterval=setInterval(function(){if(_opRedirectAutoRefresh)loadOpRedirectList();},30000);
+  } else {
+    btn.style.color='#555';btn.style.borderColor='rgba(255,255,255,.12)';
+    if(_opRedirectAutoRefreshInterval){clearInterval(_opRedirectAutoRefreshInterval);_opRedirectAutoRefreshInterval=null;}
+  }
+});
 document.getElementById('opRedirectExport').addEventListener('click',function(){
   var ws=getOpWs();
   var btn=this;btn.textContent='Exporting…';btn.disabled=true;
@@ -3343,6 +3370,18 @@ document.getElementById('opTrapToggleLinks').addEventListener('click',function()
   });
 });
 document.getElementById('opTrapRefresh').addEventListener('click',function(){loadOpTrapList();});
+document.getElementById('opTrapAutoRefreshToggle').addEventListener('click',function(){
+  _opTrapAutoRefresh=!_opTrapAutoRefresh;
+  var btn=this;
+  if(_opTrapAutoRefresh){
+    btn.style.color='#4fc';btn.style.borderColor='rgba(79,255,204,.4)';
+    loadOpTrapList();
+    _opTrapAutoRefreshInterval=setInterval(function(){if(_opTrapAutoRefresh)loadOpTrapList();},30000);
+  } else {
+    btn.style.color='#555';btn.style.borderColor='rgba(255,255,255,.12)';
+    if(_opTrapAutoRefreshInterval){clearInterval(_opTrapAutoRefreshInterval);_opTrapAutoRefreshInterval=null;}
+  }
+});
 document.getElementById('opTrapClearAll').addEventListener('click',function(){
   if(!confirm('Delete ALL error links and visitor logs for workspace "'+getOpWs()+'"?'))return;
   Promise.all([
