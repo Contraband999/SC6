@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.44</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.45</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1179,9 +1179,10 @@ function renderExLog(){
       var hasDetail=!!(e.os||e.br||e.ip||e.country||e.tag||e.region);
       var did='exdet-'+i;
       var copyData=(e.action||'')+(e.detail?' | '+e.detail:'')+(e.ip&&e.ip!=='?'?' | '+e.ip:'')+(e.country&&e.country!=='?'?' | '+e.country:'');
+      var whoKey=whoRaw==='operator'?'operator':whoRaw.startsWith('dev ')?'dev':'visitor';
       return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.7rem">'
         +'<div style="display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap">'
-        +'<span style="color:'+whoColor+';font-weight:700;min-width:52px;text-transform:uppercase;font-size:.62rem">'+esc(whoLabel)+'</span>'
+        +'<span style="color:'+whoColor+';font-weight:700;min-width:52px;text-transform:uppercase;font-size:.62rem;cursor:pointer" title="Filter by this actor" data-exec-who-filter="'+esc(whoKey)+'">'+esc(whoLabel)+'</span>'
         +'<span style="color:'+actionColor+';flex:1;word-break:break-word">'+esc(e.action||'?')+'</span>'
         +'<button title="Copy" onclick="(function(b,s){navigator.clipboard.writeText(s).then(function(){b.textContent=\'✓\';setTimeout(function(){b.textContent=\'⎘\';},1200)}).catch(function(){});})(this,'+JSON.stringify(copyData)+')" style="background:none;border:1px solid rgba(255,255,255,.12);border-radius:3px;color:#666;font-size:.62rem;padding:0 5px;cursor:pointer;line-height:1.6;font-family:Manrope,sans-serif;flex-shrink:0">⎘</button>'
         +'<span style="color:#555;white-space:nowrap;font-size:.62rem">'+esc(ts)+'</span>'
@@ -1700,7 +1701,8 @@ function openDev(whichCode){
     function _updateSessionBar(){
       var elapsed=Math.floor((Date.now()-_devSessionLoginTime)/1000);
       var m=Math.floor(elapsed/60);var s=elapsed%60;
-      bar.textContent='⏱ Logged in '+(m>0?m+'m ':'')+s+'s · since '+(new Date(_devSessionLoginTime)).toLocaleTimeString();
+      var wsLabel=getSyncCode()||'?';
+      bar.textContent='⏱ Logged in '+(m>0?m+'m ':'')+s+'s · '+wsLabel;
     }
     _updateSessionBar();
     _devSessionTimerInterval=setInterval(_updateSessionBar,1000);
@@ -2335,7 +2337,7 @@ function loadOpRedirectList(){
               +(screen?'<div>🖥 <span style="color:#aaa">Screen:</span> <span style="color:#ccc">'+esc(screen)+'</span></div>':'')
               +'</div>'
               +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
-              +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(h.lat)+', '+esc(h.lon)+'</span></div>':'')
+              +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(h.lat)+', '+esc(h.lon)+'</span> <a href="https://www.openstreetmap.org/?mlat='+encodeURIComponent(h.lat)+'&mlon='+encodeURIComponent(h.lon)+'#map=13/'+encodeURIComponent(h.lat)+'/'+encodeURIComponent(h.lon)+'" target="_blank" rel="noopener" style="font-size:.6rem;color:#4fc;text-decoration:none;border:1px solid rgba(79,255,204,.3);border-radius:3px;padding:0 4px;margin-left:4px">↗ Map</a></div>':'')
               +'<div>'+srcIcon+' <span style="color:#aaa">Opened from:</span> <span style="color:#c8b8ff">'+esc(openedFrom)+'</span></div>'
               +(tz?'<div>🕐 <span style="color:#aaa">Timezone:</span> <span style="color:#ccc">'+esc(tz)+'</span></div>':'')
               +(lang?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(lang)+'</span></div>':'')
@@ -2577,6 +2579,22 @@ document.querySelectorAll('.exec-filter-time').forEach(function(btn){
     });
     renderExLog();
   });
+});
+
+// ── Exec log who-filter via click on who label ──
+document.getElementById('execLogList').addEventListener('click',function(e){
+  var el=e.target;
+  var who=el.getAttribute&&el.getAttribute('data-exec-who-filter');
+  if(!who)return;
+  // Toggle: if already filtering by this, reset to all
+  if(_execLogFilterWho===who)who='all';
+  _execLogFilterWho=who;
+  document.querySelectorAll('.exec-filter-who').forEach(function(b){
+    var active=b.getAttribute('data-who')===who;
+    b.style.opacity=active?'1':'0.45';
+    b.style.fontWeight=active?'700':'400';
+  });
+  renderExLog();
 });
 
 // ── Exec log JSON export ──
@@ -3261,7 +3279,7 @@ function loadOpTrapList(){
               +'<div>'+esc(dev)+'</div>'
               +'</div>'
               +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
-              +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(e.lat)+', '+esc(e.lon)+'</span></div>':'')
+              +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(e.lat)+', '+esc(e.lon)+'</span> <a href="https://www.openstreetmap.org/?mlat='+encodeURIComponent(e.lat)+'&mlon='+encodeURIComponent(e.lon)+'#map=13/'+encodeURIComponent(e.lat)+'/'+encodeURIComponent(e.lon)+'" target="_blank" rel="noopener" style="font-size:.6rem;color:#4fc;text-decoration:none;border:1px solid rgba(79,255,204,.3);border-radius:3px;padding:0 4px;margin-left:4px">↗ Map</a></div>':'')
               +(ref?'<div>🔗 <span style="color:#aaa">Referrer:</span> <span style="color:#c8b8ff">'+esc(ref.slice(0,80))+'</span></div>':'')
               +(tz?'<div>🕐 <span style="color:#aaa">Timezone:</span> <span style="color:#ccc">'+esc(tz)+'</span></div>':'')
               +(lang?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(lang)+'</span></div>':'')
@@ -3344,6 +3362,14 @@ function loadDevTrapList(){
           expiryStr='Exp: '+(dh>0?dh+'h ':'')+dm+'m';
         }
       }
+      // Age string
+      var ageStr='';
+      if(e.createdAt){
+        var ageDiff=now-new Date(e.createdAt).getTime();
+        if(ageDiff<3600000)ageStr=Math.max(1,Math.floor(ageDiff/60000))+'m ago';
+        else if(ageDiff<86400000)ageStr=Math.floor(ageDiff/3600000)+'h ago';
+        else ageStr=Math.floor(ageDiff/86400000)+'d ago';
+      }
       var haystack=(short+' '+note+' '+id+(muted?' muted':'')).toLowerCase();
       var opacity=muted?'0.38':'1';
       return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07);opacity:'+opacity+'" data-trap-id="'+esc(id)+'" data-trap-haystack="'+esc(haystack)+'" data-trap-muted="'+esc(String(muted))+'">'
@@ -3351,6 +3377,7 @@ function loadDevTrapList(){
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
         +'<span style="font-size:.78rem;color:#ccc;flex:1">'
         +'🔗 <code style="font-size:.72rem;color:'+(expiryOver?'#555':'#f5c800')+';background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px">'+esc(short)+'</code>'
+        +(ageStr?' <span style="font-size:.58rem;color:#3a3a3a;margin-left:2px">'+esc(ageStr)+'</span>':'')
         +(note?' <span style="font-size:.65rem;color:#9f7aea;font-style:italic">'+esc(note)+'</span>':'')
         +(expiryStr?' <span style="font-size:.58rem;color:'+(expiryOver?'#ff4444':'#555')+';border:1px solid '+(expiryOver?'rgba(255,68,68,.35)':'rgba(255,255,255,.1)')+';border-radius:3px;padding:1px 5px">'+esc(expiryStr)+'</span>':'')
         +'</span>'
@@ -3506,7 +3533,7 @@ function loadDevTrapList(){
               +'<div>'+esc(dev)+'</div>'
               +'</div>'
               +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
-              +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(e.lat)+', '+esc(e.lon)+'</span></div>':'')
+              +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(e.lat)+', '+esc(e.lon)+'</span> <a href="https://www.openstreetmap.org/?mlat='+encodeURIComponent(e.lat)+'&mlon='+encodeURIComponent(e.lon)+'#map=13/'+encodeURIComponent(e.lat)+'/'+encodeURIComponent(e.lon)+'" target="_blank" rel="noopener" style="font-size:.6rem;color:#4fc;text-decoration:none;border:1px solid rgba(79,255,204,.3);border-radius:3px;padding:0 4px;margin-left:4px">↗ Map</a></div>':'')
               +(ref?'<div>🔗 <span style="color:#aaa">Referrer:</span> <span style="color:#c8b8ff">'+esc(ref.slice(0,80))+'</span></div>':'')
               +(tz?'<div>🕐 <span style="color:#aaa">Timezone:</span> <span style="color:#ccc">'+esc(tz)+'</span></div>':'')
               +(lang?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(lang)+'</span></div>':'')
@@ -3605,6 +3632,7 @@ function loadDevRedirectList(){
         +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
         +'<code style="font-size:.65rem;color:#f5c800;background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;word-break:break-all;flex:1">'+esc(url)+'</code>'
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" data-redir-copy="'+esc(url)+'">Copy</button>'
+        +'<a href="'+esc(e.target||'')+'" target="_blank" rel="noopener" class="btn-sm" style="font-size:.65rem;padding:2px 7px;text-decoration:none;color:inherit" title="Open destination">↗</a>'
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" id="devrhitbtn-'+esc(id)+'" data-redir-hits="'+esc(id)+'">Hits</button>'
         +'<button class="btn-sm danger" style="font-size:.65rem;padding:2px 7px" data-redir-del="'+esc(id)+'">Del</button>'
         +'</div>'
@@ -3686,7 +3714,7 @@ function loadDevRedirectList(){
               +(screen?'<div>🖥 <span style="color:#aaa">Screen:</span> <span style="color:#ccc">'+esc(screen)+'</span></div>':'')
               +'</div>'
               +'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06)">'
-              +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(h.lat)+', '+esc(h.lon)+'</span></div>':'')
+              +(coordStr?'<div>🗺 <span style="color:#888">Coords:</span> <span style="color:#ccc">'+esc(h.lat)+', '+esc(h.lon)+'</span> <a href="https://www.openstreetmap.org/?mlat='+encodeURIComponent(h.lat)+'&mlon='+encodeURIComponent(h.lon)+'#map=13/'+encodeURIComponent(h.lat)+'/'+encodeURIComponent(h.lon)+'" target="_blank" rel="noopener" style="font-size:.6rem;color:#4fc;text-decoration:none;border:1px solid rgba(79,255,204,.3);border-radius:3px;padding:0 4px;margin-left:4px">↗ Map</a></div>':'')
               +'<div>'+srcIcon+' <span style="color:#aaa">Opened from:</span> <span style="color:#c8b8ff">'+esc(openedFrom)+'</span></div>'
               +(tz?'<div>🕐 <span style="color:#aaa">Timezone:</span> <span style="color:#ccc">'+esc(tz)+'</span></div>':'')
               +(lang?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(lang)+'</span></div>':'')
