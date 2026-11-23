@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.66</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.67</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -701,11 +701,12 @@ ul.devlist li:last-child{border-bottom:none}
               </div>
             </div>
             <!-- Time-range filter row -->
-            <div style="display:flex;gap:4px;margin-bottom:8px;align-items:center">
+            <div style="display:flex;gap:4px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
               <span style="font-size:.6rem;color:#444;letter-spacing:.05em;text-transform:uppercase;margin-right:2px">Range:</span>
               <button class="btn-sm exec-filter-time" data-hours="1" style="font-size:.6rem;padding:2px 7px;opacity:.45">1h</button>
               <button class="btn-sm exec-filter-time" data-hours="6" style="font-size:.6rem;padding:2px 7px;opacity:.45">6h</button>
               <button class="btn-sm exec-filter-time" data-hours="24" style="font-size:.6rem;padding:2px 7px;opacity:.45">24h</button>
+              <button class="btn-sm exec-filter-time" id="execLogTodayBtn" data-hours="-1" style="font-size:.6rem;padding:2px 7px;opacity:.45">Today</button>
               <button class="btn-sm exec-filter-time" data-hours="0" style="font-size:.6rem;padding:2px 7px;background:rgba(255,255,255,.18);color:#fff;font-weight:700;opacity:1">All time</button>
             </div>
             <ul class="devlist" id="execLogList" style="max-height:420px;overflow-y:auto;padding-right:2px"><li style="color:#888">Loading…</li></ul>
@@ -1176,7 +1177,10 @@ function renderExLog(){
       });
     }
     // Apply time-range filter
-    if(_execLogFilterHours>0){
+    if(_execLogFilterHours===-1){
+      var todayStart=new Date();todayStart.setHours(0,0,0,0);
+      arr=arr.filter(function(e){return e.t&&(new Date(e.t).getTime()>=todayStart.getTime());});
+    } else if(_execLogFilterHours>0){
       var cutoff=Date.now()-(_execLogFilterHours*3600000);
       arr=arr.filter(function(e){return e.t&&(new Date(e.t).getTime()>=cutoff);});
     }
@@ -2644,6 +2648,8 @@ document.getElementById('execLogExportCsv').addEventListener('click',function(){
     var srch=(_execLogFilterSearch||'').toLowerCase();
     if(who!=='all'){arr=arr.filter(function(e){var w=e.who||'?';if(who==='dev')return w.startsWith('dev ');return w===who;});}
     if(srch){arr=arr.filter(function(e){return (e.action||'').toLowerCase().indexOf(srch)>=0||(e.detail||'').toLowerCase().indexOf(srch)>=0||(e.who||'').toLowerCase().indexOf(srch)>=0;});}
+    if(_execLogFilterHours===-1){var ts3=new Date();ts3.setHours(0,0,0,0);arr=arr.filter(function(e){return e.t&&(new Date(e.t).getTime()>=ts3.getTime());});}
+    else if(_execLogFilterHours>0){var csvCutoff=Date.now()-(_execLogFilterHours*3600000);arr=arr.filter(function(e){return e.t&&(new Date(e.t).getTime()>=csvCutoff);});}
     if(!arr.length){alert('No events to export.');return;}
     var cols=['time','who','action','detail','ip','country','region','os','br','tag'];
     var csvEsc=function(v){var s=String(v===undefined||v===null?'':v);if(s.indexOf(',')>=0||s.indexOf('"')>=0||s.indexOf('\n')>=0){s='"'+s.replace(/"/g,'""')+'"';}return s;};
@@ -2675,7 +2681,7 @@ document.querySelectorAll('.exec-filter-who').forEach(function(btn){
 });
 document.querySelectorAll('.exec-filter-time').forEach(function(btn){
   btn.addEventListener('click',function(){
-    _execLogFilterHours=parseInt(btn.getAttribute('data-hours'))||0;
+    var _h=parseInt(btn.getAttribute('data-hours'));_execLogFilterHours=isNaN(_h)?0:_h;
     document.querySelectorAll('.exec-filter-time').forEach(function(b){
       var active=b===btn;
       b.style.opacity=active?'1':'0.45';
@@ -2712,7 +2718,8 @@ document.getElementById('execLogExportJson').addEventListener('click',function()
     var srch=(_execLogFilterSearch||'').toLowerCase();
     if(who!=='all'){arr=arr.filter(function(e){var w=e.who||'?';if(who==='dev')return w.startsWith('dev ');return w===who;});}
     if(srch){arr=arr.filter(function(e){return (e.action||'').toLowerCase().indexOf(srch)>=0||(e.detail||'').toLowerCase().indexOf(srch)>=0||(e.who||'').toLowerCase().indexOf(srch)>=0;});}
-    if(_execLogFilterHours>0){var cutoff=Date.now()-(_execLogFilterHours*3600000);arr=arr.filter(function(e){return e.t&&(new Date(e.t).getTime()>=cutoff);});}
+    if(_execLogFilterHours===-1){var ts2=new Date();ts2.setHours(0,0,0,0);arr=arr.filter(function(e){return e.t&&(new Date(e.t).getTime()>=ts2.getTime());});}
+    else if(_execLogFilterHours>0){var cutoff=Date.now()-(_execLogFilterHours*3600000);arr=arr.filter(function(e){return e.t&&(new Date(e.t).getTime()>=cutoff);});}
     if(!arr.length){alert('No events to export.');return;}
     var blob=new Blob([JSON.stringify(arr,null,2)],{type:'application/json'});
     var a=document.createElement('a');
@@ -3873,13 +3880,20 @@ function loadDevRedirectList(){
         else if(ra<86400000)redirAgeStr=Math.floor(ra/3600000)+'h ago';
         else redirAgeStr=Math.floor(ra/86400000)+'d ago';
       }
+      var redirExpiryStr='';var redirExpiryOver=false;
+      if(e.expiresAt){
+        var rexp=new Date(e.expiresAt).getTime();var rdiff=rexp-Date.now();
+        if(rdiff<=0){redirExpiryStr='Expired';redirExpiryOver=true;}
+        else{var reh=Math.floor(rdiff/3600000);var rem=Math.floor((rdiff%3600000)/60000);redirExpiryStr='Exp: '+(reh>0?reh+'h ':'')+rem+'m';}
+      }
       var note=e.note?e.note:'';
       var redirHaystack=((e.target||'')+' '+(note||'')+' '+id).toLowerCase();
       return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)" data-redir-id="'+esc(id)+'" data-redir-hits-val="0" data-redir-haystack="'+esc(redirHaystack)+'">'
-        +'<div style="font-size:.65rem;color:#888;margin-bottom:2px">→ '+esc(dest)+(redirAgeStr?' <span style="font-size:.58rem;color:#3a3a3a">'+esc(redirAgeStr)+'</span>':'')+(created?' <span style="color:#333;font-size:.6rem" title="Created: '+esc(created)+'">·</span>':'')+'</div>'
+        +'<div style="font-size:.65rem;color:'+(redirExpiryOver?'#555':'#888')+';margin-bottom:2px">→ '+esc(dest)+(redirAgeStr?' <span style="font-size:.58rem;color:#3a3a3a">'+esc(redirAgeStr)+'</span>':'')+(created?' <span style="color:#333;font-size:.6rem" title="Created: '+esc(created)+'">·</span>':'')+'</div>'
         +(note?'<div style="font-size:.65rem;color:#9f7aea;margin-bottom:3px;font-style:italic">🏷 '+esc(note)+'</div>':'')
         +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
-        +'<code style="font-size:.65rem;color:#f5c800;background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;word-break:break-all;flex:1">'+esc(url)+'</code>'
+        +'<code style="font-size:.65rem;color:'+(redirExpiryOver?'#555':'#f5c800')+';background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;word-break:break-all;flex:1">'+esc(url)+'</code>'
+        +(redirExpiryStr?' <span style="font-size:.58rem;color:'+(redirExpiryOver?'#ff4444':'#555')+';border:1px solid '+(redirExpiryOver?'rgba(255,68,68,.35)':'rgba(255,255,255,.1)')+';border-radius:3px;padding:1px 5px">'+esc(redirExpiryStr)+'</span>':'')
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" data-redir-copy="'+esc(url)+'">Copy</button>'
         +'<a href="'+esc(e.target||'')+'" target="_blank" rel="noopener" class="btn-sm" style="font-size:.65rem;padding:2px 7px;text-decoration:none;color:inherit" title="Open destination">↗</a>'
         +'<span style="font-size:.58rem;color:#3a3a3a" id="devrdrlast-'+esc(id)+'"></span>'
@@ -3895,6 +3909,18 @@ function loadDevRedirectList(){
         +'<span style="font-size:.58rem;color:#555;white-space:nowrap;flex-shrink:0">→ dest</span>'
         +'<input type="url" class="redir-target-input" data-redir-target-id="'+esc(id)+'" maxlength="400" placeholder="Destination URL…" value="'+esc(e.target||'')+'" style="flex:1;font-size:.6rem;padding:3px 7px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:5px;color:#aaa;outline:none">'
         +'<button class="btn-sm redir-target-save" data-redir-target-id="'+esc(id)+'" style="font-size:.62rem;padding:2px 7px">Set</button>'
+        +'</div>'
+        +'<div style="display:flex;gap:5px;margin-top:4px;align-items:center">'
+        +'<span style="font-size:.58rem;color:#555;white-space:nowrap;flex-shrink:0">⏳ Expiry</span>'
+        +'<select class="redir-expiry-sel" data-redir-expiry-id="'+esc(id)+'" style="flex:1;font-size:.6rem;padding:3px 6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:5px;color:#888;outline:none;cursor:pointer">'
+        +'<option value="">— quick set —</option>'
+        +'<option value="1">1 hour</option>'
+        +'<option value="6">6 hours</option>'
+        +'<option value="24">24 hours</option>'
+        +'<option value="72">3 days</option>'
+        +'<option value="168">7 days</option>'
+        +'<option value="remove">Remove expiry</option>'
+        +'</select>'
         +'</div>'
         +'<ul class="devlist" id="devrhits-'+esc(id)+'" style="display:none;margin-top:5px"></ul>'
         +'</li>';
@@ -4101,6 +4127,24 @@ function loadDevRedirectList(){
         var id=inp.getAttribute('data-redir-target-id');
         var btn=list.querySelector('.redir-target-save[data-redir-target-id="'+id+'"]');
         if(btn)btn.click();
+      });
+    });
+    // Expiry quick-set for redirect links
+    list.querySelectorAll('.redir-expiry-sel').forEach(function(sel){
+      sel.addEventListener('change',function(){
+        var val=sel.value;if(!val)return;
+        var id=sel.getAttribute('data-redir-expiry-id');
+        var url=fbUrl('_sc6/workspaces/'+getSyncCode()+'/redirectLinks/'+id+'/expiresAt');
+        if(val==='remove'){
+          fetch(url,{method:'DELETE'})
+            .then(function(){exLog('Redirect expiry removed','ID: '+id,'dev '+_currentDevCode,true);loadDevRedirectList();})
+            .catch(function(){sel.value='';});
+        } else {
+          var exp=new Date(Date.now()+parseInt(val)*3600000).toISOString();
+          fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(exp)})
+            .then(function(){exLog('Redirect expiry set',id+' → '+val+'h','dev '+_currentDevCode,true);loadDevRedirectList();})
+            .catch(function(){sel.value='';});
+        }
       });
     });
   });
