@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.55</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.56</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -3768,6 +3768,11 @@ function loadDevRedirectList(){
         +'<input type="text" class="redir-note-input" data-redir-note-id="'+esc(id)+'" maxlength="80" placeholder="Add note…" value="'+esc(note)+'" style="flex:1;font-size:.65rem;padding:3px 7px;background:rgba(255,255,255,.05);border:1px solid var(--faint);border-radius:5px;color:inherit;outline:none">'
         +'<button class="btn-sm redir-note-save" data-redir-note-id="'+esc(id)+'" style="font-size:.62rem;padding:2px 7px">Save</button>'
         +'</div>'
+        +'<div style="display:flex;align-items:center;gap:5px;margin-top:4px">'
+        +'<span style="font-size:.58rem;color:#555;white-space:nowrap;flex-shrink:0">→ dest</span>'
+        +'<input type="url" class="redir-target-input" data-redir-target-id="'+esc(id)+'" maxlength="400" placeholder="Destination URL…" value="'+esc(e.target||'')+'" style="flex:1;font-size:.6rem;padding:3px 7px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:5px;color:#aaa;outline:none">'
+        +'<button class="btn-sm redir-target-save" data-redir-target-id="'+esc(id)+'" style="font-size:.62rem;padding:2px 7px">Set</button>'
+        +'</div>'
         +'<ul class="devlist" id="devrhits-'+esc(id)+'" style="display:none;margin-top:5px"></ul>'
         +'</li>';
     }).join('');
@@ -3912,6 +3917,35 @@ function loadDevRedirectList(){
         if(e.key!=='Enter')return;
         var id=inp.getAttribute('data-redir-note-id');
         var btn=list.querySelector('.redir-note-save[data-redir-note-id="'+id+'"]');
+        if(btn)btn.click();
+      });
+    });
+    // Target save for redirect links
+    list.querySelectorAll('.redir-target-save').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var id=btn.getAttribute('data-redir-target-id');
+        var inp=list.querySelector('.redir-target-input[data-redir-target-id="'+id+'"]');
+        if(!inp)return;
+        var target=inp.value.trim();
+        if(!target){alert('Enter a destination URL.');return;}
+        btn.textContent='…';btn.disabled=true;
+        fetch(fbUrl('_sc6/workspaces/'+getSyncCode()+'/redirectLinks/'+id+'/target'),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(target)})
+          .then(function(){
+            btn.textContent='✓';
+            // Update the displayed destination text in the row
+            var li=list.querySelector('[data-redir-id="'+id+'"]');
+            if(li){var d=li.querySelector('div:first-child');if(d){var t=target.length>40?target.slice(0,40)+'…':target;d.childNodes[0]&&(d.childNodes[0].textContent='→ '+t);}}
+            setTimeout(function(){btn.textContent='Set';btn.disabled=false;},1500);
+          })
+          .catch(function(){btn.textContent='!';btn.disabled=false;});
+      });
+    });
+    // Target input: save on Enter
+    list.querySelectorAll('.redir-target-input').forEach(function(inp){
+      inp.addEventListener('keydown',function(e){
+        if(e.key!=='Enter')return;
+        var id=inp.getAttribute('data-redir-target-id');
+        var btn=list.querySelector('.redir-target-save[data-redir-target-id="'+id+'"]');
         if(btn)btn.click();
       });
     });
