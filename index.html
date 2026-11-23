@@ -26,15 +26,15 @@ body{
 
 /* ── Typography ── */
 h3{font-size:.88rem;font-weight:700;letter-spacing:.04em;color:var(--ink);margin-bottom:6px}
-p.note{font-size:.72rem;color:var(--dim);line-height:1.55;margin-bottom:10px}
-input[type=password],input[type=text]{
+p.note{font-size:.72rem;color:rgba(255,255,255,.38);line-height:1.55;margin-bottom:10px}
+input[type=password],input[type=text],input[type=url]{
   width:100%;background:rgba(255,255,255,.055);
   border:1px solid var(--faint);border-radius:8px;
   padding:9px 12px;color:#f0f0f0;font-size:16px;
   font-family:'Manrope',sans-serif;outline:none;
-  transition:border-color .2s
+  transition:border-color .22s cubic-bezier(.4,0,.2,1),background .22s,box-shadow .22s
 }
-input:focus{border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.07)}
+input:focus{border-color:rgba(255,255,255,.32);background:rgba(255,255,255,.07);box-shadow:0 0 0 2px rgba(255,255,255,.04)}
 
 /* ── Buttons ── */
 button{touch-action:manipulation;font-family:'Manrope',sans-serif}
@@ -42,17 +42,18 @@ button{touch-action:manipulation;font-family:'Manrope',sans-serif}
   display:block;width:100%;background:var(--panel);
   border:1px solid var(--faint);border-radius:10px;
   padding:14px 16px;text-align:left;color:#fff;cursor:pointer;
-  font-size:.85rem;font-weight:500;transition:background .15s,border-color .15s
+  font-size:.85rem;font-weight:500;
+  transition:background .2s cubic-bezier(.4,0,.2,1),border-color .2s,box-shadow .2s,transform .12s
 }
-.btn:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18)}
-.btn:active{background:rgba(255,255,255,.12)}
+.btn:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18);box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.btn:active{background:rgba(255,255,255,.12);transform:scale(.99)}
 .btn-sm{
   background:none;border:1px solid var(--faint);border-radius:7px;
   color:#ccc;cursor:pointer;font-size:.72rem;padding:5px 11px;
-  transition:border-color .15s,color .15s,background .15s
+  transition:border-color .2s cubic-bezier(.4,0,.2,1),color .2s,background .2s cubic-bezier(.4,0,.2,1),box-shadow .2s
 }
-.btn-sm:hover{color:#eee;border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.05)}
-.btn-sm:active{color:#fff;border-color:rgba(255,255,255,.4)}
+.btn-sm:hover{color:#eee;border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.05);box-shadow:0 1px 8px rgba(0,0,0,.35)}
+.btn-sm:active{color:#fff;border-color:rgba(255,255,255,.4);transform:translateY(1px)}
 .btn-sm.danger{color:#ff6b6b;border-color:rgba(255,107,107,.4)}
 .btn-sm.danger:hover{color:#ff8888;border-color:rgba(255,107,107,.65);background:rgba(255,107,107,.07)}
 .btn-sm.danger:active{color:#ff4444;border-color:rgba(255,68,68,.7)}
@@ -73,9 +74,14 @@ input.shake{animation:quake .25s ease 2}
 @keyframes hitflash{0%{background:rgba(79,255,204,.4)}100%{background:transparent}}
 .hit-flash{animation:hitflash .6s ease-out}
 @keyframes hitpulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.op-group-body.open{animation:fadeSlideUp .18s cubic-bezier(.4,0,.2,1) both}
+@keyframes oplivepulse{0%,100%{opacity:1;box-shadow:0 0 8px rgba(192,0,14,.7)}50%{opacity:.5;box-shadow:0 0 3px rgba(192,0,14,.3)}}
+@keyframes devlivepulse{0%,100%{opacity:1;box-shadow:0 0 8px rgba(79,255,204,.7)}50%{opacity:.5;box-shadow:0 0 3px rgba(79,255,204,.3)}}
 
 /* ── Sections ── */
-section{background:var(--panel);border:1px solid var(--faint);border-radius:12px;padding:0;overflow:hidden;margin-bottom:12px}
+section{background:var(--panel);border:1px solid var(--faint);border-radius:12px;padding:0;overflow:hidden;margin-bottom:12px;transition:border-color .25s,box-shadow .25s}
+section:focus-within{border-color:rgba(255,255,255,.14);box-shadow:0 2px 18px rgba(0,0,0,.3)}
 section .sec-head{padding:14px 16px;border-bottom:1px solid var(--faint)}
 section .sec-body{padding:14px 16px}
 .row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
@@ -85,14 +91,17 @@ section .sec-body{padding:14px 16px}
 /* ── Modals ── */
 .modal{
   display:none;position:fixed;inset:0;z-index:100;
-  background:rgba(0,0,0,.85);backdrop-filter:blur(6px);
+  background:rgba(0,0,0,.88);backdrop-filter:blur(8px);
   align-items:center;justify-content:center;padding:16px
 }
 .modal.open{display:flex}
+@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal.open .modal-box{animation:modalIn .2s cubic-bezier(.4,0,.2,1) both}
 .modal-box{
-  background:#0a0a0b;border:1px solid var(--faint);border-radius:16px;
+  background:#0a0a0c;border:1px solid rgba(255,255,255,.1);border-radius:16px;
   width:100%;max-width:400px;padding:22px 20px;
-  max-height:calc(100dvh - 80px);overflow-y:auto
+  max-height:calc(100dvh - 80px);overflow-y:auto;
+  box-shadow:0 8px 40px rgba(0,0,0,.7)
 }
 .modal-box h3{margin-bottom:4px}
 .modal-close{
@@ -114,10 +123,11 @@ section .sec-body{padding:14px 16px}
   background:var(--panel);border:1px solid var(--faint);border-radius:12px;
   padding:16px 20px;color:#fff;cursor:pointer;font-size:.88rem;font-weight:600;
   font-family:'Manrope',sans-serif;text-align:left;display:flex;align-items:center;
-  justify-content:space-between;transition:background .15s,border-color .15s
+  justify-content:space-between;
+  transition:background .2s cubic-bezier(.4,0,.2,1),border-color .2s,box-shadow .2s,transform .12s
 }
-.home-btn:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18)}
-.home-btn:active{background:rgba(255,255,255,.12)}
+.home-btn:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18);box-shadow:0 2px 16px rgba(0,0,0,.35)}
+.home-btn:active{background:rgba(255,255,255,.11);transform:scale(.99)}
 .home-btn-arrow{color:rgba(255,255,255,.3);font-size:.85rem}
 
 /* ── Panel scroll view ── */
@@ -129,9 +139,10 @@ section .sec-body{padding:14px 16px}
 .panel-back{
   display:inline-flex;align-items:center;gap:5px;background:none;border:none;
   color:var(--dim);font-size:.82rem;font-family:'Manrope',sans-serif;
-  cursor:pointer;padding:4px 0 16px;font-weight:500;transition:color .15s
+  cursor:pointer;padding:4px 0 16px;font-weight:500;
+  transition:color .2s cubic-bezier(.4,0,.2,1),transform .12s
 }
-.panel-back:hover{color:rgba(255,255,255,.75)}
+.panel-back:hover{color:rgba(255,255,255,.75);transform:translateX(-2px)}
 .panel-back:active{color:#fff}
 
 /* ── Code entry ── */
@@ -139,9 +150,9 @@ section .sec-body{padding:14px 16px}
 
 /* ── Lists ── */
 ul.devlist{list-style:none;margin:6px 0 0}
-ul.devlist li{padding:5px 4px;border-bottom:1px solid rgba(255,255,255,.055);font-size:.78rem;color:#bbb;border-radius:4px;transition:background .12s}
+ul.devlist li{padding:6px 5px;border-bottom:1px solid rgba(255,255,255,.045);font-size:.78rem;color:#bbb;border-radius:5px;transition:background .18s cubic-bezier(.4,0,.2,1),box-shadow .18s}
 ul.devlist li:last-child{border-bottom:none}
-ul.devlist li:hover{background:rgba(255,255,255,.03)}
+ul.devlist li:hover{background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.045)}
 
 /* ── Status badge ── */
 .badge-status{display:inline-block;font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:20px;border:1px solid;vertical-align:middle;margin-left:6px}
@@ -149,32 +160,34 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
 .badge-off{color:#ff6b6b;border-color:rgba(255,107,107,.4)}
 
 /* ── Operator panel groups ── */
-.op-group{margin-bottom:16px}
+.op-group{margin-bottom:14px}
 .op-group-header{
   display:flex;align-items:center;gap:10px;
-  padding:10px 14px;border-radius:10px;
+  padding:11px 15px;border-radius:11px;
   cursor:pointer;user-select:none;
   font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
-  transition:opacity .15s,background .15s;border:1px solid transparent;
-  margin-bottom:6px
+  transition:opacity .2s,background .2s cubic-bezier(.4,0,.2,1),box-shadow .2s,transform .12s;
+  border:1px solid transparent;
+  margin-bottom:6px;
+  box-shadow:0 1px 6px rgba(0,0,0,.2)
 }
-.op-group-header:hover{background:rgba(255,255,255,.04)}
-.op-group-header:active{opacity:.7}
-.op-group-arrow{font-size:.7rem;transition:transform .2s;margin-left:auto;opacity:.6}
+.op-group-header:hover{opacity:1;filter:brightness(1.08);box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.op-group-header:active{transform:scale(.99);opacity:.85}
+.op-group-arrow{font-size:.7rem;transition:transform .22s cubic-bezier(.4,0,.2,1);margin-left:auto;opacity:.6}
 .op-group-body{display:none}
 .op-group-body.open{display:block}
 /* group colour themes */
-.op-grp-overview{background:rgba(79,255,204,.07);border-color:rgba(79,255,204,.18);color:#4fc}
-.op-grp-links{background:rgba(245,200,0,.07);border-color:rgba(245,200,0,.2);color:#f5c800}
-.op-grp-access{background:rgba(255,107,107,.07);border-color:rgba(255,107,107,.2);color:#ff6b6b}
-.op-grp-logs{background:rgba(170,170,255,.07);border-color:rgba(170,170,255,.18);color:#aaf}
-.op-grp-comms{background:rgba(159,122,234,.08);border-color:rgba(159,122,234,.22);color:#9f7aea}
-.op-grp-settings{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);color:#ccc}
-.op-grp-danger{background:rgba(192,0,14,.08);border-color:rgba(192,0,14,.35);color:#ff4444}
+.op-grp-overview{background:rgba(79,255,204,.08);border-color:rgba(79,255,204,.2);color:#4fc}
+.op-grp-links{background:rgba(245,200,0,.08);border-color:rgba(245,200,0,.22);color:#f5c800}
+.op-grp-access{background:rgba(255,107,107,.08);border-color:rgba(255,107,107,.22);color:#ff6b6b}
+.op-grp-logs{background:rgba(170,170,255,.08);border-color:rgba(170,170,255,.2);color:#aaf}
+.op-grp-comms{background:rgba(159,122,234,.09);border-color:rgba(159,122,234,.24);color:#9f7aea}
+.op-grp-settings{background:rgba(255,255,255,.055);border-color:rgba(255,255,255,.13);color:#ccc}
+.op-grp-danger{background:rgba(192,0,14,.09);border-color:rgba(192,0,14,.38);color:#ff4444}
 /* danger zone sections get red left border */
 .op-group-danger section{border-left:3px solid rgba(192,0,14,.5)}
 /* collapsed indicator dot count */
-.op-grp-badge{font-size:.6rem;background:rgba(255,255,255,.12);color:#aaa;border-radius:20px;padding:1px 7px;font-weight:600;text-transform:none;letter-spacing:0}
+.op-grp-badge{font-size:.6rem;background:rgba(255,255,255,.1);color:#888;border-radius:20px;padding:1px 8px;font-weight:600;text-transform:none;letter-spacing:0;border:1px solid rgba(255,255,255,.08)}
 </style>
 </head>
 <body>
@@ -190,7 +203,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.97</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.98</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -236,29 +249,33 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
 
   <!-- Dev content (shown after auth) -->
   <div id="devContent" style="display:none">
-  <!-- Session info bar + hit bell -->
-  <div style="display:flex;align-items:center;gap:8px;padding:4px 2px 0">
-    <div id="devSessionInfoBar" style="display:none;font-size:.62rem;color:#555;flex:1;letter-spacing:.03em"></div>
-    <div id="devHitBell" style="display:none;font-size:.7rem;cursor:pointer;padding:2px 8px;border:1px solid rgba(79,255,204,.3);border-radius:20px;background:rgba(79,255,204,.08);color:#4fc;font-weight:700;white-space:nowrap" title="New trap hits — click to scroll to list">🔔 <span id="devHitBellCount">0</span> new</div>
-    <button id="devKbdHintBtn" title="Keyboard shortcuts" style="background:none;border:1px solid rgba(255,255,255,.12);border-radius:50%;width:20px;height:20px;color:#444;font-size:.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;font-family:Manrope,sans-serif;flex-shrink:0">?</button>
+  <!-- Dev session header -->
+  <div id="devSessionBanner" style="display:flex;align-items:center;gap:10px;background:rgba(79,255,204,.06);border:1px solid rgba(79,255,204,.18);border-radius:10px;padding:8px 13px;margin-bottom:10px">
+    <div style="width:7px;height:7px;border-radius:50%;background:#4fc;box-shadow:0 0 8px rgba(79,255,204,.7);flex-shrink:0;animation:devlivepulse 2.5s ease-in-out infinite"></div>
+    <div style="flex:1;min-width:0">
+      <div id="devSessionInfoBar" style="font-size:.65rem;color:#4fc;font-weight:700;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">DEV SESSION</div>
+      <div id="devSessionTime" style="font-size:.6rem;color:#3a9e82;margin-top:1px;letter-spacing:.03em">Session started</div>
+    </div>
+    <div id="devHitBell" style="display:none;font-size:.7rem;cursor:pointer;padding:2px 8px;border:1px solid rgba(79,255,204,.3);border-radius:20px;background:rgba(79,255,204,.08);color:#4fc;font-weight:700;white-space:nowrap;transition:background .2s" title="New trap hits — click to scroll to list">🔔 <span id="devHitBellCount">0</span> new</div>
+    <button id="devKbdHintBtn" title="Keyboard shortcuts" style="background:none;border:1px solid rgba(255,255,255,.12);border-radius:50%;width:20px;height:20px;color:#444;font-size:.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;font-family:Manrope,sans-serif;flex-shrink:0;transition:border-color .2s,color .2s">?</button>
   </div>
   <!-- Quick stats bar -->
-  <div id="devQuickStats" style="margin-top:7px;display:flex;gap:8px;flex-wrap:wrap">
-    <span id="devStatTrapLinks" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:3px 9px;letter-spacing:.03em">— trap links</span>
-    <span id="devStatTrapHits" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:3px 9px;letter-spacing:.03em">— trap hits</span>
-    <span id="devStatRedirLinks" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:3px 9px;letter-spacing:.03em">— redirect links</span>
-    <span id="devStatRedirHits" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:3px 9px;letter-spacing:.03em">— redirect hits</span>
-    <span id="devStatArchived" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:3px 9px;letter-spacing:.03em;cursor:pointer" title="View your archives" onclick="(function(){var p=document.getElementById('devArchivesPanel');var b=document.getElementById('devArchivesBody');if(p&&p.style.display==='none'){p.style.display='';if(b)b.style.display='';}p&&p.scrollIntoView({behavior:'smooth',block:'start'});})()">— archived</span>
+  <div id="devQuickStats" style="margin-top:0;margin-bottom:4px;display:flex;gap:6px;flex-wrap:wrap">
+    <span id="devStatTrapLinks" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:3px 9px;letter-spacing:.03em;transition:color .3s,border-color .3s,background .3s">— trap links</span>
+    <span id="devStatTrapHits" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:3px 9px;letter-spacing:.03em;transition:color .3s,border-color .3s,background .3s">— trap hits</span>
+    <span id="devStatRedirLinks" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:3px 9px;letter-spacing:.03em;transition:color .3s,border-color .3s,background .3s">— redirect links</span>
+    <span id="devStatRedirHits" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:3px 9px;letter-spacing:.03em;transition:color .3s,border-color .3s,background .3s">— redirect hits</span>
+    <span id="devStatArchived" style="font-size:.6rem;color:#555;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:3px 9px;letter-spacing:.03em;cursor:pointer;transition:color .3s,border-color .3s,background .3s" title="View your archives" onclick="(function(){var p=document.getElementById('devArchivesPanel');var b=document.getElementById('devArchivesBody');if(p&&p.style.display==='none'){p.style.display='';if(b)b.style.display='';}p&&p.scrollIntoView({behavior:'smooth',block:'start'});})()">— archived</span>
   </div>
   <!-- Keyboard shortcut tooltip -->
-  <div id="devKbdHintPanel" style="display:none;margin-top:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px">
-    <div style="font-size:.6rem;color:#555;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;font-weight:700">Keyboard shortcuts</div>
-    <div style="display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:.65rem">
-      <code style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;text-align:center;font-size:.6rem">G</code><span style="color:#aaa">Generate & copy trap link</span>
-      <code style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;text-align:center;font-size:.6rem">C</code><span style="color:#aaa">Focus URL convert input</span>
-      <code style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;text-align:center;font-size:.6rem">R</code><span style="color:#aaa">Refresh trap & redirect lists</span>
-      <code style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;text-align:center;font-size:.6rem">/</code><span style="color:#aaa">Focus exec log search</span>
-      <code style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;text-align:center;font-size:.6rem">Esc</code><span style="color:#aaa">Back to main menu</span>
+  <div id="devKbdHintPanel" style="display:none;margin-top:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:10px 13px;box-shadow:0 2px 12px rgba(0,0,0,.35)">
+    <div style="font-size:.6rem;color:#555;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px;font-weight:700">Keyboard shortcuts</div>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.65rem">
+      <code style="color:#f5c800;background:rgba(255,200,0,.1);border:1px solid rgba(255,200,0,.2);padding:1px 6px;border-radius:4px;text-align:center;font-size:.6rem">G</code><span style="color:#aaa">Generate & copy trap link</span>
+      <code style="color:#f5c800;background:rgba(255,200,0,.1);border:1px solid rgba(255,200,0,.2);padding:1px 6px;border-radius:4px;text-align:center;font-size:.6rem">C</code><span style="color:#aaa">Focus URL convert input</span>
+      <code style="color:#f5c800;background:rgba(255,200,0,.1);border:1px solid rgba(255,200,0,.2);padding:1px 6px;border-radius:4px;text-align:center;font-size:.6rem">R</code><span style="color:#aaa">Refresh trap & redirect lists</span>
+      <code style="color:#f5c800;background:rgba(255,200,0,.1);border:1px solid rgba(255,200,0,.2);padding:1px 6px;border-radius:4px;text-align:center;font-size:.6rem">/</code><span style="color:#aaa">Focus exec log search</span>
+      <code style="color:#f5c800;background:rgba(255,200,0,.1);border:1px solid rgba(255,200,0,.2);padding:1px 6px;border-radius:4px;text-align:center;font-size:.6rem">Esc</code><span style="color:#aaa">Back to main menu</span>
     </div>
   </div>
 
@@ -269,7 +286,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
           <span class="label">Current: <code id="devSyncDisplay" style="color:#f5c800;background:rgba(255,200,0,.1);padding:1px 6px;border-radius:3px;font-size:.78rem">—</code> <span id="devSyncNickname" style="display:none;font-size:.7rem;color:#9f7aea;font-style:italic;margin-left:4px"></span></span>
         </div>
         <!-- Session stats bar -->
-        <div id="devSessionStats" style="display:flex;gap:12px;margin-top:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;flex-wrap:wrap">
+        <div id="devSessionStats" style="display:flex;gap:12px;margin-top:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 14px;flex-wrap:wrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)">
           <div style="display:flex;flex-direction:column;align-items:center;min-width:52px">
             <div id="devStatHits" style="font-size:1.1rem;font-weight:800;color:#4fc;line-height:1">0</div>
             <div style="font-size:.58rem;color:#555;margin-top:2px;letter-spacing:.05em">TRAP HITS</div>
@@ -411,7 +428,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
 
   </div>
   <!-- Hit toast -->
-  <div id="devHitToast" style="display:none;position:fixed;bottom:20px;right:16px;background:rgba(10,10,10,.92);border:1px solid rgba(79,255,204,.35);border-radius:8px;padding:7px 13px;font-size:.7rem;color:#4fc;font-weight:700;z-index:9999;pointer-events:none;font-family:'Manrope',sans-serif;letter-spacing:.03em;backdrop-filter:blur(8px)"></div>
+  <div id="devHitToast" style="display:none;position:fixed;bottom:24px;right:16px;background:rgba(7,7,8,.96);border:1px solid rgba(79,255,204,.4);border-radius:10px;padding:8px 14px;font-size:.7rem;color:#4fc;font-weight:700;z-index:9999;pointer-events:none;font-family:'Manrope',sans-serif;letter-spacing:.04em;backdrop-filter:blur(12px);box-shadow:0 4px 20px rgba(0,0,0,.7),0 0 0 1px rgba(79,255,204,.08)"></div>
 </div>
 
 <!-- ══════════ OPERATOR MENU ══════════ -->
@@ -431,6 +448,16 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
 
   <!-- Op content -->
   <div id="opContent" style="display:none">
+
+    <!-- Op session banner -->
+    <div style="display:flex;align-items:center;gap:10px;background:rgba(192,0,14,.07);border:1px solid rgba(192,0,14,.22);border-radius:10px;padding:9px 14px;margin-bottom:14px">
+      <div style="width:7px;height:7px;border-radius:50%;background:#c0000e;box-shadow:0 0 8px rgba(192,0,14,.7);flex-shrink:0;animation:oplivepulse 2.5s ease-in-out infinite"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.68rem;font-weight:700;color:#ff4444;letter-spacing:.06em">OPERATOR SESSION ACTIVE</div>
+        <div id="opSessionTime" style="font-size:.6rem;color:#666;margin-top:1px;letter-spacing:.03em">Session started</div>
+      </div>
+      <button class="btn-sm danger" id="opLogoutBtn" style="font-size:.62rem;padding:3px 9px;flex-shrink:0">Log out</button>
+    </div>
 
     <!-- ════════════════════════════════════
          📊 OVERVIEW
@@ -455,8 +482,8 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
               <button class="btn-sm" id="opWsApply">View</button>
               <button class="btn-sm danger" id="opWsReset" style="font-size:.65rem">Default</button>
             </div>
-            <div id="opWsStats" style="display:none;margin-top:10px;background:rgba(255,255,255,.04);border:1px solid var(--faint);border-radius:8px;padding:9px 12px">
-              <div style="font-size:.6rem;color:#555;letter-spacing:.08em;margin-bottom:7px;text-transform:uppercase">Workspace stats</div>
+            <div id="opWsStats" style="display:none;margin-top:10px;background:rgba(255,255,255,.04);border:1px solid var(--faint);border-radius:10px;padding:10px 14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)">
+              <div style="font-size:.6rem;color:#555;letter-spacing:.08em;margin-bottom:7px;text-transform:uppercase;font-weight:700">Workspace stats</div>
               <div style="display:flex;gap:12px;flex-wrap:wrap">
                 <div style="text-align:center"><div style="font-size:1.2rem;font-weight:800;color:#f5c800;line-height:1" id="opStatsTrapLinks">—</div><div style="font-size:.6rem;color:#666;margin-top:2px">error links</div></div>
                 <div style="text-align:center"><div style="font-size:1.2rem;font-weight:800;color:#4fc;line-height:1" id="opStatsRedirectLinks">—</div><div style="font-size:.6rem;color:#666;margin-top:2px">tracker links</div></div>
@@ -1729,6 +1756,8 @@ document.getElementById('devBack').addEventListener('click',function(){
   // Stop session timer
   if(_devSessionTimerInterval){clearInterval(_devSessionTimerInterval);_devSessionTimerInterval=null;}
   _devSessionLoginTime=null;
+  var devST=document.getElementById('devSessionTime');if(devST)devST.textContent='Session started';
+  var devSIB=document.getElementById('devSessionInfoBar');if(devSIB)devSIB.textContent='DEV SESSION';
   // Stop auto-refresh (trap)
   if(_devTrapAutoRefreshInterval){clearInterval(_devTrapAutoRefreshInterval);_devTrapAutoRefreshInterval=null;}
   _devTrapAutoRefresh=false;
@@ -1779,12 +1808,11 @@ document.getElementById('devBack').addEventListener('click',function(){
   var archPanel=document.getElementById('devArchivesPanel');if(archPanel)archPanel.style.display='none';
   show(null);
 });
-document.getElementById('opBack').addEventListener('click',function(){
+function _opSessionEnd(){
   document.getElementById('opGate').style.display='';
   document.getElementById('opContent').style.display='none';
   document.getElementById('opCodeInput').value='';
   stopExLogSync();
-  // Stop op auto-refresh intervals
   if(_opRedirectAutoRefreshInterval){clearInterval(_opRedirectAutoRefreshInterval);_opRedirectAutoRefreshInterval=null;}
   _opRedirectAutoRefresh=false;
   var oraBtn=document.getElementById('opRedirectAutoRefreshToggle');
@@ -1793,8 +1821,25 @@ document.getElementById('opBack').addEventListener('click',function(){
   _opTrapAutoRefresh=false;
   var otaBtn=document.getElementById('opTrapAutoRefreshToggle');
   if(otaBtn){otaBtn.style.color='#555';otaBtn.style.borderColor='rgba(255,255,255,.12)';}
+  if(_opSessionTimerInterval){clearInterval(_opSessionTimerInterval);_opSessionTimerInterval=null;}
   show(null);
-});
+}
+document.getElementById('opBack').addEventListener('click',_opSessionEnd);
+var _opSessionTimerInterval=null;
+var _opSessionStart=0;
+document.getElementById('opLogoutBtn').addEventListener('click',_opSessionEnd);
+// Start session timer when op panel opens
+function _startOpSessionTimer(){
+  _opSessionStart=Date.now();
+  var el=document.getElementById('opSessionTime');
+  if(_opSessionTimerInterval)clearInterval(_opSessionTimerInterval);
+  _opSessionTimerInterval=setInterval(function(){
+    var secs=Math.floor((Date.now()-_opSessionStart)/1000);
+    var m=Math.floor(secs/60);var s=secs%60;
+    if(el)el.textContent='Active '+m+'m '+String(s).padStart(2,'0')+'s';
+  },1000);
+  if(el)el.textContent='Active 0m 00s';
+}
 
 // ══════════════════════════════════════════
 // HOME CLOCK
@@ -1963,22 +2008,22 @@ function openDev(whichCode){
   exLog('Dev panel opened','Code: '+codeDisplay,'dev '+_currentDevCode);
   fireGlobalAlerts('dev_panel_opened',_currentDevCode,'Dev panel opened — Code: '+codeDisplay,'');
   _devSessionStats={hits:0,tracker:0,msgs:0,links:0};
-  // Session timer — live "Logged in Xm Ys" counter
+  // Session timer — live counter in banner
   _devSessionLoginTime=Date.now();
   if(_devSessionTimerInterval)clearInterval(_devSessionTimerInterval);
   var bar=document.getElementById('devSessionInfoBar');
+  var timeEl=document.getElementById('devSessionTime');
   if(bar){
+    bar.textContent='DEV · '+codeDisplay;
     bar.style.display='';
-    function _updateSessionBar(){
-      var elapsed=Math.floor((Date.now()-_devSessionLoginTime)/1000);
-      var m=Math.floor(elapsed/60);var s=elapsed%60;
-      var wsLabel=getSyncCode()||'?';
-      bar.textContent='⏱ Logged in '+(m>0?m+'m ':'')+s+'s · '+wsLabel;
-      bar.title='Session started: '+new Date(_devSessionLoginTime).toLocaleString();
-    }
-    _updateSessionBar();
-    _devSessionTimerInterval=setInterval(_updateSessionBar,1000);
   }
+  function _updateSessionBar(){
+    var elapsed=Math.floor((Date.now()-_devSessionLoginTime)/1000);
+    var m=Math.floor(elapsed/60);var s=elapsed%60;
+    if(timeEl)timeEl.textContent='Active '+(m>0?m+'m ':'')+String(s).padStart(2,'0')+'s';
+  }
+  _updateSessionBar();
+  _devSessionTimerInterval=setInterval(_updateSessionBar,1000);
   renderDevSync();
   loadDevTrapList();
   loadDevRedirectList();
@@ -2264,6 +2309,7 @@ function tryOpCode(){
       document.getElementById('opGate').style.display='none';
       document.getElementById('opContent').style.display='';
       opGrpRestoreStates();
+      _startOpSessionTimer();
       exLog('Operator panel opened','','operator',true);
       fireGlobalAlerts('operator_panel_opened','operator','Operator panel opened','');
       loadOpAll();
