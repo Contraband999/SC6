@@ -190,7 +190,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.94</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.95</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -3799,7 +3799,7 @@ function loadDevTrapList(){
       var opacity=muted?'0.38':'1';
       var isNew=e.createdAt&&(now-new Date(e.createdAt).getTime()<86400000);
       var liExtra=isNew?';box-shadow:0 0 0 1px rgba(79,255,204,.2);border-radius:4px':'';
-      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07);opacity:'+opacity+liExtra+'" data-trap-id="'+esc(id)+'" data-trap-haystack="'+esc(haystack)+'" data-trap-muted="'+esc(String(muted))+'">'
+      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07);opacity:'+opacity+liExtra+'" data-trap-id="'+esc(id)+'" data-trap-hits-val="0" data-trap-haystack="'+esc(haystack)+'" data-trap-muted="'+esc(String(muted))+'">'
         +(muted?'<div style="font-size:.58rem;color:#666;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px">🔇 MUTED / ARCHIVED</div>':'')
         +'<label style="display:inline-flex;align-items:center;gap:4px;font-size:.6rem;color:#444;cursor:pointer;margin-bottom:2px"><input type="checkbox" class="trap-bulk-chk" data-trap-chk-id="'+esc(id)+'" style="accent-color:#c0000e;width:11px;height:11px;cursor:pointer"> Select</label>'
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
@@ -3867,6 +3867,8 @@ function loadDevTrapList(){
           else if(n<=3){liHeat.style.borderLeft='3px solid rgba(245,166,0,.45)';liHeat.style.paddingLeft='8px';}
           else if(n<=10){liHeat.style.borderLeft='3px solid rgba(255,107,107,.55)';liHeat.style.paddingLeft='8px';}
           else{liHeat.style.borderLeft='3px solid rgba(255,58,58,.8)';liHeat.style.paddingLeft='8px';}
+          // Store hit count for sort
+          liHeat.setAttribute('data-trap-hits-val',String(n));
         }
         // Show last visitor preview inline
         var lastEl=document.getElementById('devtraplast-'+id);
@@ -3911,6 +3913,12 @@ function loadDevTrapList(){
         if(hitsDone===keys.length){
           var sumTEl2=document.getElementById('devTrapSummary');
           if(sumTEl2){sumTEl2.style.display='';sumTEl2.textContent=keys.length+' link'+(keys.length!==1?'s':'')+(_totalTrapHits>0?' · '+_totalTrapHits+' total hit'+(_totalTrapHits!==1?'s':''):'');}
+          // Sort by hits desc
+          var tItems=Array.prototype.slice.call(list.querySelectorAll('li[data-trap-hits-val]'));
+          if(tItems.length>1){
+            tItems.sort(function(a,b){return parseInt(b.getAttribute('data-trap-hits-val')||'0')-parseInt(a.getAttribute('data-trap-hits-val')||'0');});
+            tItems.forEach(function(li3){list.appendChild(li3);});
+          }
           // Update quick stats bar
           var qsTrap=document.getElementById('devStatTrapLinks');var qsTrapH=document.getElementById('devStatTrapHits');
           if(qsTrap){qsTrap.textContent=keys.length+' trap link'+(keys.length!==1?'s':'');qsTrap.style.color=keys.length>0?'#aaa':'#555';}
