@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.48</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.49</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -367,6 +367,8 @@ ul.devlist li:last-child{border-bottom:none}
     </section>
 
   </div>
+  <!-- Hit toast -->
+  <div id="devHitToast" style="display:none;position:fixed;bottom:20px;right:16px;background:rgba(10,10,10,.92);border:1px solid rgba(79,255,204,.35);border-radius:8px;padding:7px 13px;font-size:.7rem;color:#4fc;font-weight:700;z-index:9999;pointer-events:none;font-family:'Manrope',sans-serif;letter-spacing:.03em;backdrop-filter:blur(8px)"></div>
 </div>
 
 <!-- ══════════ OPERATOR MENU ══════════ -->
@@ -1204,7 +1206,7 @@ function renderExLog(){
           +'<button class="btn-sm" style="font-size:.58rem;padding:1px 6px;opacity:.6" onclick="(function(el,id){var d=document.getElementById(id);var open=d.style.display!==\'none\';d.style.display=open?\'none\':\'\';el.textContent=open?\'Details\':\'Hide\';el.style.opacity=open?\'.6\':\'1\';})(this,\''+did+'\')" >Details</button>'
           +'</div>':'')
         +(hasDetail?'<div id="'+did+'" style="display:none;padding-left:60px;margin-top:4px;background:rgba(255,255,255,.03);border-left:2px solid rgba(255,255,255,.08);padding-top:5px;padding-bottom:5px;padding-right:8px;font-size:.63rem;line-height:2;color:#777">'
-          +(e.ip&&e.ip!=='?'?'<div><span style="color:#f5c800;font-family:monospace">🌐 '+esc(e.ip)+'</span>'+(e.country?' <span style="color:#666">'+esc(e.country)+(e.region&&e.region!=='?'?' · '+esc(e.region):'')+'</span>':'')+'</div>':'')
+          +(e.ip&&e.ip!=='?'?'<div><span style="color:#f5c800;font-family:monospace">🌐 '+esc(e.ip)+'</span>'+(e.country?' <span style="color:#666">'+(e.country.length===2?String.fromCodePoint(e.country.toUpperCase().charCodeAt(0)+127397,e.country.toUpperCase().charCodeAt(1)+127397)+' ':'')+esc(e.country)+(e.region&&e.region!=='?'?' · '+esc(e.region):'')+'</span>':'')+'</div>':'')
           +((e.os||e.br)?'<div>'+(e.os&&e.os!=='?'?'💻 <span style="color:#ccc">'+esc(e.os)+'</span>':'')+((e.os&&e.br)?' &nbsp;·&nbsp; ':'')+(e.br&&e.br!=='?'?'🌏 <span style="color:#ccc">'+esc(e.br)+'</span>':'')+'</div>':'')
           +(e.tag&&e.tag!=='?'?'<div>🔖 <span style="color:#888">Device tag:</span> <span style="color:#9f7aea">'+esc(e.tag)+'</span></div>':'')
           +'</div>':'')
@@ -3415,7 +3417,9 @@ function loadDevTrapList(){
       }
       var haystack=(short+' '+note+' '+id+(muted?' muted':'')).toLowerCase();
       var opacity=muted?'0.38':'1';
-      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07);opacity:'+opacity+'" data-trap-id="'+esc(id)+'" data-trap-haystack="'+esc(haystack)+'" data-trap-muted="'+esc(String(muted))+'">'
+      var isNew=e.createdAt&&(now-new Date(e.createdAt).getTime()<600000);
+      var liExtra=isNew?';box-shadow:0 0 0 1px rgba(79,255,204,.2);border-radius:4px':'';
+      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07);opacity:'+opacity+liExtra+'" data-trap-id="'+esc(id)+'" data-trap-haystack="'+esc(haystack)+'" data-trap-muted="'+esc(String(muted))+'">'
         +(muted?'<div style="font-size:.58rem;color:#666;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px">🔇 MUTED / ARCHIVED</div>':'')
         +'<label style="display:inline-flex;align-items:center;gap:4px;font-size:.6rem;color:#444;cursor:pointer;margin-bottom:2px"><input type="checkbox" class="trap-bulk-chk" data-trap-chk-id="'+esc(id)+'" style="accent-color:#c0000e;width:11px;height:11px;cursor:pointer"> Select</label>'
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
@@ -3489,6 +3493,15 @@ function loadDevTrapList(){
             }
             // Render live feed
             _renderDevTrapFeed();
+            // Show toast
+            (function(n){
+              var toast=document.getElementById('devHitToast');
+              if(!toast)return;
+              toast.textContent='🔔 '+n+' new hit'+(n===1?'':'s');
+              toast.style.display='';
+              clearTimeout(toast._t);
+              toast._t=setTimeout(function(){toast.style.display='none';},3000);
+            })(totalNewHits);
           }
         }
       });
@@ -3685,9 +3698,16 @@ function loadDevRedirectList(){
       var url=WORKER_BASE+'/r?'+param+'='+encodeURIComponent(id)+'&ws='+encodeURIComponent(sc);
       var dest=e.target?e.target.slice(0,40)+'…':'?';
       var created=e.createdAt?new Date(e.createdAt).toLocaleString():'';
+      var redirAgeStr='';
+      if(e.createdAt){
+        var ra=Date.now()-new Date(e.createdAt).getTime();
+        if(ra<3600000)redirAgeStr=Math.max(1,Math.floor(ra/60000))+'m ago';
+        else if(ra<86400000)redirAgeStr=Math.floor(ra/3600000)+'h ago';
+        else redirAgeStr=Math.floor(ra/86400000)+'d ago';
+      }
       var note=e.note?e.note:'';
       return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
-        +'<div style="font-size:.65rem;color:#888;margin-bottom:2px">→ '+esc(dest)+(created?' · '+esc(created):'')+'</div>'
+        +'<div style="font-size:.65rem;color:#888;margin-bottom:2px">→ '+esc(dest)+(redirAgeStr?' <span style="font-size:.58rem;color:#3a3a3a">'+esc(redirAgeStr)+'</span>':'')+(created?' <span style="color:#333;font-size:.6rem" title="Created: '+esc(created)+'">·</span>':'')+'</div>'
         +(note?'<div style="font-size:.65rem;color:#9f7aea;margin-bottom:3px;font-style:italic">🏷 '+esc(note)+'</div>':'')
         +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
         +'<code style="font-size:.65rem;color:#f5c800;background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;word-break:break-all;flex:1">'+esc(url)+'</code>'
