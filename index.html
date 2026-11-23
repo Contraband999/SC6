@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.56</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.57</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1811,20 +1811,32 @@ function updateDevSyncNickname(){
   else{el.style.display='none';}
 }
 
-function loadDevWsSwitcher(){
-  // Read workspace log and show only codes logged by _currentDevCode
-  fetch(fbUrl('_sc6/workspaceLog')).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+// Save a workspace code to this dev user's private workspace list in Firebase
+function _saveDevWorkspace(code){
+  if(!code||!_currentDevCode||_currentDevCode==='?')return;
+  var url=fbUrl('_sc6/devWorkspaces/'+encodeURIComponent(_currentDevCode));
+  fetch(url).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
     var list=Array.isArray(d)?d:[];
-    // Collect unique codes used by this dev code (preserve insertion order, most recent first)
-    var seen={};var codes=[];
-    for(var i=list.length-1;i>=0;i--){
-      var e=list[i];
-      if(e&&e.by===_currentDevCode&&e.code&&!seen[e.code]){
-        seen[e.code]=true;codes.push(e.code);
-      }
-    }
-    // Always include the current code even if not in log yet
+    if(list.indexOf(code)<0){list.push(code);}
+    if(list.length>50)list=list.slice(-50);
+    fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(list)}).catch(function(){});
+  });
+}
+
+function loadDevWsSwitcher(){
+  // Read ONLY this dev user's private workspace list — isolated from other users
+  if(!_currentDevCode||_currentDevCode==='?')return;
+  var url=fbUrl('_sc6/devWorkspaces/'+encodeURIComponent(_currentDevCode));
+  fetch(url).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var saved=Array.isArray(d)?d:[];
+    // Always include the current code
     var cur=getSyncCode();
+    var seen={};var codes=[];
+    // Most recently saved first; dedupe
+    for(var i=saved.length-1;i>=0;i--){
+      var c=saved[i];
+      if(c&&!seen[c]){seen[c]=true;codes.push(c);}
+    }
     if(!seen[cur]){seen[cur]=true;codes.unshift(cur);}
     var row=document.getElementById('devWsSwitcherRow');
     var sel=document.getElementById('devWsSwitcher');
@@ -1843,6 +1855,7 @@ document.getElementById('devSyncApply').addEventListener('click',function(){
   var val=document.getElementById('devSyncInput').value.trim();
   if(!val){alert('Enter a workspace code first.');return;}
   setSyncCode(val,true);
+  _saveDevWorkspace(val);
   exLog('Workspace applied','Code set to: '+val,'dev '+_currentDevCode,true);
   renderDevSync();
   loadDevTrapList();
@@ -1855,6 +1868,7 @@ document.getElementById('devSyncGenerate').addEventListener('click',function(){
   var words=['alpha','beta','gamma','delta','echo','foxtrot','zeta','nova','cipher','phantom','solar','neon','void','static','flux','arc'];
   var code=words[Math.floor(Math.random()*words.length)]+'-'+Math.random().toString(36).slice(2,6)+'-'+Math.random().toString(36).slice(2,5);
   setSyncCode(code,true);
+  _saveDevWorkspace(code);
   exLog('Workspace generated','New code: '+code,'dev '+_currentDevCode,true);
   renderDevSync();
   loadDevTrapList();
