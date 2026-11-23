@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.60</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.61</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -3310,24 +3310,38 @@ function loadOpTrapList(){
       var ws=link.workspace||getOpWs();
       var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws);
       var trapNote=link.note?esc(link.note):'';
-      return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+      return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)" data-trap-id-op="'+esc(id)+'">'
         +'<div style="font-size:.7rem;color:#888">'+esc(created)+'</div>'
         +(trapNote?'<div style="font-size:.7rem;color:#9f7aea;margin:2px 0;font-style:italic">🏷 '+trapNote+'</div>':'')
         +'<div style="font-size:.72rem;color:#ccc;word-break:break-all;margin:2px 0">'+esc(url)+'</div>'
-        +'<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">'
+        +'<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;align-items:center">'
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" data-trap-copy="'+esc(url)+'">Copy</button>'
         +'<button class="btn-sm" style="font-size:.68rem;padding:2px 8px" id="optrapvisbtn-'+esc(id)+'" data-trap-view="'+esc(id)+'">Visitors</button>'
         +'<button class="btn-sm danger" style="font-size:.68rem;padding:2px 8px" data-trap-del="'+esc(id)+'">Delete</button>'
+        +'<span class="op-trap-last-visit" style="font-size:.58rem;color:#3a3a3a;margin-left:auto"></span>'
         +'</div>'
         +'<ul class="devlist" id="opvis-'+esc(id)+'" style="display:none;margin-top:6px"></ul>'
         +'</li>';
     }).join('');
-    // Async: show visitor counts on buttons
+    // Async: show visitor counts on buttons + last visitor preview
     keys.forEach(function(id){
       fetch(opTrapLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
-        var n=logs?(Array.isArray(logs)?logs.length:Object.keys(logs).length):0;
+        var raw=Array.isArray(logs)?logs:(logs&&typeof logs==='object'?Object.values(logs):[]);
+        var n=raw.length;
         var btn=document.getElementById('optrapvisbtn-'+id);
         if(btn)btn.textContent='Visitors'+(n>0?' ('+n+')':'');
+        // Last visitor hint
+        var li2=list.querySelector('[data-trap-id-op="'+id+'"]');
+        if(li2&&n>0){
+          var osorted=raw.slice().sort(function(a,b){return (b.time||'').localeCompare(a.time||'');});
+          var olast=osorted[0];
+          var oflag=olast.country&&olast.country!=='?'?getFlagEmoji(olast.country):'';
+          var ocity=olast.city&&olast.city!=='?'?olast.city:'';
+          var olastAgo='';
+          if(olast.time){var od=Date.now()-new Date(olast.time).getTime();if(od<60000)olastAgo='just now';else if(od<3600000)olastAgo=Math.floor(od/60000)+'m ago';else if(od<86400000)olastAgo=Math.floor(od/3600000)+'h ago';else olastAgo=Math.floor(od/86400000)+'d ago';}
+          var oLastEl=li2.querySelector('.op-trap-last-visit');
+          if(oLastEl){oLastEl.textContent=(oflag?oflag+' ':'')+ocity+(ocity&&olastAgo?' · ':'')+olastAgo;oLastEl.style.color='#555';}
+        }
       });
     });
     list.querySelectorAll('[data-trap-copy]').forEach(function(btn){
