@@ -183,7 +183,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.80</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.81</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1039,6 +1039,7 @@ function _loginSuccess(){_loginAttempts=0;_loginLockedUntil=0;}
 // ── Helpers ──
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function getFlagEmoji(cc){if(!cc||cc.length!==2)return '';var c=cc.toUpperCase();return String.fromCodePoint(c.charCodeAt(0)+127397,c.charCodeAt(1)+127397);}
+function getDestIcon(url){if(!url)return '🔗';try{var h=(new URL(url)).hostname.replace(/^www\./,'');var m={'instagram.com':'📸','tiktok.com':'🎵','youtube.com':'▶️','youtu.be':'▶️','twitter.com':'🐦','x.com':'🐦','facebook.com':'👥','fb.com':'👥','whatsapp.com':'💬','telegram.me':'✈️','t.me':'✈️','discord.gg':'🎮','discord.com':'🎮','reddit.com':'🔴','snapchat.com':'👻','linkedin.com':'💼','google.com':'🔍','gmail.com':'📧','spotify.com':'🎧','twitch.tv':'🟣','amazon.com':'📦','paypal.com':'💳','apple.com':'🍎','github.com':'💾','dropbox.com':'📁','drive.google.com':'📁'};return m[h]||'🔗';}catch(e){return '🔗';}}
 function fbUrl(path){return FIREBASE_BASE+path+'.json'}
 function syncFetch(url,opts){
   return fetch(url,Object.assign({headers:{'Content-Type':'application/json'}},opts||{}));
@@ -2389,13 +2390,14 @@ function loadOpRedirectList(){
       var created=e.createdAt?new Date(e.createdAt).toLocaleString():'?';
       var creator=e.createdBy?esc(e.createdBy):'?';
       var note=e.note?esc(e.note):'';
+      var opDestIcon=getDestIcon(e.target||'');
       return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
         +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">'
         +'<span style="font-size:.62rem;color:#555">'+esc(created)+' · by '+creator+'</span>'
         +'<span style="margin-left:auto;font-size:.62rem;background:rgba(79,255,204,.1);color:#4fc;border:1px solid rgba(79,255,204,.25);border-radius:10px;padding:1px 8px;font-weight:600" id="oprhitcount-'+esc(id)+'">— hits</span>'
         +'</div>'
         +(note?'<div style="font-size:.7rem;color:#9f7aea;margin-bottom:3px;font-style:italic">🏷 '+note+'</div>':'')
-        +'<div style="font-size:.68rem;color:#aaa;margin-bottom:3px">→ '+esc(dest)+'</div>'
+        +'<div style="font-size:.68rem;color:#aaa;margin-bottom:3px">'+opDestIcon+' → '+esc(dest)+'</div>'
         +'<code style="font-size:.62rem;color:#f5c800;background:rgba(255,200,0,.08);padding:1px 5px;border-radius:3px;word-break:break-all;display:block;margin-bottom:5px">'+esc(url)+'</code>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" data-op-redir-copy="'+esc(url)+'">Copy</button>'
@@ -4054,9 +4056,10 @@ function loadDevRedirectList(){
         else{var reh=Math.floor(rdiff/3600000);var rem=Math.floor((rdiff%3600000)/60000);redirExpiryStr='Exp: '+(reh>0?reh+'h ':'')+rem+'m';}
       }
       var note=e.note?e.note:'';
+      var destIcon=getDestIcon(e.target||'');
       var redirHaystack=((e.target||'')+' '+(note||'')+' '+id).toLowerCase();
       return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)" data-redir-id="'+esc(id)+'" data-redir-hits-val="0" data-redir-haystack="'+esc(redirHaystack)+'">'
-        +'<div style="font-size:.65rem;color:'+(redirExpiryOver?'#555':'#888')+';margin-bottom:2px">→ '+esc(dest)+(redirAgeStr?' <span style="font-size:.58rem;color:#3a3a3a">'+esc(redirAgeStr)+'</span>':'')+(created?' <span style="color:#333;font-size:.6rem" title="Created: '+esc(created)+'">·</span>':'')+'</div>'
+        +'<div style="font-size:.65rem;color:'+(redirExpiryOver?'#555':'#888')+';margin-bottom:2px">'+destIcon+' → '+esc(dest)+(redirAgeStr?' <span style="font-size:.58rem;color:#3a3a3a">'+esc(redirAgeStr)+'</span>':'')+(created?' <span style="color:#333;font-size:.6rem" title="Created: '+esc(created)+'">·</span>':'')+'</div>'
         +(note?'<div style="font-size:.65rem;color:#9f7aea;margin-bottom:3px;font-style:italic">🏷 '+esc(note)+'</div>':'')
         +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
         +'<code style="font-size:.65rem;color:'+(redirExpiryOver?'#555':'#f5c800')+';background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;word-break:break-all;flex:1">'+esc(url)+'</code>'
