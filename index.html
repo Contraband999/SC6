@@ -190,7 +190,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.03)}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.88</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.89</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -3664,6 +3664,15 @@ function loadOpTrapList(){
             setTimeout(function(){btn.textContent='Save note';},1500);
             exLog('Error link note updated','ID: …'+id.slice(-6)+' note: '+newNote,'operator',true);
           }).catch(function(){btn.textContent='Save note';btn.disabled=false;});
+      });
+    });
+    // Wire op trap note Enter key
+    list.querySelectorAll('[data-op-trap-note-input]').forEach(function(inp){
+      inp.addEventListener('keydown',function(e){
+        if(e.key!=='Enter')return;
+        var id=inp.getAttribute('data-op-trap-note-input');
+        var btn=list.querySelector('[data-op-trap-note-save="'+id+'"]');
+        if(btn)btn.click();
       });
     });
   });
