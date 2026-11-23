@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.51</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.52</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -3307,6 +3307,9 @@ function loadOpTrapList(){
             var rawDwell=typeof e.dwell==='number'?e.dwell:(typeof e.dwellSec==='number'?e.dwellSec:null);
             var dwellStr=rawDwell===null?'':rawDwell<60?rawDwell+'s':(Math.floor(rawDwell/60)+'m '+(rawDwell%60)+'s');
             var ref=e.referrer&&e.referrer!=='direct'?e.referrer:'';
+            var backAttempt=e.backAttempt===true;
+            var mouseLeft=e.mouseLeft===true;
+            var scrollDepth=typeof e.scrollDepth==='number'?e.scrollDepth:0;
             return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
               +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'
               +(vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN</span>':'')
@@ -3330,6 +3333,11 @@ function loadOpTrapList(){
               +(tz?'<div>🕐 <span style="color:#aaa">Timezone:</span> <span style="color:#ccc">'+esc(tz)+'</span></div>':'')
               +(lang?'<div>🗣 <span style="color:#aaa">Language:</span> <span style="color:#ccc">'+esc(lang)+'</span></div>':'')
               +(e.screen?'<div>🖥 <span style="color:#aaa">Screen:</span> <span style="color:#ccc">'+esc(e.screen)+'</span></div>':'')
+              +(backAttempt||mouseLeft||scrollDepth>0?'<div style="margin-top:3px;padding-top:3px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:7px;flex-wrap:wrap">'
+                +(backAttempt?'<span style="font-size:.6rem;color:#f5a600;border:1px solid rgba(245,166,0,.3);border-radius:3px;padding:1px 5px" title="Tried to navigate back">↩ Back attempted</span>':'')
+                +(mouseLeft?'<span style="font-size:.6rem;color:#888;border:1px solid rgba(255,255,255,.12);border-radius:3px;padding:1px 5px" title="Mouse left viewport">↗ Mouse left</span>':'')
+                +(scrollDepth>10?'<span style="font-size:.6rem;color:#888;border:1px solid rgba(255,255,255,.12);border-radius:3px;padding:1px 5px">📜 Scrolled '+scrollDepth+'%</span>':'')
+                +'</div>':'')
               +'</div>'
               +'</div></li>';
           }).join('');
