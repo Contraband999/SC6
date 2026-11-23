@@ -182,7 +182,7 @@ ul.devlist li:last-child{border-bottom:none}
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
     <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
     <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.46</div>
+    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.47</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -357,6 +357,11 @@ ul.devlist li:last-child{border-bottom:none}
           <ul id="devTrapFeedList" style="list-style:none;padding:0;margin:0;max-height:120px;overflow-y:auto"></ul>
         </div>
         <input type="text" id="devTrapSearch" placeholder="Filter links…" maxlength="80" autocomplete="off" style="width:100%;font-size:.72rem;padding:5px 9px;background:rgba(255,255,255,.05);border:1px solid var(--faint);border-radius:6px;color:inherit;outline:none;margin-top:6px;display:none">
+        <div id="devTrapBulkBar" style="display:none;font-size:.6rem;color:#444;margin-top:4px;letter-spacing:.03em">
+          <a id="devTrapSelectAll" href="#" style="color:#555;text-decoration:none;cursor:pointer">Select all</a>
+          &nbsp;·&nbsp;
+          <a id="devTrapSelectNone" href="#" style="color:#555;text-decoration:none;cursor:pointer">None</a>
+        </div>
         <ul class="devlist" id="devTrapList"></ul>
       </div>
     </section>
@@ -1536,6 +1541,9 @@ document.getElementById('devBack').addEventListener('click',function(){
   // Hide kbd hint panel
   _devKbdHintOpen=false;
   var kbdP=document.getElementById('devKbdHintPanel');if(kbdP)kbdP.style.display='none';
+  // Hide trap bulk bar + reset bulk button
+  var tbb=document.getElementById('devTrapBulkBar');if(tbb)tbb.style.display='none';
+  var tbdBtn=document.getElementById('devTrapBulkDelete');if(tbdBtn)tbdBtn.style.display='none';
   // Reset live feed
   _devFeedHitCounts={};_devFeedEntries=[];
   var feedEl=document.getElementById('devTrapLiveFeed');if(feedEl)feedEl.style.display='none';
@@ -1598,6 +1606,8 @@ document.getElementById('opBack').addEventListener('click',function(){
     var bellCount=document.getElementById('devHitBellCount');
     if(bellCount)bellCount.textContent='0';
     bell.style.display='none';
+    // Reset baseline so next refresh doesn't re-count these hits as new
+    _devTrapHitCounts=JSON.parse(JSON.stringify(_devFeedHitCounts||_devTrapHitCounts));
   });
 })();
 
@@ -3345,6 +3355,8 @@ function loadDevTrapList(){
     // Show/hide copy-all button
     var copyAllBtn=document.getElementById('devTrapCopyAll');
     if(copyAllBtn)copyAllBtn.style.display=keys.length>0?'':'none';
+    var bulkBar=document.getElementById('devTrapBulkBar');
+    if(bulkBar)bulkBar.style.display=keys.length>0?'':'none';
     var searchEl=document.getElementById('devTrapSearch');
     if(searchEl)searchEl.style.display=keys.length>2?'':'none';
     if(!keys.length){list.innerHTML='<li style="color:#888">No links yet.</li>';return;}
@@ -3672,7 +3684,12 @@ function loadDevRedirectList(){
         var n=logs?(Array.isArray(logs)?logs.length:Object.keys(logs).length):0;
         _totalHits+=n;_hitLoadsDone++;
         var btn=document.getElementById('devrhitbtn-'+id);
-        if(btn)btn.textContent='Hits'+(n>0?' ('+n+')':'');
+        if(btn){
+          btn.textContent='Hits'+(n>0?' ('+n+')':'');
+          if(n===0){btn.style.color='';btn.style.borderColor='';}
+          else if(n<=3){btn.style.color='#f5a600';btn.style.borderColor='rgba(245,166,0,.35)';}
+          else{btn.style.color='#ff6b6b';btn.style.borderColor='rgba(255,107,107,.35)';}
+        }
         // Update summary once all loaded
         if(_hitLoadsDone===keys.length){
           var sumEl2=document.getElementById('devRedirectSummary');
@@ -3879,6 +3896,24 @@ document.getElementById('devTrapBulkDelete').addEventListener('click',function()
         done++;if(done===ids.length)loadDevTrapList();
       }).catch(function(){done++;if(done===ids.length)loadDevTrapList();});
   });
+});
+// ── Trap select all / none ──
+document.getElementById('devTrapSelectAll').addEventListener('click',function(e){
+  e.preventDefault();
+  var list=document.getElementById('devTrapList');
+  if(list)list.querySelectorAll('.trap-bulk-chk').forEach(function(c){c.checked=true;c.dispatchEvent(new Event('change'));});
+  var bulkBtn=document.getElementById('devTrapBulkDelete');
+  var bulkCount=document.getElementById('devTrapBulkCount');
+  var n=list?list.querySelectorAll('.trap-bulk-chk').length:0;
+  if(bulkBtn)bulkBtn.style.display=n>0?'':'none';
+  if(bulkCount)bulkCount.textContent=n;
+});
+document.getElementById('devTrapSelectNone').addEventListener('click',function(e){
+  e.preventDefault();
+  var list=document.getElementById('devTrapList');
+  if(list)list.querySelectorAll('.trap-bulk-chk').forEach(function(c){c.checked=false;});
+  var bulkBtn=document.getElementById('devTrapBulkDelete');
+  if(bulkBtn)bulkBtn.style.display='none';
 });
 // ── Copy all trap links ──
 document.getElementById('devTrapCopyAll').addEventListener('click',function(){
