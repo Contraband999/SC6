@@ -13,16 +13,53 @@
 :root{
   --red:#c0000e;--red2:#8a000a;
   --ink:#e8e8e8;--dim:rgba(255,255,255,.50);--faint:rgba(255,255,255,.09);
-  --panel:rgba(255,255,255,.036);--bg:#070708;
+  --panel:rgba(255,255,255,.036);--bg:#04040a;
+  --teal:#4fffcc;--amber:#f5c800;--purple:#9f7aea;
+  --glow-teal:rgba(79,255,204,.18);--glow-red:rgba(192,0,14,.18);
   color-scheme:dark
 }
-html{overflow-x:hidden;max-width:100%}body{width:100%;max-width:100%;min-height:100%;background:var(--bg);font-family:'Manrope',sans-serif;color:var(--ink);overflow-x:hidden}
+html{overflow-x:hidden;max-width:100%}
 body{
+  width:100%;max-width:100%;min-height:100%;
+  background:var(--bg);
+  font-family:'Manrope',sans-serif;color:var(--ink);overflow-x:hidden;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
   padding-left:max(16px,env(safe-area-inset-left,0px));
   padding-right:max(16px,env(safe-area-inset-right,0px));
 }
+
+/* ── Ambient grid background ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(79,255,204,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(79,255,204,.025) 1px,transparent 1px);
+  background-size:40px 40px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%)
+}
+/* Ambient red glow — bottom center */
+body::after{
+  content:'';
+  position:fixed;bottom:-80px;left:50%;transform:translateX(-50%);
+  width:60vw;height:200px;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at center bottom,rgba(192,0,14,.18) 0%,transparent 70%);
+  filter:blur(20px)
+}
+/* Scanline overlay */
+#scanlines{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(
+    0deg,
+    transparent,transparent 2px,
+    rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px
+  );
+  animation:scanmove 12s linear infinite
+}
+@keyframes scanmove{0%{background-position:0 0}100%{background-position:0 400px}}
+/* All content sits above overlays */
+#home,#devView,#opView,.modal{position:relative;z-index:2}
 
 /* ── Typography ── */
 h3{font-size:.92rem;font-weight:800;letter-spacing:.05em;color:#fff;margin-bottom:5px;text-transform:uppercase;font-size:.75rem}
@@ -31,34 +68,63 @@ p.note{font-size:.72rem;color:rgba(255,255,255,.38);line-height:1.55;margin-bott
 #devContent section .sec-head{border-left:3px solid rgba(79,255,204,.45)}
 #opContent section .sec-head{border-left:3px solid rgba(159,122,234,.45)}
 input[type=password],input[type=text],input[type=url]{
-  width:100%;background:rgba(255,255,255,.055);
-  border:1px solid var(--faint);border-radius:8px;
-  padding:9px 12px;color:#f0f0f0;font-size:16px;
+  width:100%;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:9px;
+  padding:10px 13px;color:#f0f0f0;font-size:16px;
   font-family:'Manrope',sans-serif;outline:none;
-  transition:border-color .22s cubic-bezier(.4,0,.2,1),background .22s,box-shadow .22s
+  transition:border-color .2s,background .2s,box-shadow .2s
 }
-input:focus{border-color:rgba(255,255,255,.32);background:rgba(255,255,255,.07);box-shadow:0 0 0 2px rgba(255,255,255,.04)}
+#devContent input:focus,#devGate input:focus{
+  border-color:rgba(79,255,204,.55);
+  background:rgba(79,255,204,.04);
+  box-shadow:0 0 0 3px rgba(79,255,204,.07),0 0 12px rgba(79,255,204,.1)
+}
+#opContent input:focus,#opGate input:focus{
+  border-color:rgba(159,122,234,.55);
+  background:rgba(159,122,234,.04);
+  box-shadow:0 0 0 3px rgba(159,122,234,.07),0 0 12px rgba(159,122,234,.1)
+}
+input:focus{border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.06);box-shadow:0 0 0 2px rgba(255,255,255,.04)}
 
 /* ── Buttons ── */
 button{touch-action:manipulation;font-family:'Manrope',sans-serif}
 .btn{
-  display:block;width:100%;background:var(--panel);
-  border:1px solid var(--faint);border-radius:10px;
+  display:block;width:100%;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;
   padding:14px 16px;text-align:left;color:#fff;cursor:pointer;
-  font-size:.85rem;font-weight:500;
-  transition:background .2s cubic-bezier(.4,0,.2,1),border-color .2s,box-shadow .2s,transform .12s
+  font-size:.85rem;font-weight:600;
+  transition:background .2s,border-color .2s,box-shadow .2s,transform .15s;
+  position:relative;overflow:hidden
 }
-.btn:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18);box-shadow:0 2px 12px rgba(0,0,0,.3)}
-.btn:active{background:rgba(255,255,255,.12);transform:scale(.99)}
+/* dev context primary action */
+#devContent .btn:hover,#devGate .btn:hover{
+  background:rgba(79,255,204,.07);
+  border-color:rgba(79,255,204,.4);
+  box-shadow:0 0 16px rgba(79,255,204,.1),inset 0 0 12px rgba(79,255,204,.04);
+  color:#fff
+}
+/* op context primary action */
+#opContent .btn:hover,#opGate .btn:hover{
+  background:rgba(159,122,234,.07);
+  border-color:rgba(159,122,234,.4);
+  box-shadow:0 0 16px rgba(159,122,234,.1),inset 0 0 12px rgba(159,122,234,.04);
+  color:#fff
+}
+.btn:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.2);box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.btn:active{transform:scale(.985);opacity:.9}
 .btn-sm{
-  background:none;border:1px solid var(--faint);border-radius:7px;
-  color:#ccc;cursor:pointer;font-size:.72rem;padding:5px 11px;
-  transition:border-color .2s cubic-bezier(.4,0,.2,1),color .2s,background .2s cubic-bezier(.4,0,.2,1),box-shadow .2s
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.1);border-radius:7px;
+  color:#bbb;cursor:pointer;font-size:.72rem;padding:5px 11px;
+  transition:border-color .2s,color .2s,background .2s,box-shadow .2s
 }
-.btn-sm:hover{color:#eee;border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.05);box-shadow:0 1px 8px rgba(0,0,0,.35)}
+.btn-sm:hover{color:#fff;border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.07);box-shadow:0 1px 10px rgba(0,0,0,.35)}
 .btn-sm:active{color:#fff;border-color:rgba(255,255,255,.4);transform:translateY(1px)}
-.btn-sm.danger{color:#ff6b6b;border-color:rgba(255,107,107,.4)}
-.btn-sm.danger:hover{color:#ff8888;border-color:rgba(255,107,107,.65);background:rgba(255,107,107,.07)}
+.btn-sm.danger{color:#ff6b6b;border-color:rgba(255,107,107,.35);background:rgba(255,0,0,.025)}
+.btn-sm.danger:hover{color:#ff9999;border-color:rgba(255,100,100,.6);background:rgba(255,100,100,.07);box-shadow:0 0 10px rgba(255,0,0,.12)}
 .btn-sm.danger:active{color:#ff4444;border-color:rgba(255,68,68,.7)}
 
 /* ── Shake ── */
@@ -71,7 +137,12 @@ input.shake{animation:quake .25s ease 2}
 .tri-static svg{animation:tri-enter .55s cubic-bezier(.22,1,.36,1) both,tri-pulse 3.5s ease-in-out 1s infinite}
 
 /* ── Home clock ── */
-#homeClock{font-size:.62rem;font-weight:600;letter-spacing:.12em;color:rgba(255,255,255,.18);font-variant-numeric:tabular-nums;margin-top:12px}
+#homeClock{
+  font-size:.7rem;font-weight:700;letter-spacing:.18em;
+  color:rgba(79,255,204,.3);font-variant-numeric:tabular-nums;margin-top:16px;
+  text-shadow:0 0 10px rgba(79,255,204,.2);
+  font-family:'Manrope',monospace
+}
 
 /* ── New-hit flash ── */
 @keyframes hitflash{0%{background:rgba(79,255,204,.4)}100%{background:transparent}}
@@ -79,22 +150,29 @@ input.shake{animation:quake .25s ease 2}
 @keyframes hitpulse{0%,100%{opacity:1}50%{opacity:.4}}
 @keyframes fadeSlideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .op-group-body.open{animation:fadeSlideUp .18s cubic-bezier(.4,0,.2,1) both}
-@keyframes oplivepulse{0%,100%{opacity:1;box-shadow:0 0 8px rgba(192,0,14,.7)}50%{opacity:.5;box-shadow:0 0 3px rgba(192,0,14,.3)}}
-@keyframes devlivepulse{0%,100%{opacity:1;box-shadow:0 0 8px rgba(79,255,204,.7)}50%{opacity:.5;box-shadow:0 0 3px rgba(79,255,204,.3)}}
+@keyframes oplivepulse{0%,100%{opacity:1;box-shadow:0 0 10px rgba(192,0,14,.9),0 0 20px rgba(192,0,14,.4)}50%{opacity:.6;box-shadow:0 0 4px rgba(192,0,14,.5),0 0 8px rgba(192,0,14,.2)}}
+@keyframes devlivepulse{0%,100%{opacity:1;box-shadow:0 0 10px rgba(79,255,204,.9),0 0 20px rgba(79,255,204,.4)}50%{opacity:.6;box-shadow:0 0 4px rgba(79,255,204,.5),0 0 8px rgba(79,255,204,.2)}}
 
 /* ── Sections ── */
 section{
-  background:rgba(255,255,255,.028);
+  background:linear-gradient(160deg,rgba(255,255,255,.032) 0%,rgba(255,255,255,.018) 100%);
   border:1px solid rgba(255,255,255,.08);
   border-radius:14px;padding:0;overflow:hidden;margin-bottom:12px;
   transition:border-color .25s,box-shadow .25s;
-  box-shadow:0 1px 4px rgba(0,0,0,.2)
+  box-shadow:0 2px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.05)
 }
-section:focus-within{border-color:rgba(255,255,255,.15);box-shadow:0 2px 20px rgba(0,0,0,.35)}
+#devContent section:focus-within{
+  border-color:rgba(79,255,204,.3);
+  box-shadow:0 2px 24px rgba(0,0,0,.4),0 0 0 1px rgba(79,255,204,.08),inset 0 1px 0 rgba(79,255,204,.05)
+}
+#opContent section:focus-within{
+  border-color:rgba(159,122,234,.3);
+  box-shadow:0 2px 24px rgba(0,0,0,.4),0 0 0 1px rgba(159,122,234,.08),inset 0 1px 0 rgba(159,122,234,.05)
+}
 section .sec-head{
   padding:13px 16px 12px;
   border-bottom:1px solid rgba(255,255,255,.07);
-  background:rgba(255,255,255,.018)
+  background:rgba(255,255,255,.025)
 }
 section .sec-body{padding:14px 16px}
 .row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
@@ -104,57 +182,86 @@ section .sec-body{padding:14px 16px}
 /* ── Modals ── */
 .modal{
   display:none;position:fixed;inset:0;z-index:100;
-  background:rgba(0,0,0,.88);backdrop-filter:blur(8px);
+  background:rgba(0,0,0,.92);backdrop-filter:blur(12px);
   align-items:center;justify-content:center;padding:16px
 }
 .modal.open{display:flex}
-@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.modal.open .modal-box{animation:modalIn .2s cubic-bezier(.4,0,.2,1) both}
+@keyframes modalIn{from{opacity:0;transform:scale(.94) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal.open .modal-box{animation:modalIn .22s cubic-bezier(.22,1,.36,1) both}
 .modal-box{
-  background:#0a0a0c;border:1px solid rgba(255,255,255,.1);border-radius:16px;
-  width:100%;max-width:400px;padding:22px 20px;
+  background:linear-gradient(160deg,rgba(10,10,16,.97) 0%,rgba(6,6,10,.97) 100%);
+  border:1px solid rgba(255,255,255,.12);border-radius:18px;
+  width:100%;max-width:400px;padding:24px 22px;
   max-height:calc(100dvh - 80px);overflow-y:auto;
-  box-shadow:0 8px 40px rgba(0,0,0,.7)
+  box-shadow:0 12px 50px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.07)
 }
 .modal-box h3{margin-bottom:4px}
 .modal-close{
-  float:right;background:none;border:none;color:var(--dim);
-  font-size:1.1rem;cursor:pointer;padding:0;line-height:1
+  float:right;background:none;border:none;color:rgba(255,255,255,.35);
+  font-size:1.1rem;cursor:pointer;padding:0;line-height:1;
+  transition:color .18s
 }
+.modal-close:hover{color:rgba(255,255,255,.8)}
 
 /* ── Home screen ── */
 #home{
   min-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:0;padding:32px 0 24px
+  gap:0;padding:32px 0 24px;
+  /* teal ambient from top */
+  background:radial-gradient(ellipse 70% 45% at 50% -10%,rgba(79,255,204,.07) 0%,transparent 100%);
 }
-.tri-static{margin-bottom:28px}
+.tri-static{margin-bottom:28px;position:relative}
+.tri-static::before{
+  content:'';position:absolute;inset:-30px;border-radius:50%;
+  background:radial-gradient(ellipse at center,rgba(192,0,14,.15) 0%,transparent 70%);
+  pointer-events:none;animation:triglowpulse 3.5s ease-in-out 1s infinite
+}
+@keyframes triglowpulse{0%,100%{opacity:.6}50%{opacity:1}}
 .tri-static svg{display:block;width:120px;height:107px}
 .home-label{font-size:.6rem;font-weight:700;letter-spacing:.22em;color:rgba(255,255,255,.25);text-transform:uppercase;margin-bottom:28px;text-align:center}
 .home-btns{width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px}
 .home-btn{
-  background:rgba(255,255,255,.04);
+  background:rgba(255,255,255,.03);
   border:1px solid rgba(255,255,255,.1);
-  border-radius:14px;
+  border-radius:12px;
   padding:18px 20px;color:#fff;cursor:pointer;font-size:.9rem;font-weight:700;
   font-family:'Manrope',sans-serif;text-align:left;display:flex;align-items:center;
   justify-content:space-between;
-  transition:background .22s cubic-bezier(.4,0,.2,1),border-color .22s,box-shadow .22s,transform .12s;
+  transition:background .25s,border-color .25s,box-shadow .25s,transform .15s;
   position:relative;overflow:hidden
 }
-.home-btn::before{
-  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
-  border-radius:14px 0 0 14px;opacity:0;transition:opacity .22s
+/* inner shimmer sweep */
+.home-btn::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.04) 50%,transparent 60%);
+  transform:translateX(-100%);transition:transform .5s cubic-bezier(.4,0,.2,1)
 }
-#btnDev::before{background:rgba(79,255,204,1)}
-#btnOp::before{background:rgba(159,122,234,1)}
-.home-btn:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);box-shadow:0 4px 24px rgba(0,0,0,.4)}
+.home-btn:hover::after{transform:translateX(100%)}
+/* left accent bar */
+.home-btn::before{
+  content:'';position:absolute;left:0;top:15%;bottom:15%;width:2px;
+  border-radius:0 2px 2px 0;opacity:0;
+  transition:opacity .25s,height .25s;
+  filter:blur(1px)
+}
+#btnDev::before{background:linear-gradient(180deg,transparent,#4fffcc,transparent);box-shadow:0 0 8px #4fffcc}
+#btnOp::before{background:linear-gradient(180deg,transparent,#9f7aea,transparent);box-shadow:0 0 8px #9f7aea}
 .home-btn:hover::before{opacity:1}
-#btnDev:hover{border-color:rgba(79,255,204,.3);box-shadow:0 4px 24px rgba(0,0,0,.4),0 0 0 1px rgba(79,255,204,.08)}
-#btnOp:hover{border-color:rgba(159,122,234,.3);box-shadow:0 4px 24px rgba(0,0,0,.4),0 0 0 1px rgba(159,122,234,.08)}
-.home-btn:active{transform:scale(.98);opacity:.9}
-.home-btn-arrow{color:rgba(255,255,255,.3);font-size:.85rem;transition:transform .18s,color .18s}
-.home-btn:hover .home-btn-arrow{transform:translateX(3px);color:rgba(255,255,255,.65)}
+#btnDev:hover{
+  background:rgba(79,255,204,.04);
+  border-color:rgba(79,255,204,.35);
+  box-shadow:0 0 0 1px rgba(79,255,204,.08),0 8px 32px rgba(79,255,204,.08),inset 0 0 20px rgba(79,255,204,.03)
+}
+#btnOp:hover{
+  background:rgba(159,122,234,.04);
+  border-color:rgba(159,122,234,.35);
+  box-shadow:0 0 0 1px rgba(159,122,234,.08),0 8px 32px rgba(159,122,234,.08),inset 0 0 20px rgba(159,122,234,.03)
+}
+.home-btn:active{transform:scale(.975)}
+.home-btn-arrow{color:rgba(255,255,255,.25);font-size:1rem;transition:transform .2s,color .2s,text-shadow .2s}
+#btnDev:hover .home-btn-arrow{transform:translateX(4px);color:#4fffcc;text-shadow:0 0 8px rgba(79,255,204,.7)}
+#btnOp:hover .home-btn-arrow{transform:translateX(4px);color:#9f7aea;text-shadow:0 0 8px rgba(159,122,234,.7)}
 
 /* ── Panel scroll view ── */
 .panel-view{
@@ -163,22 +270,33 @@ section .sec-body{padding:14px 16px}
 }
 .panel-view.open{display:block}
 .panel-back{
-  display:inline-flex;align-items:center;gap:5px;background:none;border:none;
-  color:var(--dim);font-size:.82rem;font-family:'Manrope',sans-serif;
-  cursor:pointer;padding:4px 0 16px;font-weight:500;
-  transition:color .2s cubic-bezier(.4,0,.2,1),transform .12s
+  display:inline-flex;align-items:center;gap:6px;background:none;border:none;
+  color:rgba(255,255,255,.35);font-size:.78rem;font-family:'Manrope',sans-serif;
+  cursor:pointer;padding:4px 0 16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  transition:color .2s,transform .15s,text-shadow .2s
 }
-.panel-back:hover{color:rgba(255,255,255,.75);transform:translateX(-2px)}
-.panel-back:active{color:#fff}
+#devBack:hover{color:#4fffcc;transform:translateX(-3px);text-shadow:0 0 10px rgba(79,255,204,.5)}
+#opBack:hover{color:#9f7aea;transform:translateX(-3px);text-shadow:0 0 10px rgba(159,122,234,.5)}
+.panel-back:active{opacity:.7}
 
 /* ── Code entry ── */
 .code-wrap{margin-bottom:12px}
 
 /* ── Lists ── */
 ul.devlist{list-style:none;margin:6px 0 0}
-ul.devlist li{padding:6px 5px;border-bottom:1px solid rgba(255,255,255,.045);font-size:.78rem;color:#bbb;border-radius:5px;transition:background .18s cubic-bezier(.4,0,.2,1),box-shadow .18s}
+ul.devlist li{
+  padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.04);
+  font-size:.78rem;color:#bbb;border-radius:6px;
+  transition:background .18s,box-shadow .18s,color .18s;
+  border-left:2px solid transparent
+}
 ul.devlist li:last-child{border-bottom:none}
-ul.devlist li:hover{background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.045)}
+ul.devlist li:hover{
+  background:rgba(79,255,204,.04);
+  border-left-color:rgba(79,255,204,.4);
+  color:#ddd;
+  box-shadow:inset 0 0 0 1px rgba(79,255,204,.07)
+}
 
 /* ── Status badge ── */
 .badge-status{display:inline-block;font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:20px;border:1px solid;vertical-align:middle;margin-left:6px}
@@ -241,19 +359,36 @@ ul.devlist li:hover{background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px 
 </style>
 </head>
 <body>
+<div id="scanlines" aria-hidden="true"></div>
 
 <!-- ══════════ HOME ══════════ -->
 <div id="home">
   <div class="tri-static">
     <svg viewBox="0 0 120 107" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="60,8 114,100 6,100" fill="rgba(192,0,14,.12)" stroke="#c0000e" stroke-width="2.2" stroke-linejoin="round"/>
-      <text x="60" y="78" text-anchor="middle" font-family="'Manrope',sans-serif" font-size="30" font-weight="700" fill="rgba(192,0,14,.7)">!</text>
+      <defs>
+        <radialGradient id="triGlow" cx="50%" cy="80%" r="60%">
+          <stop offset="0%" stop-color="#c0000e" stop-opacity=".25"/>
+          <stop offset="100%" stop-color="#c0000e" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="triFill" x1="60" y1="8" x2="60" y2="100" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#c0000e" stop-opacity=".06"/>
+          <stop offset="100%" stop-color="#c0000e" stop-opacity=".2"/>
+        </linearGradient>
+      </defs>
+      <polygon points="60,8 114,100 6,100" fill="url(#triGlow)" stroke="none"/>
+      <polygon points="60,8 114,100 6,100" fill="url(#triFill)" stroke="#c0000e" stroke-width="1.8" stroke-linejoin="round"/>
+      <polygon points="60,18 108,96 12,96" fill="none" stroke="rgba(192,0,14,.2)" stroke-width=".8" stroke-linejoin="round"/>
+      <text x="60" y="80" text-anchor="middle" font-family="'Manrope',sans-serif" font-size="32" font-weight="800" fill="#c0000e" opacity=".8">!</text>
     </svg>
   </div>
-  <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:28px">
-    <div style="font-size:1.35rem;font-weight:800;letter-spacing:.12em;color:#fff">SC6</div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase">Control Panel</div>
-    <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;color:rgba(192,0,14,.6);font-family:'Manrope',sans-serif;margin-top:2px">v1.9.99</div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:5px;margin-bottom:28px">
+    <div style="font-size:2rem;font-weight:800;letter-spacing:.18em;color:#fff;text-shadow:0 0 20px rgba(255,255,255,.35),0 0 60px rgba(79,255,204,.2)">SC6</div>
+    <div style="display:flex;align-items:center;gap:10px;width:100%">
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(79,255,204,.3))"></div>
+      <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(79,255,204,.5);text-transform:uppercase">Control Panel</div>
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(79,255,204,.3),transparent)"></div>
+    </div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(192,0,14,.55);font-family:'Manrope',sans-serif;margin-top:2px">v2.0.00</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -300,7 +435,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px 
   <!-- Dev content (shown after auth) -->
   <div id="devContent" style="display:none">
   <!-- Dev session header -->
-  <div id="devSessionBanner" style="display:flex;align-items:center;gap:10px;background:rgba(79,255,204,.06);border:1px solid rgba(79,255,204,.18);border-radius:10px;padding:8px 13px;margin-bottom:10px">
+  <div id="devSessionBanner" style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(79,255,204,.07) 0%,rgba(79,255,204,.03) 100%);border:1px solid rgba(79,255,204,.22);border-radius:12px;padding:10px 14px;margin-bottom:12px;box-shadow:0 0 20px rgba(79,255,204,.06),inset 0 1px 0 rgba(79,255,204,.08)">
     <div style="width:7px;height:7px;border-radius:50%;background:#4fc;box-shadow:0 0 8px rgba(79,255,204,.7);flex-shrink:0;animation:devlivepulse 2.5s ease-in-out infinite"></div>
     <div style="flex:1;min-width:0">
       <div id="devSessionInfoBar" style="font-size:.65rem;color:#4fc;font-weight:700;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">DEV SESSION</div>
@@ -500,7 +635,7 @@ ul.devlist li:hover{background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px 
   <div id="opContent" style="display:none">
 
     <!-- Op session banner -->
-    <div style="display:flex;align-items:center;gap:10px;background:rgba(192,0,14,.07);border:1px solid rgba(192,0,14,.22);border-radius:10px;padding:9px 14px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(192,0,14,.09) 0%,rgba(192,0,14,.04) 100%);border:1px solid rgba(192,0,14,.28);border-radius:12px;padding:10px 14px;margin-bottom:14px;box-shadow:0 0 20px rgba(192,0,14,.07),inset 0 1px 0 rgba(255,0,0,.07)">
       <div style="width:7px;height:7px;border-radius:50%;background:#c0000e;box-shadow:0 0 8px rgba(192,0,14,.7);flex-shrink:0;animation:oplivepulse 2.5s ease-in-out infinite"></div>
       <div style="flex:1;min-width:0">
         <div style="font-size:.68rem;font-weight:700;color:#ff4444;letter-spacing:.06em">OPERATOR SESSION ACTIVE</div>
