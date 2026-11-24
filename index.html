@@ -548,7 +548,7 @@ ul.devlist li:hover{
       <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(192,0,14,.5);text-transform:uppercase">Control Panel</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(192,0,14,.3),transparent)"></div>
     </div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.11</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.12</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1657,14 +1657,90 @@ function renderDevArchives(){
   });
 }
 
-function devArchiveLinkPrompt(linkId,type){
+// Archive modal state
+var _archiveModalPending=null;// {linkId, type}
+(function(){
   var modal=document.getElementById('archiveModal');
   var sel=document.getElementById('archiveModalSelect');
   var newNameInput=document.getElementById('archiveModalNewName');
   var confirmBtn=document.getElementById('archiveModalConfirm');
   var cancelBtn=document.getElementById('archiveModalCancel');
+  if(!modal)return;
+  sel.onchange=function(){
+    newNameInput.style.display=sel.value==='__new__'?'block':'none';
+  };
+  function closeModal(){
+    modal.style.display='none';
+    confirmBtn.disabled=false;
+    confirmBtn.textContent='Move';
+    _archiveModalPending=null;
+  }
+  cancelBtn.onclick=closeModal;
+  modal.onclick=function(e){if(e.target===modal)closeModal();};
+  confirmBtn.onclick=function(){
+    var pending=_archiveModalPending;
+    if(!pending)return;
+    var linkId=pending.linkId;
+    var type=pending.type;
+    var archId,archName,isNew=sel.value==='__new__';
+    if(isNew){
+      archName=(newNameInput.value||'').trim();
+      if(!archName)return;
+      archId='arch-'+Date.now();
+    } else {
+      archId=sel.value;
+      archName=_devArchivesCache[archId]&&_devArchivesCache[archId].name||'Archive';
+    }
+    confirmBtn.disabled=true;
+    confirmBtn.textContent='…';
+    var sc=getSyncCode();
+    var linkUrl=type==='trap'
+      ?fbUrl('_sc6/workspaces/'+sc+'/trapLinks/'+linkId)
+      :fbUrl('_sc6/workspaces/'+sc+'/redirectLinks/'+linkId);
+    var logsUrl=type==='trap'?trapLogsUrl(linkId):redirectLogsUrl(linkId);
+    Promise.all([
+      fetch(linkUrl).then(function(r){return r.ok?r.json():null}).catch(function(){return null}),
+      fetch(logsUrl).then(function(r){return r.ok?r.json():null}).catch(function(){return null})
+    ]).then(function(results){
+      var archEntry={type:type,archivedAt:new Date().toISOString(),data:results[0]||{}};
+      if(results[1])archEntry.logs=results[1];
+      var writeUrl,body;
+      if(isNew){
+        var newArch={name:archName,createdAt:new Date().toISOString(),links:{}};
+        newArch.links[linkId]=archEntry;
+        writeUrl=fbUrl('_sc6/devArchives/'+_currentDevCode+'/'+archId);
+        body=JSON.stringify(newArch);
+      } else {
+        writeUrl=fbUrl('_sc6/devArchives/'+_currentDevCode+'/'+archId+'/links/'+linkId);
+        body=JSON.stringify(archEntry);
+      }
+      return fetch(writeUrl,{method:'PUT',headers:{'Content-Type':'application/json'},body:body})
+        .then(function(){return deleteFromWorkspace(sc,linkId,type,logsUrl,linkUrl);});
+    }).then(function(){
+      closeModal();
+      loadDevArchives();
+      if(type==='trap')loadDevTrapList();else loadDevRedirectList();
+    }).catch(function(e){
+      alert('Archive failed: '+e.message);
+      confirmBtn.disabled=false;
+      confirmBtn.textContent='Move';
+    });
+  };
+})();
+
+function devArchiveLinkPrompt(linkId,type){
+  var modal=document.getElementById('archiveModal');
+  var sel=document.getElementById('archiveModalSelect');
+  var newNameInput=document.getElementById('archiveModalNewName');
+  var confirmBtn=document.getElementById('archiveModalConfirm');
   if(!modal||!sel)return;
-  // Build select options
+  _archiveModalPending={linkId:linkId,type:type};
+  // Reset state
+  confirmBtn.disabled=false;
+  confirmBtn.textContent='Move';
+  newNameInput.style.display='none';
+  newNameInput.value='';
+  // Build options
   var keys=Object.keys(_devArchivesCache);
   sel.innerHTML='';
   keys.forEach(function(k){
@@ -1677,68 +1753,7 @@ function devArchiveLinkPrompt(linkId,type){
   newOpt.value='__new__';
   newOpt.textContent='+ New archive…';
   sel.appendChild(newOpt);
-  newNameInput.style.display='none';
-  newNameInput.value='';
-  sel.onchange=function(){
-    newNameInput.style.display=sel.value==='__new__'?'block':'none';
-  };
   modal.style.display='flex';
-  // Clone confirm to remove old listeners
-  var newConfirm=confirmBtn.cloneNode(true);
-  confirmBtn.parentNode.replaceChild(newConfirm,confirmBtn);
-  confirmBtn=newConfirm;
-  confirmBtn.onclick=function(){
-    var archId,archName;
-    if(sel.value==='__new__'){
-      archName=(newNameInput.value||'').trim();
-      if(!archName)return;
-      archId='arch-'+Date.now();
-    } else {
-      archId=sel.value;
-      archName=_devArchivesCache[archId]&&_devArchivesCache[archId].name||'Archive';
-    }
-    modal.style.display='none';
-    confirmBtn.disabled=true;
-    // Fetch link data and logs, then write to archive and delete from workspace
-    var sc=getSyncCode();
-    var linkUrl=type==='trap'
-      ?fbUrl('_sc6/workspaces/'+sc+'/trapLinks/'+linkId)
-      :fbUrl('_sc6/workspaces/'+sc+'/redirectLinks/'+linkId);
-    var logsUrl=type==='trap'
-      ?trapLogsUrl(linkId)
-      :redirectLogsUrl(linkId);
-    Promise.all([
-      fetch(linkUrl).then(function(r){return r.ok?r.json():null}).catch(function(){return null}),
-      fetch(logsUrl).then(function(r){return r.ok?r.json():null}).catch(function(){return null})
-    ]).then(function(results){
-      var linkData=results[0]||{};
-      var logsData=results[1]||null;
-      // Build archive entry for this link
-      var archEntry={type:type,archivedAt:new Date().toISOString(),data:linkData};
-      if(logsData)archEntry.logs=logsData;
-      // Write to archive
-      var writeUrl;
-      if(sel.value==='__new__'){
-        // New archive: create whole archive object
-        var newArch={name:archName,createdAt:new Date().toISOString(),links:{}};
-        newArch.links[linkId]=archEntry;
-        writeUrl=fbUrl('_sc6/devArchives/'+(_currentDevCode||'')+'/'+archId);
-        return fetch(writeUrl,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(newArch)})
-          .then(function(){return deleteFromWorkspace(sc,linkId,type,logsUrl,linkUrl);});
-      } else {
-        // Existing archive: add this link entry at the correct path
-        writeUrl=fbUrl('_sc6/devArchives/'+(_currentDevCode||'')+'/'+archId+'/links/'+linkId);
-        return fetch(writeUrl,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(archEntry)})
-          .then(function(){return deleteFromWorkspace(sc,linkId,type,logsUrl,linkUrl);});
-      }
-    }).then(function(){
-      loadDevArchives();
-      if(type==='trap')loadDevTrapList();
-      else loadDevRedirectList();
-    }).catch(function(e){alert('Archive failed: '+e.message);confirmBtn.disabled=false;});
-  };
-  cancelBtn.onclick=function(){modal.style.display='none';};
-  modal.onclick=function(e){if(e.target===modal)modal.style.display='none';};
 }
 
 function deleteFromWorkspace(sc,linkId,type,logsUrl,linkUrl){
