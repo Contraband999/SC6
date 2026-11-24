@@ -548,7 +548,7 @@ ul.devlist li:hover{
       <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(192,0,14,.5);text-transform:uppercase">Control Panel</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(192,0,14,.3),transparent)"></div>
     </div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.10</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.11</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1637,7 +1637,7 @@ function renderDevArchives(){
         })
         .then(function(){
           // Remove from archive
-          return fetch(devArchiveUrl(null,archId)+'/links/'+encodeURIComponent(linkId)+'.json',{method:'DELETE'});
+          return fetch(fbUrl('_sc6/devArchives/'+(_currentDevCode||'')+'/'+archId+'/links/'+linkId),{method:'DELETE'});
         })
         .then(function(){
           loadDevArchives();
@@ -1652,7 +1652,7 @@ function renderDevArchives(){
     btn.addEventListener('click',function(){
       var linkId=btn.getAttribute('data-arch-unarchive-link');
       var archId=btn.getAttribute('data-arch-unarchive-from');
-      fetch(devArchiveUrl(null,archId)+'/links/'+encodeURIComponent(linkId)+'.json',{method:'DELETE'}).then(function(){loadDevArchives();}).catch(function(){});
+      fetch(fbUrl('_sc6/devArchives/'+(_currentDevCode||'')+'/'+archId+'/links/'+linkId),{method:'DELETE'}).then(function(){loadDevArchives();}).catch(function(){});
     });
   });
 }
@@ -1722,12 +1722,12 @@ function devArchiveLinkPrompt(linkId,type){
         // New archive: create whole archive object
         var newArch={name:archName,createdAt:new Date().toISOString(),links:{}};
         newArch.links[linkId]=archEntry;
-        writeUrl=devArchiveUrl(null,archId);
+        writeUrl=fbUrl('_sc6/devArchives/'+(_currentDevCode||'')+'/'+archId);
         return fetch(writeUrl,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(newArch)})
           .then(function(){return deleteFromWorkspace(sc,linkId,type,logsUrl,linkUrl);});
       } else {
-        // Existing archive: just add this link entry
-        writeUrl=devArchiveUrl(null,archId)+'/links/'+encodeURIComponent(linkId)+'.json';
+        // Existing archive: add this link entry at the correct path
+        writeUrl=fbUrl('_sc6/devArchives/'+(_currentDevCode||'')+'/'+archId+'/links/'+linkId);
         return fetch(writeUrl,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(archEntry)})
           .then(function(){return deleteFromWorkspace(sc,linkId,type,logsUrl,linkUrl);});
       }
