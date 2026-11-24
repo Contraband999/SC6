@@ -548,7 +548,7 @@ ul.devlist li:hover{
       <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(192,0,14,.5);text-transform:uppercase">Control Panel</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(192,0,14,.3),transparent)"></div>
     </div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.08</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.09</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1551,11 +1551,22 @@ function renderDevArchives(){
       +'</div>'
       +(linkCount?'<ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px">'
         +Object.keys(links).map(function(linkId){
-          var type=links[linkId];
-          return '<li style="display:flex;align-items:center;gap:6px;font-size:.65rem;color:#888;padding:3px 5px;background:rgba(255,255,255,.03);border-radius:4px">'
-            +'<span style="font-size:.56rem;color:'+(type==='trap'?'#ff9955':'#ff3333')+';border:1px solid '+(type==='trap'?'rgba(255,153,85,.25)':'rgba(192,0,14,.25)')+';border-radius:8px;padding:1px 5px;font-weight:600">'+(type==='trap'?'ERROR':'TRACKER')+'</span>'
-            +'<code style="font-size:.62rem;color:#f5c800;background:rgba(255,200,0,.08);padding:1px 5px;border-radius:3px;flex:1;word-break:break-all">'+esc(linkId.slice(-12))+'</code>'
-            +'<button class="btn-sm" style="font-size:.58rem;padding:1px 6px;color:#ff3333" data-arch-unarchive-link="'+esc(linkId)+'" data-arch-unarchive-from="'+esc(archId)+'">Restore</button>'
+          var entry=links[linkId];
+          // Support both old string format and new object format
+          var linkType=typeof entry==='string'?entry:(entry&&entry.type)||'trap';
+          var linkData=entry&&entry.data||{};
+          var logsData=entry&&entry.logs||null;
+          var hitCount=logsData?(Array.isArray(logsData)?logsData.length:Object.keys(logsData).length):0;
+          var note=linkData.note||linkData.label||'';
+          var archivedAt=entry&&entry.archivedAt?new Date(entry.archivedAt).toLocaleDateString():'';
+          return '<li style="display:flex;align-items:center;gap:6px;font-size:.65rem;color:#888;padding:4px 6px;background:rgba(255,255,255,.03);border-radius:5px">'
+            +'<span style="font-size:.56rem;color:'+(linkType==='trap'?'#ff9955':'#ff3333')+';border:1px solid '+(linkType==='trap'?'rgba(255,153,85,.25)':'rgba(192,0,14,.25)')+';border-radius:8px;padding:1px 5px;font-weight:600">'+(linkType==='trap'?'ERROR':'TRACKER')+'</span>'
+            +'<code style="font-size:.62rem;color:#f5c800;background:rgba(255,200,0,.08);padding:1px 5px;border-radius:3px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(linkId)+'">…'+esc(linkId.slice(-10))+'</code>'
+            +(note?'<span style="font-size:.6rem;color:#9f7aea;font-style:italic;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(note)+'</span>':'')
+            +(hitCount?'<span style="font-size:.58rem;color:#ff3333;border:1px solid rgba(192,0,14,.25);border-radius:8px;padding:1px 5px">'+hitCount+' hits</span>':'')
+            +(archivedAt?'<span style="font-size:.56rem;color:#3a3a3a">'+esc(archivedAt)+'</span>':'')
+            +'<button class="btn-sm" style="font-size:.58rem;padding:1px 6px;color:#9f7aea" data-arch-restore-link="'+esc(linkId)+'" data-arch-restore-from="'+esc(archId)+'" data-arch-restore-type="'+esc(linkType)+'">Restore</button>'
+            +'<button class="btn-sm danger" style="font-size:.58rem;padding:1px 6px" data-arch-unarchive-link="'+esc(linkId)+'" data-arch-unarchive-from="'+esc(archId)+'">Remove</button>'
             +'</li>';
         }).join('')
         +'</ul>':'')
@@ -1567,15 +1578,53 @@ function renderDevArchives(){
       var archId=btn.getAttribute('data-arch-delete');
       var arch=_devArchivesCache[archId];
       if(!arch)return;
-      if(!confirm('Delete archive "'+arch.name+'"? Links will be removed from the archive (they still exist in the workspace).'))return;
+      if(!confirm('Delete archive "'+arch.name+'"? All archived links and their hit data will be permanently lost.'))return;
       fetch(devArchiveUrl(null,archId),{method:'DELETE'}).then(function(){loadDevArchives();}).catch(function(){});
     });
   });
+  // Restore: write link+logs back to workspace, then remove from archive
+  container.querySelectorAll('[data-arch-restore-link]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var linkId=btn.getAttribute('data-arch-restore-link');
+      var archId=btn.getAttribute('data-arch-restore-from');
+      var linkType=btn.getAttribute('data-arch-restore-type')||'trap';
+      var arch=_devArchivesCache[archId];
+      if(!arch||!arch.links||!arch.links[linkId])return;
+      var entry=arch.links[linkId];
+      var linkData=typeof entry==='string'?{}:(entry.data||{});
+      var logsData=typeof entry==='string'?null:(entry.logs||null);
+      var sc=getSyncCode();
+      var linkWriteUrl=linkType==='trap'
+        ?fbUrl('_sc6/workspaces/'+sc+'/trapLinks/'+linkId)
+        :fbUrl('_sc6/workspaces/'+sc+'/redirectLinks/'+linkId);
+      var logsWriteUrl=linkType==='trap'
+        ?trapLogsUrl(linkId)
+        :redirectLogsUrl(linkId);
+      btn.textContent='…';btn.disabled=true;
+      // Write link data back
+      fetch(linkWriteUrl,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(linkData)})
+        .then(function(){
+          if(!logsData)return;
+          return fetch(logsWriteUrl,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(logsData)});
+        })
+        .then(function(){
+          // Remove from archive
+          return fetch(devArchiveUrl(null,archId)+'/links/'+encodeURIComponent(linkId)+'.json',{method:'DELETE'});
+        })
+        .then(function(){
+          loadDevArchives();
+          if(linkType==='trap')loadDevTrapList();
+          else loadDevRedirectList();
+        })
+        .catch(function(e){alert('Restore failed: '+e.message);btn.textContent='Restore';btn.disabled=false;});
+    });
+  });
+  // Remove from archive only (no restore to workspace)
   container.querySelectorAll('[data-arch-unarchive-link]').forEach(function(btn){
     btn.addEventListener('click',function(){
       var linkId=btn.getAttribute('data-arch-unarchive-link');
       var archId=btn.getAttribute('data-arch-unarchive-from');
-      fetch(devArchiveUrl(null,archId)+'/links/'+linkId.replace(/\./g,'%2E')+'.json',{method:'DELETE'}).then(function(){loadDevArchives();}).catch(function(){});
+      fetch(devArchiveUrl(null,archId)+'/links/'+encodeURIComponent(linkId)+'.json',{method:'DELETE'}).then(function(){loadDevArchives();}).catch(function(){});
     });
   });
 }
