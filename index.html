@@ -548,7 +548,7 @@ ul.devlist li:hover{
       <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(192,0,14,.5);text-transform:uppercase">Control Panel</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(192,0,14,.3),transparent)"></div>
     </div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.09</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.10</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1543,35 +1543,63 @@ function renderDevArchives(){
     var arch=_devArchivesCache[archId];
     var links=arch.links&&typeof arch.links==='object'?arch.links:{};
     var linkCount=Object.keys(links).length;
-    return '<div style="border:1px solid rgba(255,255,255,.09);border-radius:7px;padding:9px 11px;background:rgba(255,255,255,.025)" data-arch-id="'+esc(archId)+'">'
-      +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:'+(linkCount?'7px':'0')+'">'
+    var totalHits=0;
+    Object.keys(links).forEach(function(lid){
+      var e=links[lid];var l=e&&e.logs||null;
+      if(l)totalHits+=Array.isArray(l)?l.length:Object.keys(l).length;
+    });
+    return '<div style="border:1px solid rgba(255,255,255,.09);border-radius:9px;background:rgba(255,255,255,.025);overflow:hidden" data-arch-id="'+esc(archId)+'">'
+      // Header row — tap to expand
+      +'<div class="arch-entry-head" style="display:flex;align-items:center;gap:7px;padding:10px 11px;cursor:pointer;user-select:none" data-arch-toggle="'+esc(archId)+'">'
       +'<span style="font-size:.72rem;color:#ccc;font-weight:600;flex:1">🗂 '+esc(arch.name||'Archive')+'</span>'
+      +(totalHits?'<span style="font-size:.58rem;color:#ff3333;border:1px solid rgba(192,0,14,.25);border-radius:8px;padding:1px 7px">'+totalHits+' hits</span>':'')
       +'<span style="font-size:.58rem;color:#555;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:1px 7px">'+linkCount+' link'+(linkCount===1?'':'s')+'</span>'
+      +'<span class="arch-entry-arrow" style="font-size:.7rem;color:#444;transition:transform .2s">▶</span>'
+      +'</div>'
+      // Expandable body — hidden by default
+      +'<div class="arch-entry-body" style="display:none;padding:0 11px 10px">'
+      +'<div style="display:flex;justify-content:flex-end;margin-bottom:6px">'
       +'<button class="btn-sm danger" style="font-size:.6rem;padding:1px 7px" data-arch-delete="'+esc(archId)+'">Delete archive</button>'
       +'</div>'
-      +(linkCount?'<ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px">'
+      +(linkCount?'<ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px">'
         +Object.keys(links).map(function(linkId){
           var entry=links[linkId];
-          // Support both old string format and new object format
           var linkType=typeof entry==='string'?entry:(entry&&entry.type)||'trap';
           var linkData=entry&&entry.data||{};
           var logsData=entry&&entry.logs||null;
           var hitCount=logsData?(Array.isArray(logsData)?logsData.length:Object.keys(logsData).length):0;
           var note=linkData.note||linkData.label||'';
           var archivedAt=entry&&entry.archivedAt?new Date(entry.archivedAt).toLocaleDateString():'';
-          return '<li style="display:flex;align-items:center;gap:6px;font-size:.65rem;color:#888;padding:4px 6px;background:rgba(255,255,255,.03);border-radius:5px">'
+          return '<li style="display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:.65rem;color:#888;padding:6px 8px;background:rgba(255,255,255,.03);border-radius:6px;border:1px solid rgba(255,255,255,.06)">'
             +'<span style="font-size:.56rem;color:'+(linkType==='trap'?'#ff9955':'#ff3333')+';border:1px solid '+(linkType==='trap'?'rgba(255,153,85,.25)':'rgba(192,0,14,.25)')+';border-radius:8px;padding:1px 5px;font-weight:600">'+(linkType==='trap'?'ERROR':'TRACKER')+'</span>'
-            +'<code style="font-size:.62rem;color:#f5c800;background:rgba(255,200,0,.08);padding:1px 5px;border-radius:3px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(linkId)+'">…'+esc(linkId.slice(-10))+'</code>'
-            +(note?'<span style="font-size:.6rem;color:#9f7aea;font-style:italic;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(note)+'</span>':'')
-            +(hitCount?'<span style="font-size:.58rem;color:#ff3333;border:1px solid rgba(192,0,14,.25);border-radius:8px;padding:1px 5px">'+hitCount+' hits</span>':'')
-            +(archivedAt?'<span style="font-size:.56rem;color:#3a3a3a">'+esc(archivedAt)+'</span>':'')
-            +'<button class="btn-sm" style="font-size:.58rem;padding:1px 6px;color:#9f7aea" data-arch-restore-link="'+esc(linkId)+'" data-arch-restore-from="'+esc(archId)+'" data-arch-restore-type="'+esc(linkType)+'">Restore</button>'
-            +'<button class="btn-sm danger" style="font-size:.58rem;padding:1px 6px" data-arch-unarchive-link="'+esc(linkId)+'" data-arch-unarchive-from="'+esc(archId)+'">Remove</button>'
+            +'<code style="font-size:.62rem;color:#f5c800;background:rgba(255,200,0,.08);padding:1px 5px;border-radius:3px;flex:1;min-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(linkId)+'">…'+esc(linkId.slice(-12))+'</code>'
+            +(note?'<span style="font-size:.6rem;color:#9f7aea;font-style:italic">'+esc(note)+'</span>':'')
+            +(hitCount?'<span style="font-size:.58rem;color:#ff3333;border:1px solid rgba(192,0,14,.25);border-radius:8px;padding:1px 5px;font-weight:600">'+hitCount+' hits</span>':'<span style="font-size:.58rem;color:#333">0 hits</span>')
+            +(archivedAt?'<span style="font-size:.56rem;color:#3a3a3a;width:100%;margin-top:1px">Archived '+esc(archivedAt)+'</span>':'')
+            +'<div style="display:flex;gap:5px;width:100%;margin-top:3px">'
+            +'<button class="btn-sm" style="font-size:.58rem;padding:2px 8px;color:#9f7aea" data-arch-restore-link="'+esc(linkId)+'" data-arch-restore-from="'+esc(archId)+'" data-arch-restore-type="'+esc(linkType)+'">↩ Restore to list</button>'
+            +'<button class="btn-sm danger" style="font-size:.58rem;padding:2px 8px" data-arch-unarchive-link="'+esc(linkId)+'" data-arch-unarchive-from="'+esc(archId)+'">× Remove</button>'
+            +'</div>'
             +'</li>';
         }).join('')
-        +'</ul>':'')
+        +'</ul>':'<div style="font-size:.65rem;color:#444;padding:4px 0">No links in this archive.</div>')
+      +'</div>'
       +'</div>';
   }).join('');
+  // Wire archive expand/collapse toggles
+  container.querySelectorAll('[data-arch-toggle]').forEach(function(head){
+    head.addEventListener('click',function(e){
+      if(e.target.tagName==='BUTTON')return;
+      var card=head.closest('[data-arch-id]');
+      if(!card)return;
+      var body=card.querySelector('.arch-entry-body');
+      var arrow=card.querySelector('.arch-entry-arrow');
+      if(!body)return;
+      var open=body.style.display!=='none';
+      body.style.display=open?'none':'block';
+      if(arrow)arrow.style.transform=open?'':'rotate(90deg)';
+    });
+  });
   // Wire events
   container.querySelectorAll('[data-arch-delete]').forEach(function(btn){
     btn.addEventListener('click',function(){
