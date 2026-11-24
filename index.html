@@ -547,7 +547,7 @@ ul.devlist li:hover{
       <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(192,0,14,.5);text-transform:uppercase">Control Panel</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(192,0,14,.3),transparent)"></div>
     </div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.05</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.06</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1581,7 +1581,7 @@ function devArchiveLinkPrompt(linkId,type){
   }
   // Build picker prompt string
   var opts=keys.map(function(k,i){return (i+1)+'. '+(_devArchivesCache[k].name||'Archive');}).join('\n');
-  var choice=prompt('Move to archive:\n'+opts+'\n\nEnter number, or type "new" to create a new archive:');
+  var choice=prompt('Add to archive:\n'+opts+'\n\nEnter number, or type "new" to create a new archive:');
   if(!choice||!choice.trim())return;
   choice=choice.trim();
   if(choice.toLowerCase()==='new'){
@@ -4389,7 +4389,7 @@ function loadDevTrapList(){
         +'<input type="text" data-trap-note-input="'+esc(id)+'" value="'+esc(note)+'" placeholder="Add note…" maxlength="80" style="flex:1;font-size:.68rem;padding:3px 7px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:5px;color:inherit;outline:none">'
         +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px" data-trap-note-save="'+esc(id)+'">Save note</button>'
         +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px;color:'+(muted?'#ff3333':'#777')+'" data-trap-mute="'+esc(id)+'" title="'+(muted?'Unmute link':'Mute / archive link')+'">'+(muted?'Unmute':'Mute')+'</button>'
-        +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px;color:#9f7aea" data-dev-archive-link="'+esc(id)+'" data-dev-archive-type="trap" title="Move to archive">🗂 Archive</button>'
+        +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px;color:#9f7aea" data-dev-archive-link="'+esc(id)+'" data-dev-archive-type="trap" title="Add to archive (link stays in list)">🗂 Archive</button>'
         +'</div>'
         +'<div style="display:flex;gap:5px;margin-top:4px;align-items:center">'
         +'<span style="font-size:.58rem;color:#555;white-space:nowrap;flex-shrink:0">⏳ Expiry</span>'
@@ -4790,7 +4790,7 @@ function loadDevRedirectList(){
         +'<span style="font-size:.58rem;color:#3a3a3a" id="devrdrlast-'+esc(id)+'"></span>'
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" id="devrhitbtn-'+esc(id)+'" data-redir-hits="'+esc(id)+'">Hits</button>'
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px;color:#777" data-dup-redir="'+esc(id)+'" title="Duplicate this redirect link">Dup</button>'
-        +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px;color:#9f7aea" data-dev-archive-link="'+esc(id)+'" data-dev-archive-type="redir" title="Move to archive">🗂 Archive</button>'
+        +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px;color:#9f7aea" data-dev-archive-link="'+esc(id)+'" data-dev-archive-type="redir" title="Add to archive (link stays in list)">🗂 Archive</button>'
         +'<button class="btn-sm danger" style="font-size:.65rem;padding:2px 7px" data-redir-del="'+esc(id)+'">Del</button>'
         +'</div>'
         +'<div style="display:flex;align-items:center;gap:5px;margin-top:5px">'
