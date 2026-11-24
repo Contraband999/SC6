@@ -548,7 +548,7 @@ ul.devlist li:hover{
       <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(192,0,14,.5);text-transform:uppercase">Control Panel</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(192,0,14,.3),transparent)"></div>
     </div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.07</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.08</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -562,6 +562,19 @@ ul.devlist li:hover{
   </div>
   <div id="homeClock"></div>
   <div style="margin-top:8px;font-size:.62rem;font-weight:600;letter-spacing:.12em;color:rgba(192,0,14,.5);text-transform:uppercase">Made by Puro &lt;3</div>
+</div>
+
+<!-- ══════════ ARCHIVE MODAL ══════════ -->
+<div id="archiveModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+  <div style="background:#0d0d14;border:1px solid rgba(192,0,14,.3);border-radius:14px;padding:22px 20px;width:calc(100% - 40px);max-width:340px;box-shadow:0 0 40px rgba(192,0,14,.15)">
+    <div style="font-size:.7rem;font-weight:700;letter-spacing:.15em;color:rgba(192,0,14,.7);text-transform:uppercase;margin-bottom:14px">🗂 Move to Archive</div>
+    <select id="archiveModalSelect" style="width:100%;padding:9px 10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#ccc;font-size:.75rem;outline:none;cursor:pointer;margin-bottom:10px"></select>
+    <input id="archiveModalNewName" type="text" placeholder="New archive name…" maxlength="40" style="display:none;width:100%;padding:8px 10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#ccc;font-size:.75rem;outline:none;box-sizing:border-box;margin-bottom:10px">
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button id="archiveModalConfirm" style="flex:1;padding:8px;background:rgba(192,0,14,.18);border:1px solid rgba(192,0,14,.4);border-radius:8px;color:#ff3333;font-size:.72rem;font-weight:700;cursor:pointer">Move</button>
+      <button id="archiveModalCancel" style="padding:8px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#666;font-size:.72rem;cursor:pointer">Cancel</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════ DEV PANEL ══════════ -->
@@ -1568,38 +1581,95 @@ function renderDevArchives(){
 }
 
 function devArchiveLinkPrompt(linkId,type){
-  // Show archive picker modal
+  var modal=document.getElementById('archiveModal');
+  var sel=document.getElementById('archiveModalSelect');
+  var newNameInput=document.getElementById('archiveModalNewName');
+  var confirmBtn=document.getElementById('archiveModalConfirm');
+  var cancelBtn=document.getElementById('archiveModalCancel');
+  if(!modal||!sel)return;
+  // Build select options
   var keys=Object.keys(_devArchivesCache);
-  if(!keys.length){
-    var name=prompt('No archives yet. Enter a name for a new archive:');
-    if(!name||!name.trim())return;
-    name=name.trim();
-    var newId='arch-'+Date.now();
-    var payload={name:name,createdAt:new Date().toISOString(),links:{}};
-    payload.links[linkId]=type;
-    fetch(devArchiveUrl(null,newId),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(){loadDevArchives();}).catch(function(){});
-    return;
-  }
-  // Build picker prompt string
-  var opts=keys.map(function(k,i){return (i+1)+'. '+(_devArchivesCache[k].name||'Archive');}).join('\n');
-  var choice=prompt('Add to archive:\n'+opts+'\n\nEnter number, or type "new" to create a new archive:');
-  if(!choice||!choice.trim())return;
-  choice=choice.trim();
-  if(choice.toLowerCase()==='new'){
-    var newName=prompt('New archive name:');
-    if(!newName||!newName.trim())return;
-    newName=newName.trim();
-    var nId='arch-'+Date.now();
-    var newPayload={name:newName,createdAt:new Date().toISOString(),links:{}};
-    newPayload.links[linkId]=type;
-    fetch(devArchiveUrl(null,nId),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(newPayload)}).then(function(){loadDevArchives();}).catch(function(){});
-    return;
-  }
-  var idx=parseInt(choice,10)-1;
-  if(isNaN(idx)||idx<0||idx>=keys.length){alert('Invalid selection.');return;}
-  var archId=keys[idx];
-  // Add link to chosen archive
-  fetch(devArchiveUrl(null,archId)+'/links/'+encodeURIComponent(linkId)+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(type)}).then(function(){loadDevArchives();}).catch(function(){});
+  sel.innerHTML='';
+  keys.forEach(function(k){
+    var opt=document.createElement('option');
+    opt.value=k;
+    opt.textContent=_devArchivesCache[k].name||'Archive';
+    sel.appendChild(opt);
+  });
+  var newOpt=document.createElement('option');
+  newOpt.value='__new__';
+  newOpt.textContent='+ New archive…';
+  sel.appendChild(newOpt);
+  newNameInput.style.display='none';
+  newNameInput.value='';
+  sel.onchange=function(){
+    newNameInput.style.display=sel.value==='__new__'?'block':'none';
+  };
+  modal.style.display='flex';
+  // Clone confirm to remove old listeners
+  var newConfirm=confirmBtn.cloneNode(true);
+  confirmBtn.parentNode.replaceChild(newConfirm,confirmBtn);
+  confirmBtn=newConfirm;
+  confirmBtn.onclick=function(){
+    var archId,archName;
+    if(sel.value==='__new__'){
+      archName=(newNameInput.value||'').trim();
+      if(!archName)return;
+      archId='arch-'+Date.now();
+    } else {
+      archId=sel.value;
+      archName=_devArchivesCache[archId]&&_devArchivesCache[archId].name||'Archive';
+    }
+    modal.style.display='none';
+    confirmBtn.disabled=true;
+    // Fetch link data and logs, then write to archive and delete from workspace
+    var sc=getSyncCode();
+    var linkUrl=type==='trap'
+      ?fbUrl('_sc6/workspaces/'+sc+'/trapLinks/'+linkId)
+      :fbUrl('_sc6/workspaces/'+sc+'/redirectLinks/'+linkId);
+    var logsUrl=type==='trap'
+      ?trapLogsUrl(linkId)
+      :redirectLogsUrl(linkId);
+    Promise.all([
+      fetch(linkUrl).then(function(r){return r.ok?r.json():null}).catch(function(){return null}),
+      fetch(logsUrl).then(function(r){return r.ok?r.json():null}).catch(function(){return null})
+    ]).then(function(results){
+      var linkData=results[0]||{};
+      var logsData=results[1]||null;
+      // Build archive entry for this link
+      var archEntry={type:type,archivedAt:new Date().toISOString(),data:linkData};
+      if(logsData)archEntry.logs=logsData;
+      // Write to archive
+      var writeUrl;
+      if(sel.value==='__new__'){
+        // New archive: create whole archive object
+        var newArch={name:archName,createdAt:new Date().toISOString(),links:{}};
+        newArch.links[linkId]=archEntry;
+        writeUrl=devArchiveUrl(null,archId);
+        return fetch(writeUrl,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(newArch)})
+          .then(function(){return deleteFromWorkspace(sc,linkId,type,logsUrl,linkUrl);});
+      } else {
+        // Existing archive: just add this link entry
+        writeUrl=devArchiveUrl(null,archId)+'/links/'+encodeURIComponent(linkId)+'.json';
+        return fetch(writeUrl,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(archEntry)})
+          .then(function(){return deleteFromWorkspace(sc,linkId,type,logsUrl,linkUrl);});
+      }
+    }).then(function(){
+      loadDevArchives();
+      if(type==='trap')loadDevTrapList();
+      else loadDevRedirectList();
+    }).catch(function(e){alert('Archive failed: '+e.message);confirmBtn.disabled=false;});
+  };
+  cancelBtn.onclick=function(){modal.style.display='none';};
+  modal.onclick=function(e){if(e.target===modal)modal.style.display='none';};
+}
+
+function deleteFromWorkspace(sc,linkId,type,logsUrl,linkUrl){
+  // Delete logs first, then link record
+  return fetch(logsUrl,{method:'DELETE'})
+    .catch(function(){})
+    .then(function(){return fetch(linkUrl,{method:'DELETE'});})
+    .catch(function(){});
 }
 
 // ── Device tag ──
