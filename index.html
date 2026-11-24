@@ -34,8 +34,8 @@ body::before{
   content:'';
   position:fixed;inset:0;z-index:0;pointer-events:none;
   background-image:
-    linear-gradient(rgba(79,255,204,.025) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(79,255,204,.025) 1px,transparent 1px);
+    linear-gradient(rgba(192,0,14,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(192,0,14,.03) 1px,transparent 1px);
   background-size:40px 40px;
   mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%)
 }
@@ -63,11 +63,11 @@ body::after{
 
 /* ── Typography ── */
 h3{font-size:.75rem;font-weight:800;letter-spacing:.05em;color:#fff;margin-bottom:5px;text-transform:uppercase}
-#devContent h3{text-shadow:0 0 10px rgba(79,255,204,.35),0 0 30px rgba(79,255,204,.12)}
+#devContent h3{text-shadow:0 0 10px rgba(192,0,14,.4),0 0 30px rgba(192,0,14,.14)}
 #opContent h3{text-shadow:0 0 10px rgba(159,122,234,.35),0 0 30px rgba(159,122,234,.12)}
 p.note{font-size:.72rem;color:rgba(255,255,255,.38);line-height:1.55;margin-bottom:10px}
 /* Section head accent lines by context */
-#devContent section .sec-head{border-left:3px solid rgba(79,255,204,.45)}
+#devContent section .sec-head{border-left:3px solid rgba(192,0,14,.5)}
 #opContent section .sec-head{border-left:3px solid rgba(159,122,234,.45)}
 input[type=password],input[type=text],input[type=url]{
   width:100%;
@@ -79,9 +79,9 @@ input[type=password],input[type=text],input[type=url]{
   transition:border-color .2s,background .2s,box-shadow .2s
 }
 #devContent input:focus,#devGate input:focus{
-  border-color:rgba(79,255,204,.55);
-  background:rgba(79,255,204,.04);
-  box-shadow:0 0 0 3px rgba(79,255,204,.07),0 0 12px rgba(79,255,204,.1)
+  border-color:rgba(192,0,14,.5);
+  background:rgba(192,0,14,.03);
+  box-shadow:0 0 0 3px rgba(192,0,14,.06),0 0 12px rgba(192,0,14,.1)
 }
 #opContent input:focus,#opGate input:focus{
   border-color:rgba(159,122,234,.55);
@@ -104,9 +104,9 @@ button{touch-action:manipulation;font-family:'Manrope',sans-serif}
 }
 /* dev context primary action */
 #devContent .btn:hover,#devGate .btn:hover{
-  background:rgba(79,255,204,.07);
-  border-color:rgba(79,255,204,.4);
-  box-shadow:0 0 16px rgba(79,255,204,.1),inset 0 0 12px rgba(79,255,204,.04);
+  background:rgba(192,0,14,.06);
+  border-color:rgba(192,0,14,.35);
+  box-shadow:0 0 16px rgba(192,0,14,.1),inset 0 0 12px rgba(192,0,14,.04);
   color:#fff
 }
 /* op context primary action */
@@ -157,34 +157,34 @@ input.shake{animation:quake .25s ease 2}
 }
 
 /* ── SC6 title glitch ── */
-@keyframes glitch1{0%,88%,100%{clip-path:none;transform:none}90%{clip-path:polygon(0 20%,100% 20%,100% 40%,0 40%);transform:translate(-2px,1px);color:rgba(79,255,204,.9)}93%{clip-path:polygon(0 55%,100% 55%,100% 70%,0 70%);transform:translate(2px,-1px);color:rgba(255,0,80,.8)}96%{clip-path:none;transform:none;color:#fff}}
+@keyframes glitch1{0%,88%,100%{clip-path:none;transform:none}90%{clip-path:polygon(0 20%,100% 20%,100% 40%,0 40%);transform:translate(-2px,1px);color:rgba(255,60,60,.9)}93%{clip-path:polygon(0 55%,100% 55%,100% 70%,0 70%);transform:translate(2px,-1px);color:rgba(192,0,14,.8)}96%{clip-path:none;transform:none;color:#fff}}
 .sc6-title{animation:glitch1 7s ease-in-out infinite}
 
 /* ── Home scan beam ── */
 @keyframes scanbeam{0%{top:-2px;opacity:0}5%{opacity:1}90%{opacity:.4}100%{top:100%;opacity:0}}
 #homeScanBeam{
   position:absolute;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent 0%,rgba(79,255,204,.4) 30%,rgba(79,255,204,.8) 50%,rgba(79,255,204,.4) 70%,transparent 100%);
-  box-shadow:0 0 8px rgba(79,255,204,.5);pointer-events:none;
+  background:linear-gradient(90deg,transparent 0%,rgba(192,0,14,.4) 30%,rgba(220,0,20,.7) 50%,rgba(192,0,14,.4) 70%,transparent 100%);
+  box-shadow:0 0 8px rgba(192,0,14,.5);pointer-events:none;
   animation:scanbeam 4s ease-in-out 1.5s infinite
 }
 
 /* ── Home clock ── */
 #homeClock{
   font-size:.7rem;font-weight:700;letter-spacing:.18em;
-  color:rgba(79,255,204,.3);font-variant-numeric:tabular-nums;margin-top:16px;
-  text-shadow:0 0 10px rgba(79,255,204,.2);
+  color:rgba(245,200,0,.65);font-variant-numeric:tabular-nums;margin-top:16px;
+  text-shadow:0 0 10px rgba(245,200,0,.3);
   font-family:'Manrope',monospace
 }
 
 /* ── New-hit flash ── */
-@keyframes hitflash{0%{background:rgba(79,255,204,.4)}100%{background:transparent}}
+@keyframes hitflash{0%{background:rgba(192,0,14,.35)}100%{background:transparent}}
 .hit-flash{animation:hitflash .6s ease-out}
 @keyframes hitpulse{0%,100%{opacity:1}50%{opacity:.4}}
 @keyframes fadeSlideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .op-group-body.open{animation:fadeSlideUp .18s cubic-bezier(.4,0,.2,1) both}
 @keyframes oplivepulse{0%,100%{opacity:1;box-shadow:0 0 10px rgba(192,0,14,.9),0 0 20px rgba(192,0,14,.4)}50%{opacity:.6;box-shadow:0 0 4px rgba(192,0,14,.5),0 0 8px rgba(192,0,14,.2)}}
-@keyframes devlivepulse{0%,100%{opacity:1;box-shadow:0 0 10px rgba(79,255,204,.9),0 0 20px rgba(79,255,204,.4)}50%{opacity:.6;box-shadow:0 0 4px rgba(79,255,204,.5),0 0 8px rgba(79,255,204,.2)}}
+@keyframes devlivepulse{0%,100%{opacity:1;box-shadow:0 0 10px rgba(192,0,14,.9),0 0 20px rgba(192,0,14,.4)}50%{opacity:.6;box-shadow:0 0 4px rgba(192,0,14,.5),0 0 8px rgba(192,0,14,.2)}}
 
 /* ── Sections ── */
 section{
@@ -203,13 +203,13 @@ section::before,section::after{
 }
 section::before{top:-1px;left:-1px;border-width:1.5px 0 0 1.5px;border-radius:14px 0 0 0}
 section::after{bottom:-1px;right:-1px;border-width:0 1.5px 1.5px 0;border-radius:0 0 14px 0}
-#devContent section::before,#devContent section::after{border-color:rgba(79,255,204,.3)}
+#devContent section::before,#devContent section::after{border-color:rgba(192,0,14,.3)}
 #opContent section::before,#opContent section::after{border-color:rgba(159,122,234,.3)}
-#devContent section:hover::before,#devContent section:hover::after{border-color:rgba(79,255,204,.7)}
+#devContent section:hover::before,#devContent section:hover::after{border-color:rgba(192,0,14,.7)}
 #opContent section:hover::before,#opContent section:hover::after{border-color:rgba(159,122,234,.7)}
 #devContent section:focus-within{
-  border-color:rgba(79,255,204,.35);
-  box-shadow:0 2px 24px rgba(0,0,0,.4),0 0 0 1px rgba(79,255,204,.1),0 0 30px rgba(79,255,204,.04)
+  border-color:rgba(192,0,14,.3);
+  box-shadow:0 2px 24px rgba(0,0,0,.4),0 0 0 1px rgba(192,0,14,.08),0 0 30px rgba(192,0,14,.04)
 }
 #opContent section:focus-within{
   border-color:rgba(159,122,234,.35);
@@ -254,8 +254,8 @@ section .sec-body{padding:14px 16px}
   min-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:0;padding:32px 0 24px;
-  /* teal ambient from top */
-  background:radial-gradient(ellipse 70% 45% at 50% -10%,rgba(79,255,204,.07) 0%,transparent 100%);
+  /* dark red ambient from top */
+  background:radial-gradient(ellipse 70% 45% at 50% -10%,rgba(192,0,14,.08) 0%,transparent 100%);
 }
 .tri-static{margin-bottom:28px;position:relative;display:flex;align-items:center;justify-content:center}
 .tri-static::before{
@@ -291,13 +291,13 @@ section .sec-body{padding:14px 16px}
   transition:opacity .25s,height .25s;
   filter:blur(1px)
 }
-#btnDev::before{background:linear-gradient(180deg,transparent,#4fffcc,transparent);box-shadow:0 0 8px #4fffcc}
+#btnDev::before{background:linear-gradient(180deg,transparent,#c0000e,transparent);box-shadow:0 0 8px #c0000e}
 #btnOp::before{background:linear-gradient(180deg,transparent,#9f7aea,transparent);box-shadow:0 0 8px #9f7aea}
 .home-btn:hover::before{opacity:1}
 #btnDev:hover{
-  background:rgba(79,255,204,.04);
-  border-color:rgba(79,255,204,.35);
-  box-shadow:0 0 0 1px rgba(79,255,204,.08),0 8px 32px rgba(79,255,204,.08),inset 0 0 20px rgba(79,255,204,.03)
+  background:rgba(192,0,14,.04);
+  border-color:rgba(192,0,14,.35);
+  box-shadow:0 0 0 1px rgba(192,0,14,.08),0 8px 32px rgba(192,0,14,.08),inset 0 0 20px rgba(192,0,14,.03)
 }
 #btnOp:hover{
   background:rgba(159,122,234,.04);
@@ -306,7 +306,7 @@ section .sec-body{padding:14px 16px}
 }
 .home-btn:active{transform:scale(.975)}
 .home-btn-arrow{color:rgba(255,255,255,.25);font-size:1rem;transition:transform .2s,color .2s,text-shadow .2s}
-#btnDev:hover .home-btn-arrow{transform:translateX(4px);color:#4fffcc;text-shadow:0 0 8px rgba(79,255,204,.7)}
+#btnDev:hover .home-btn-arrow{transform:translateX(4px);color:#ff3333;text-shadow:0 0 8px rgba(192,0,14,.7)}
 #btnOp:hover .home-btn-arrow{transform:translateX(4px);color:#9f7aea;text-shadow:0 0 8px rgba(159,122,234,.7)}
 
 /* ── Panel scroll view ── */
@@ -321,7 +321,7 @@ section .sec-body{padding:14px 16px}
   cursor:pointer;padding:4px 0 16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
   transition:color .2s,transform .15s,text-shadow .2s
 }
-#devBack:hover{color:#4fffcc;transform:translateX(-3px);text-shadow:0 0 10px rgba(79,255,204,.5)}
+#devBack:hover{color:#ff3333;transform:translateX(-3px);text-shadow:0 0 10px rgba(192,0,14,.5)}
 #opBack:hover{color:#9f7aea;transform:translateX(-3px);text-shadow:0 0 10px rgba(159,122,234,.5)}
 .panel-back:active{opacity:.7}
 
@@ -338,10 +338,10 @@ ul.devlist li{
 }
 ul.devlist li:last-child{border-bottom:none}
 ul.devlist li:hover{
-  background:rgba(79,255,204,.04);
-  border-left-color:rgba(79,255,204,.4);
+  background:rgba(192,0,14,.04);
+  border-left-color:rgba(192,0,14,.4);
   color:#ddd;
-  box-shadow:inset 0 0 0 1px rgba(79,255,204,.07)
+  box-shadow:inset 0 0 0 1px rgba(192,0,14,.07)
 }
 
 /* ── Status badge ── */
@@ -373,7 +373,7 @@ ul.devlist li:hover{
 .op-group-body{display:none}
 .op-group-body.open{display:block}
 /* group colour themes */
-.op-grp-overview{background:rgba(79,255,204,.1);border-color:rgba(79,255,204,.28);color:#4fc}
+.op-grp-overview{background:rgba(192,0,14,.1);border-color:rgba(192,0,14,.28);color:#ff3333}
 .op-grp-links{background:rgba(245,200,0,.1);border-color:rgba(245,200,0,.3);color:#f5c800}
 .op-grp-access{background:rgba(255,107,107,.1);border-color:rgba(255,107,107,.3);color:#ff6b6b}
 .op-grp-logs{background:rgba(170,170,255,.1);border-color:rgba(170,170,255,.28);color:#aaf}
@@ -397,8 +397,8 @@ ul.devlist li:hover{
 .stat-chip-trap.active{color:#ff4444;background:rgba(192,0,14,.1);border-color:rgba(192,0,14,.4);box-shadow:0 0 8px rgba(192,0,14,.15)}
 .stat-chip-hit{color:rgba(245,200,0,.5);background:rgba(245,200,0,.06);border:1px solid rgba(245,200,0,.18)}
 .stat-chip-hit.active{color:#f5c800;background:rgba(245,200,0,.1);border-color:rgba(245,200,0,.4);box-shadow:0 0 8px rgba(245,200,0,.12)}
-.stat-chip-redir{color:rgba(79,255,204,.4);background:rgba(79,255,204,.04);border:1px solid rgba(79,255,204,.14)}
-.stat-chip-redir.active{color:#4fc;background:rgba(79,255,204,.08);border-color:rgba(79,255,204,.35);box-shadow:0 0 8px rgba(79,255,204,.1)}
+.stat-chip-redir{color:rgba(192,0,14,.5);background:rgba(192,0,14,.04);border:1px solid rgba(192,0,14,.18)}
+.stat-chip-redir.active{color:#ff3333;background:rgba(192,0,14,.08);border-color:rgba(192,0,14,.4);box-shadow:0 0 8px rgba(192,0,14,.12)}
 .stat-chip-archive{color:rgba(170,170,255,.4);background:rgba(170,170,255,.04);border:1px solid rgba(170,170,255,.12);cursor:pointer}
 .stat-chip-archive.active{color:#aaf;background:rgba(170,170,255,.08);border-color:rgba(170,170,255,.3);box-shadow:0 0 8px rgba(170,170,255,.1)}
 .stat-chip-archive:hover{background:rgba(170,170,255,.1);border-color:rgba(170,170,255,.35)}
@@ -406,16 +406,16 @@ ul.devlist li:hover{
 /* ── Active stat chip pulse ── */
 @keyframes chip-pulse-red{0%,100%{box-shadow:0 0 8px rgba(192,0,14,.15)}50%{box-shadow:0 0 14px rgba(192,0,14,.5),0 0 24px rgba(192,0,14,.2)}}
 @keyframes chip-pulse-amber{0%,100%{box-shadow:0 0 8px rgba(245,200,0,.12)}50%{box-shadow:0 0 14px rgba(245,200,0,.4),0 0 24px rgba(245,200,0,.18)}}
-@keyframes chip-pulse-teal{0%,100%{box-shadow:0 0 8px rgba(79,255,204,.1)}50%{box-shadow:0 0 14px rgba(79,255,204,.4),0 0 24px rgba(79,255,204,.14)}}
+@keyframes chip-pulse-red2{0%,100%{box-shadow:0 0 8px rgba(192,0,14,.1)}50%{box-shadow:0 0 14px rgba(192,0,14,.45),0 0 24px rgba(192,0,14,.18)}}
 .stat-chip-trap.active{animation:chip-pulse-red 2.4s ease-in-out infinite}
 .stat-chip-hit.active{animation:chip-pulse-amber 2.6s ease-in-out infinite}
-.stat-chip-redir.active{animation:chip-pulse-teal 2.8s ease-in-out infinite}
+.stat-chip-redir.active{animation:chip-pulse-red2 2.8s ease-in-out infinite}
 
 /* ── Panel ambient top-edge glow ── */
 #devContent::before{
   content:'';position:absolute;top:0;left:10%;right:10%;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(79,255,204,.4),transparent);
-  box-shadow:0 0 12px 2px rgba(79,255,204,.18);pointer-events:none;z-index:0
+  background:linear-gradient(90deg,transparent,rgba(192,0,14,.5),transparent);
+  box-shadow:0 0 12px 2px rgba(192,0,14,.2);pointer-events:none;z-index:0
 }
 #opContent::before{
   content:'';position:absolute;top:0;left:10%;right:10%;height:1px;
@@ -538,25 +538,19 @@ ul.devlist li:hover{
         <animate attributeName="opacity" values=".3;0;.3" dur="3s" repeatCount="indefinite"/>
       </circle>
 
-      <!-- Exclamation mark — glowing red -->
-      <text x="80" y="90" text-anchor="middle"
-        font-family="'Manrope',sans-serif" font-size="28" font-weight="900"
-        fill="#c0000e" opacity=".0">!</text>
-      <!-- Replaced by the void — keep invisible for screen readers only -->
-
-      <!-- Warning bars replacing ! -->
+      <!-- Warning bars -->
       <rect x="77" y="52" width="6" height="22" rx="3" fill="#c0000e" opacity=".75"/>
       <rect x="77.5" y="79" width="5" height="5" rx="2.5" fill="#c0000e" opacity=".9"/>
     </svg>
   </div>
   <div style="display:flex;flex-direction:column;align-items:center;gap:5px;margin-bottom:28px">
-    <div class="sc6-title" style="font-size:2rem;font-weight:800;letter-spacing:.18em;color:#fff;text-shadow:0 0 20px rgba(255,255,255,.35),0 0 60px rgba(79,255,204,.2)">SC6</div>
+    <div class="sc6-title" style="font-size:2rem;font-weight:800;letter-spacing:.18em;color:#fff;text-shadow:0 0 20px rgba(255,255,255,.35),0 0 60px rgba(192,0,14,.2)">SC6</div>
     <div style="display:flex;align-items:center;gap:10px;width:100%">
-      <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(79,255,204,.3))"></div>
-      <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(79,255,204,.5);text-transform:uppercase">Control Panel</div>
-      <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(79,255,204,.3),transparent)"></div>
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(192,0,14,.3))"></div>
+      <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(192,0,14,.5);text-transform:uppercase">Control Panel</div>
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(192,0,14,.3),transparent)"></div>
     </div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(192,0,14,.55);font-family:'Manrope',sans-serif;margin-top:2px">v2.0.03</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.04</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -603,13 +597,13 @@ ul.devlist li:hover{
   <!-- Dev content (shown after auth) -->
   <div id="devContent" style="display:none">
   <!-- Dev session header -->
-  <div id="devSessionBanner" style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(79,255,204,.07) 0%,rgba(79,255,204,.03) 100%);border:1px solid rgba(79,255,204,.22);border-radius:12px;padding:10px 14px;margin-bottom:12px;box-shadow:0 0 20px rgba(79,255,204,.06),inset 0 1px 0 rgba(79,255,204,.08)">
-    <div style="width:7px;height:7px;border-radius:50%;background:#4fc;box-shadow:0 0 8px rgba(79,255,204,.7);flex-shrink:0;animation:devlivepulse 2.5s ease-in-out infinite"></div>
+  <div id="devSessionBanner" style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(192,0,14,.07) 0%,rgba(192,0,14,.03) 100%);border:1px solid rgba(192,0,14,.22);border-radius:12px;padding:10px 14px;margin-bottom:12px;box-shadow:0 0 20px rgba(192,0,14,.06),inset 0 1px 0 rgba(192,0,14,.08)">
+    <div style="width:7px;height:7px;border-radius:50%;background:#c0000e;box-shadow:0 0 8px rgba(192,0,14,.7);flex-shrink:0;animation:devlivepulse 2.5s ease-in-out infinite"></div>
     <div style="flex:1;min-width:0">
-      <div id="devSessionInfoBar" style="font-size:.65rem;color:#4fc;font-weight:700;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">DEV SESSION</div>
+      <div id="devSessionInfoBar" style="font-size:.65rem;color:#ff3333;font-weight:700;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">DEV SESSION</div>
       <div id="devSessionTime" style="font-size:.6rem;color:#3a9e82;margin-top:1px;letter-spacing:.03em">Session started</div>
     </div>
-    <div id="devHitBell" style="display:none;font-size:.7rem;cursor:pointer;padding:2px 8px;border:1px solid rgba(79,255,204,.3);border-radius:20px;background:rgba(79,255,204,.08);color:#4fc;font-weight:700;white-space:nowrap;transition:background .2s" title="New trap hits — click to scroll to list">🔔 <span id="devHitBellCount">0</span> new</div>
+    <div id="devHitBell" style="display:none;font-size:.7rem;cursor:pointer;padding:2px 8px;border:1px solid rgba(192,0,14,.3);border-radius:20px;background:rgba(192,0,14,.08);color:#ff3333;font-weight:700;white-space:nowrap;transition:background .2s" title="New trap hits — click to scroll to list">🔔 <span id="devHitBellCount">0</span> new</div>
     <button id="devKbdHintBtn" title="Keyboard shortcuts" style="background:none;border:1px solid rgba(255,255,255,.12);border-radius:50%;width:20px;height:20px;color:#444;font-size:.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;font-family:Manrope,sans-serif;flex-shrink:0;transition:border-color .2s,color .2s">?</button>
   </div>
   <!-- Quick stats bar -->
@@ -641,7 +635,7 @@ ul.devlist li:hover{
         <!-- Session stats bar -->
         <div id="devSessionStats" style="display:flex;gap:12px;margin-top:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 14px;flex-wrap:wrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)">
           <div style="display:flex;flex-direction:column;align-items:center;min-width:52px">
-            <div id="devStatHits" style="font-size:1.1rem;font-weight:800;color:#4fc;line-height:1">0</div>
+            <div id="devStatHits" style="font-size:1.1rem;font-weight:800;color:#ff3333;line-height:1">0</div>
             <div style="font-size:.58rem;color:#555;margin-top:2px;letter-spacing:.05em">TRAP HITS</div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:center;min-width:52px">
@@ -690,7 +684,7 @@ ul.devlist li:hover{
           <input type="text" id="devMsgInput" maxlength="200" placeholder="Your message…" style="flex:1">
           <button class="btn-sm" id="devMsgSend">Send</button>
         </div>
-        <div id="devMsgSent" style="display:none;font-size:.7rem;color:#4fc;margin-top:6px">✓ Message sent</div>
+        <div id="devMsgSent" style="display:none;font-size:.7rem;color:#ff3333;margin-top:6px">✓ Message sent</div>
       </div>
     </section>
 
@@ -749,8 +743,8 @@ ul.devlist li:hover{
         <!-- Trap refresh indicator -->
         <div id="devTrapRefreshInfo" style="display:none;font-size:.6rem;color:#444;margin-top:4px;letter-spacing:.03em"></div>
         <!-- Trap live hit feed -->
-        <div id="devTrapLiveFeed" style="display:none;margin-top:8px;background:rgba(79,255,204,.04);border:1px solid rgba(79,255,204,.12);border-radius:7px;padding:7px 10px">
-          <div style="font-size:.6rem;color:#4fc;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;font-weight:700">Live hit feed <span id="devTrapFeedDot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#4fc;vertical-align:middle;animation:tri-pulse 2s ease-in-out infinite"></span></div>
+        <div id="devTrapLiveFeed" style="display:none;margin-top:8px;background:rgba(192,0,14,.03);border:1px solid rgba(192,0,14,.15);border-radius:7px;padding:7px 10px">
+          <div style="font-size:.6rem;color:#ff3333;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;font-weight:700">Live hit feed <span id="devTrapFeedDot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#c0000e;vertical-align:middle;animation:tri-pulse 2s ease-in-out infinite"></span></div>
           <ul id="devTrapFeedList" style="list-style:none;padding:0;margin:0;max-height:120px;overflow-y:auto"></ul>
         </div>
         <input type="text" id="devTrapSearch" placeholder="Filter links…" maxlength="80" autocomplete="off" style="width:100%;font-size:.72rem;padding:5px 9px;background:rgba(255,255,255,.05);border:1px solid var(--faint);border-radius:6px;color:inherit;outline:none;margin-top:6px;display:none">
@@ -781,7 +775,7 @@ ul.devlist li:hover{
 
   </div>
   <!-- Hit toast -->
-  <div id="devHitToast" style="display:none;position:fixed;bottom:24px;right:16px;background:rgba(7,7,8,.96);border:1px solid rgba(79,255,204,.4);border-radius:10px;padding:8px 14px;font-size:.7rem;color:#4fc;font-weight:700;z-index:9999;pointer-events:none;font-family:'Manrope',sans-serif;letter-spacing:.04em;backdrop-filter:blur(12px);box-shadow:0 4px 20px rgba(0,0,0,.7),0 0 0 1px rgba(79,255,204,.08)"></div>
+  <div id="devHitToast" style="display:none;position:fixed;bottom:24px;right:16px;background:rgba(7,7,8,.96);border:1px solid rgba(192,0,14,.4);border-radius:10px;padding:8px 14px;font-size:.7rem;color:#ff3333;font-weight:700;z-index:9999;pointer-events:none;font-family:'Manrope',sans-serif;letter-spacing:.04em;backdrop-filter:blur(12px);box-shadow:0 4px 20px rgba(0,0,0,.7),0 0 0 1px rgba(192,0,14,.08)"></div>
 </div>
 
 <!-- ══════════ OPERATOR MENU ══════════ -->
@@ -839,7 +833,7 @@ ul.devlist li:hover{
               <div style="font-size:.6rem;color:#555;letter-spacing:.08em;margin-bottom:7px;text-transform:uppercase;font-weight:700">Workspace stats</div>
               <div style="display:flex;gap:12px;flex-wrap:wrap">
                 <div style="text-align:center"><div style="font-size:1.2rem;font-weight:800;color:#f5c800;line-height:1" id="opStatsTrapLinks">—</div><div style="font-size:.6rem;color:#666;margin-top:2px">error links</div></div>
-                <div style="text-align:center"><div style="font-size:1.2rem;font-weight:800;color:#4fc;line-height:1" id="opStatsRedirectLinks">—</div><div style="font-size:.6rem;color:#666;margin-top:2px">tracker links</div></div>
+                <div style="text-align:center"><div style="font-size:1.2rem;font-weight:800;color:#ff3333;line-height:1" id="opStatsRedirectLinks">—</div><div style="font-size:.6rem;color:#666;margin-top:2px">tracker links</div></div>
                 <div style="text-align:center"><div style="font-size:1.2rem;font-weight:800;color:#aaa;line-height:1" id="opStatsTrapVisitors">—</div><div style="font-size:.6rem;color:#666;margin-top:2px">error hits</div></div>
                 <div style="text-align:center"><div style="font-size:1.2rem;font-weight:800;color:#9f7aea;line-height:1" id="opStatsRedirectHits">—</div><div style="font-size:.6rem;color:#666;margin-top:2px">tracker hits</div></div>
               </div>
@@ -964,9 +958,9 @@ ul.devlist li:hover{
               </select>
               <button class="btn-sm" id="opCreateLink" style="font-weight:600">Create</button>
             </div>
-            <div id="opCreateResult" style="display:none;margin-top:8px;background:rgba(79,255,204,.07);border:1px solid rgba(79,255,204,.2);border-radius:7px;padding:9px 11px">
+            <div id="opCreateResult" style="display:none;margin-top:8px;background:rgba(192,0,14,.07);border:1px solid rgba(192,0,14,.2);border-radius:7px;padding:9px 11px">
               <div style="font-size:.62rem;color:#555;margin-bottom:3px;letter-spacing:.05em">LINK CREATED</div>
-              <code id="opCreateResultUrl" style="font-size:.7rem;color:#4fc;word-break:break-all;line-height:1.5"></code>
+              <code id="opCreateResultUrl" style="font-size:.7rem;color:#ff3333;word-break:break-all;line-height:1.5"></code>
               <div class="row" style="margin-top:7px;gap:6px">
                 <button class="btn-sm" id="opCreateCopy" style="font-size:.65rem">Copy</button>
               </div>
@@ -1122,7 +1116,7 @@ ul.devlist li:hover{
                 <button class="btn-sm exec-filter-who" data-who="all" style="font-size:.6rem;padding:2px 7px;background:rgba(255,255,255,.18);color:#fff;font-weight:700;opacity:1">All</button>
                 <button class="btn-sm exec-filter-who" data-who="operator" style="font-size:.6rem;padding:2px 7px;background:rgba(255,107,107,.12);color:#ff6b6b;opacity:.45">Op</button>
                 <button class="btn-sm exec-filter-who" data-who="dev" style="font-size:.6rem;padding:2px 7px;background:rgba(245,200,0,.08);color:#f5c800;opacity:.45">Dev</button>
-                <button class="btn-sm exec-filter-who" data-who="visitor" style="font-size:.6rem;padding:2px 7px;background:rgba(79,255,204,.08);color:#4fc;opacity:.45">Visit</button>
+                <button class="btn-sm exec-filter-who" data-who="visitor" style="font-size:.6rem;padding:2px 7px;background:rgba(192,0,14,.08);color:#ff3333;opacity:.45">Visit</button>
               </div>
             </div>
             <!-- Time-range filter row -->
@@ -1277,11 +1271,11 @@ ul.devlist li:hover{
               <input type="text" id="opErrBody" maxlength="400" placeholder="Body / detail text…" style="flex:1">
             </div>
             <div class="row" style="margin-top:6px">
-              <button class="btn-sm" id="opErrSave" style="color:#4fc;font-weight:600">Save</button>
+              <button class="btn-sm" id="opErrSave" style="color:#ff3333;font-weight:600">Save</button>
               <button class="btn-sm danger" id="opErrReset">Reset to default</button>
               <button class="btn-sm" id="opErrLoad" style="font-size:.65rem">Load current</button>
             </div>
-            <div id="opErrSaveMsg" style="display:none;font-size:.7rem;color:#4fc;margin-top:5px">✓ Saved</div>
+            <div id="opErrSaveMsg" style="display:none;font-size:.7rem;color:#ff3333;margin-top:5px">✓ Saved</div>
           </div>
         </section>
 
@@ -1548,9 +1542,9 @@ function renderDevArchives(){
         +Object.keys(links).map(function(linkId){
           var type=links[linkId];
           return '<li style="display:flex;align-items:center;gap:6px;font-size:.65rem;color:#888;padding:3px 5px;background:rgba(255,255,255,.03);border-radius:4px">'
-            +'<span style="font-size:.56rem;color:'+(type==='trap'?'#ff9955':'#4fc')+';border:1px solid '+(type==='trap'?'rgba(255,153,85,.25)':'rgba(79,255,204,.25)')+';border-radius:8px;padding:1px 5px;font-weight:600">'+(type==='trap'?'ERROR':'TRACKER')+'</span>'
+            +'<span style="font-size:.56rem;color:'+(type==='trap'?'#ff9955':'#ff3333')+';border:1px solid '+(type==='trap'?'rgba(255,153,85,.25)':'rgba(192,0,14,.25)')+';border-radius:8px;padding:1px 5px;font-weight:600">'+(type==='trap'?'ERROR':'TRACKER')+'</span>'
             +'<code style="font-size:.62rem;color:#f5c800;background:rgba(255,200,0,.08);padding:1px 5px;border-radius:3px;flex:1;word-break:break-all">'+esc(linkId.slice(-12))+'</code>'
-            +'<button class="btn-sm" style="font-size:.58rem;padding:1px 6px;color:#4fc" data-arch-unarchive-link="'+esc(linkId)+'" data-arch-unarchive-from="'+esc(archId)+'">Restore</button>'
+            +'<button class="btn-sm" style="font-size:.58rem;padding:1px 6px;color:#ff3333" data-arch-unarchive-link="'+esc(linkId)+'" data-arch-unarchive-from="'+esc(archId)+'">Restore</button>'
             +'</li>';
         }).join('')
         +'</ul>':'')
@@ -1744,7 +1738,7 @@ function renderExLog(){
       // Extract code from "dev XXXX" for nickname lookup
       var devCode=whoRaw.startsWith('dev ')?whoRaw.slice(4):null;
       var whoLabel=devCode?nameFor(devCode):whoRaw;
-      var whoColor=whoRaw==='operator'?'#ff6b6b':whoRaw.startsWith('dev ')?'#f5c800':whoRaw==='visitor'?'#4fc':'#aaa';
+      var whoColor=whoRaw==='operator'?'#ff6b6b':whoRaw.startsWith('dev ')?'#f5c800':whoRaw==='visitor'?'#ff3333':'#aaa';
       var isErr=e.action&&(e.action.startsWith('ERR')||e.action.toLowerCase().indexOf('error')>=0||e.action.toLowerCase().indexOf('error link')>=0||e.action.indexOf('Error link')>=0);
       var actionColor=isErr?'#ff6b6b':'#eee';
       var rowStyle='padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.7rem'+(isErr?';border-left:2px solid rgba(192,0,14,.5);padding-left:5px;background:rgba(192,0,14,.04)':';border-left:2px solid transparent;padding-left:5px');
@@ -1964,7 +1958,7 @@ function loadOpBindings(){
       var nick=nickFor(code);
       var label=nick?code+' ('+nick+')':code;
       var boundAt=b.boundAt?new Date(b.boundAt).toLocaleString():'?';
-      var statusColor=locked?'#ff5050':status==='pending'?'#f5c800':status==='rejected'?'#ff5050':enabled?'#4fc':'#aaa';
+      var statusColor=locked?'#ff5050':status==='pending'?'#f5c800':status==='rejected'?'#ff5050':enabled?'#ff3333':'#aaa';
       var statusLabel=locked?'🔒 Locked':status==='pending'?'⏳ Pending approval':status==='rejected'?'✗ Rejected':enabled?'✓ Approved':'⊘ Check disabled';
       return '<li style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
@@ -1975,7 +1969,7 @@ function loadOpBindings(){
         +(b.ua?'<div style="font-size:.6rem;color:#555;margin-top:1px;word-break:break-all">'+esc(b.ua.slice(0,100))+'</div>':'')
         +'<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'
         +(status==='pending'
-          ?'<button class="btn-sm" style="font-size:.62rem;background:rgba(79,255,160,.18);color:#4fc;border-color:#4fc" data-bind-approve="'+esc(code)+'">✓ Approve</button>'
+          ?'<button class="btn-sm" style="font-size:.62rem;background:rgba(192,0,14,.18);color:#ff3333;border-color:#c0000e" data-bind-approve="'+esc(code)+'">✓ Approve</button>'
            +'<button class="btn-sm danger" style="font-size:.62rem" data-bind-reject="'+esc(code)+'">✗ Reject</button>'
           :'')
         +(locked?'<button class="btn-sm" style="font-size:.62rem" data-bind-unlock="'+esc(code)+'">Unlock</button>':'')
@@ -2993,11 +2987,11 @@ function loadOpRedirectList(){
       var note=e.note?esc(e.note):'';
       var opDestIcon=getDestIcon(e.target||'');
       var opRdrHaystack=(id+' '+(e.note||'')+' '+(e.target||'')+' '+url+' '+(e.createdBy||'')).toLowerCase();
-      return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)'+(opRdrIsNew?';box-shadow:0 0 0 1px rgba(79,255,204,.2);border-radius:4px':'')+'" data-op-redir-id="'+esc(id)+'" data-op-redir-haystack="'+esc(opRdrHaystack)+'">'
+      return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)'+(opRdrIsNew?';box-shadow:0 0 0 1px rgba(192,0,14,.2);border-radius:4px':'')+'" data-op-redir-id="'+esc(id)+'" data-op-redir-haystack="'+esc(opRdrHaystack)+'">'
         +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">'
         +'<span style="font-size:.62rem;color:#555">'+esc(created)+' · by '+creator+'</span>'
-        +(opRdrIsNew?'<span style="font-size:.56rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em">NEW</span>':'')
-        +'<span style="margin-left:auto;font-size:.62rem;background:rgba(79,255,204,.1);color:#4fc;border:1px solid rgba(79,255,204,.25);border-radius:10px;padding:1px 8px;font-weight:600" id="oprhitcount-'+esc(id)+'">— hits</span>'
+        +(opRdrIsNew?'<span style="font-size:.56rem;color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em">NEW</span>':'')
+        +'<span style="margin-left:auto;font-size:.62rem;background:rgba(192,0,14,.1);color:#ff3333;border:1px solid rgba(192,0,14,.25);border-radius:10px;padding:1px 8px;font-weight:600" id="oprhitcount-'+esc(id)+'">— hits</span>'
         +'</div>'
         +(note?'<div style="font-size:.7rem;color:#9f7aea;margin-bottom:3px;font-style:italic">🏷 '+note+'</div>':'')
         +'<div style="font-size:.68rem;color:#aaa;margin-bottom:3px">'+opDestIcon+' → '+esc(dest)+'</div>'
@@ -3006,7 +3000,7 @@ function loadOpRedirectList(){
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" data-op-redir-copy="'+esc(url)+'">Copy</button>'
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" id="oprhitbtn-'+esc(id)+'" data-op-redir-hits="'+esc(id)+'">Hits</button>'
         +'<button class="btn-sm danger" style="font-size:.65rem;padding:2px 7px" data-op-redir-del="'+esc(id)+'">Delete</button>'
-        +'<span id="opractive-'+esc(id)+'" style="display:none;font-size:.58rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 6px;animation:hitpulse 2s infinite">🟢 active</span>'
+        +'<span id="opractive-'+esc(id)+'" style="display:none;font-size:.58rem;color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:10px;padding:1px 6px;animation:hitpulse 2s infinite">🟢 active</span>'
         +'<span id="oprlast-'+esc(id)+'" style="font-size:.58rem;color:#3a3a3a;margin-left:auto"></span>'
         +'</div>'
         +'<div style="display:flex;align-items:center;gap:5px;margin-top:5px">'
@@ -3031,9 +3025,9 @@ function loadOpRedirectList(){
           badge.textContent=n===0?'0 hits':n+(n===1?' hit':' hits');
           badge.style.animation='';badge.style.boxShadow='';
           if(n===0){badge.style.background='rgba(255,255,255,.05)';badge.style.color='#555';badge.style.borderColor='rgba(255,255,255,.1)';}
-          else if(n<=5){badge.style.background='rgba(79,255,204,.13)';badge.style.color='#4fc';badge.style.borderColor='rgba(79,255,204,.3)';badge.style.boxShadow='0 0 6px rgba(79,255,204,.18)';}
-          else if(n<=20){badge.style.background='rgba(79,255,204,.2)';badge.style.color='#4fc';badge.style.borderColor='rgba(79,255,204,.5)';badge.style.boxShadow='0 0 10px rgba(79,255,204,.3)';badge.style.fontWeight='700';}
-          else{badge.style.background='rgba(79,255,204,.28)';badge.style.color='#2fffbe';badge.style.borderColor='rgba(79,255,204,.7)';badge.style.boxShadow='0 0 14px rgba(79,255,204,.5)';badge.style.fontWeight='700';badge.style.animation='hitpulse 1.8s infinite';}
+          else if(n<=5){badge.style.background='rgba(192,0,14,.13)';badge.style.color='#ff3333';badge.style.borderColor='rgba(192,0,14,.3)';badge.style.boxShadow='0 0 6px rgba(192,0,14,.18)';}
+          else if(n<=20){badge.style.background='rgba(192,0,14,.2)';badge.style.color='#ff3333';badge.style.borderColor='rgba(192,0,14,.5)';badge.style.boxShadow='0 0 10px rgba(192,0,14,.3)';badge.style.fontWeight='700';}
+          else{badge.style.background='rgba(192,0,14,.28)';badge.style.color='#ff5555';badge.style.borderColor='rgba(192,0,14,.7)';badge.style.boxShadow='0 0 14px rgba(192,0,14,.5)';badge.style.fontWeight='700';badge.style.animation='hitpulse 1.8s infinite';}
         }
         // Last visit hint
         var lastEl=document.getElementById('oprlast-'+id);
@@ -3058,9 +3052,9 @@ function loadOpRedirectList(){
         var liHeatR=list.querySelector('[data-op-redir-id="'+id+'"]');
         if(liHeatR){
           if(n===0){liHeatR.style.borderLeft='';}
-          else if(n<=5){liHeatR.style.borderLeft='3px solid rgba(79,255,204,.35)';liHeatR.style.paddingLeft='8px';}
-          else if(n<=20){liHeatR.style.borderLeft='3px solid rgba(79,255,204,.6)';liHeatR.style.paddingLeft='8px';}
-          else{liHeatR.style.borderLeft='3px solid rgba(79,255,204,.9)';liHeatR.style.paddingLeft='8px';}
+          else if(n<=5){liHeatR.style.borderLeft='3px solid rgba(192,0,14,.35)';liHeatR.style.paddingLeft='8px';}
+          else if(n<=20){liHeatR.style.borderLeft='3px solid rgba(192,0,14,.6)';liHeatR.style.paddingLeft='8px';}
+          else{liHeatR.style.borderLeft='3px solid rgba(192,0,14,.9)';liHeatR.style.paddingLeft='8px';}
         }
         opRdrHitsDone++;
         if(opRdrHitsDone===keys.length){
@@ -3087,7 +3081,7 @@ function loadOpRedirectList(){
         fetch(opRedirectLogsUrl(id)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(logs){
           var arr=Array.isArray(logs)?logs.slice().reverse():(logs&&typeof logs==='object'?Object.values(logs).reverse():[]);
           if(!arr.length){sub.innerHTML='<li style="color:#888;font-size:.7rem">No hits yet.</li>';return;}
-          sub.innerHTML='<li style="color:#4fc;font-size:.65rem;padding:3px 0">'+arr.length+' hit'+(arr.length===1?'':'s')+'</li>'+arr.map(function(h,hi){
+          sub.innerHTML='<li style="color:#ff3333;font-size:.65rem;padding:3px 0">'+arr.length+' hit'+(arr.length===1?'':'s')+'</li>'+arr.map(function(h,hi){
             var loc=[h.city,h.region,h.country].filter(function(x){return x&&x!=='?';}).join(', ')||'Unknown';
             var dev=[h.device,h.os,h.browser].filter(function(x){return x&&x!=='?';}).join(' · ')||'?';
             var isp=h.isp&&h.isp!=='?'?h.isp:'';
@@ -3111,9 +3105,9 @@ function loadOpRedirectList(){
             var did='trhit-'+id+'-'+hi;
             return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
               +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'
-              +(vpnBlocked?'<span style="font-size:.6rem;background:rgba(255,40,40,.25);color:#ff3333;border:1px solid #ff3333;border-radius:3px;padding:1px 5px">🚫 VPN BLOCKED</span>':vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN / PROXY</span>':'<span style="font-size:.6rem;background:rgba(80,255,160,.12);color:#4fc;border:1px solid rgba(80,255,160,.3);border-radius:3px;padding:1px 5px">✓ Clean</span>')
+              +(vpnBlocked?'<span style="font-size:.6rem;background:rgba(255,40,40,.25);color:#ff3333;border:1px solid #ff3333;border-radius:3px;padding:1px 5px">🚫 VPN BLOCKED</span>':vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN / PROXY</span>':'<span style="font-size:.6rem;background:rgba(192,0,14,.12);color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:3px;padding:1px 5px">✓ Clean</span>')
               +(tzCheck.mismatch?'<span style="font-size:.6rem;background:rgba(255,165,0,.18);color:#ffaa33;border:1px solid rgba(255,165,0,.4);border-radius:3px;padding:1px 5px">🌐 TZ mismatch</span>':'')
-              +'<span style="font-size:.72rem;color:#4fc;font-weight:600">📍 '+esc(loc)+'</span>'
+              +'<span style="font-size:.72rem;color:#ff3333;font-weight:600">📍 '+esc(loc)+'</span>'
               +(dwellStr?'<span style="font-size:.65rem;color:#a0cfff">⏱ '+esc(dwellStr)+'</span>':'')
               +'<span style="margin-left:auto;font-size:.6rem;color:#555">'+esc(new Date(h.time).toLocaleString())+'</span>'
               +'</div>'
@@ -3198,7 +3192,7 @@ document.getElementById('opRedirectAutoRefreshToggle').addEventListener('click',
   _opRedirectAutoRefresh=!_opRedirectAutoRefresh;
   var btn=this;
   if(_opRedirectAutoRefresh){
-    btn.style.color='#4fc';btn.style.borderColor='rgba(79,255,204,.4)';
+    btn.style.color='#ff3333';btn.style.borderColor='rgba(192,0,14,.4)';
     loadOpRedirectList();
     _opRedirectAutoRefreshInterval=setInterval(function(){if(_opRedirectAutoRefresh)loadOpRedirectList();},30000);
   } else {
@@ -3493,7 +3487,7 @@ document.getElementById('devRedirectAutoRefreshToggle').addEventListener('click'
   _devRedirectAutoRefresh=!_devRedirectAutoRefresh;
   var btn=this;
   if(_devRedirectAutoRefresh){
-    btn.style.color='#4fc';btn.style.borderColor='rgba(79,255,204,.4)';
+    btn.style.color='#ff3333';btn.style.borderColor='rgba(192,0,14,.4)';
     loadDevRedirectList();
     _devRedirectAutoRefreshInterval=setInterval(function(){if(_devRedirectAutoRefresh)loadDevRedirectList();},30000);
   } else {
@@ -3635,11 +3629,11 @@ function loadOpDevInbox(){
         +(deviceInfo?'<div style="font-size:.62rem;color:#555;margin-bottom:3px">'+esc(deviceInfo)+'</div>':'')
         +'<div style="font-size:.8rem;color:#eee;margin:4px 0 6px;line-height:1.45;background:rgba(255,255,255,.04);padding:7px 10px;border-radius:6px;border-left:2px solid rgba(245,200,0,.4)">'+esc(e.text||'')+'</div>'
         +'<div style="display:flex;gap:6px">'
-        +'<button class="btn-sm" data-inbox-reply="'+safeTag+'" style="color:#4fc;border-color:rgba(79,255,160,.25)">↩ Reply privately</button>'
+        +'<button class="btn-sm" data-inbox-reply="'+safeTag+'" style="color:#ff3333;border-color:rgba(192,0,14,.25)">↩ Reply privately</button>'
         +'<button class="btn-sm danger" data-inbox-del="'+safeTag+'">Delete</button>'
         +'</div>'
         +'<div id="'+esc(domId)+'" style="display:none;margin-top:6px">'
-        +'<div class="row"><input type="text" class="inbox-reply-input" maxlength="200" placeholder="Private reply to '+esc(who)+'…" style="flex:1"><button class="btn-sm inbox-reply-send inbox-reply-tag" data-tag="'+safeTag+'" style="color:#4fc;border-color:rgba(79,255,160,.3)">Send</button></div>'
+        +'<div class="row"><input type="text" class="inbox-reply-input" maxlength="200" placeholder="Private reply to '+esc(who)+'…" style="flex:1"><button class="btn-sm inbox-reply-send inbox-reply-tag" data-tag="'+safeTag+'" style="color:#ff3333;border-color:rgba(192,0,14,.3)">Send</button></div>'
         +'</div>'
         +'</li>';
     }).join('');
@@ -4039,7 +4033,7 @@ document.getElementById('opTrapAutoRefreshToggle').addEventListener('click',func
   _opTrapAutoRefresh=!_opTrapAutoRefresh;
   var btn=this;
   if(_opTrapAutoRefresh){
-    btn.style.color='#4fc';btn.style.borderColor='rgba(79,255,204,.4)';
+    btn.style.color='#ff3333';btn.style.borderColor='rgba(192,0,14,.4)';
     loadOpTrapList();
     _opTrapAutoRefreshInterval=setInterval(function(){if(_opTrapAutoRefresh)loadOpTrapList();},30000);
   } else {
@@ -4079,8 +4073,8 @@ function loadOpTrapList(){
       var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws);
       var trapNote=link.note?esc(link.note):'';
       var opHaystack=(id+' '+(link.note||'')+' '+url).toLowerCase();
-      return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)'+(opTrapIsNew?';box-shadow:0 0 0 1px rgba(79,255,204,.2);border-radius:4px':'')+'" data-trap-id-op="'+esc(id)+'" data-op-trap-hits-val="0" data-op-trap-haystack="'+esc(opHaystack)+'">'
-        +'<div style="font-size:.7rem;color:#888">'+esc(created)+(opTrapIsNew?' <span style="font-size:.56rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em;vertical-align:middle">NEW</span>':'')+'</div>'
+      return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)'+(opTrapIsNew?';box-shadow:0 0 0 1px rgba(192,0,14,.2);border-radius:4px':'')+'" data-trap-id-op="'+esc(id)+'" data-op-trap-hits-val="0" data-op-trap-haystack="'+esc(opHaystack)+'">'
+        +'<div style="font-size:.7rem;color:#888">'+esc(created)+(opTrapIsNew?' <span style="font-size:.56rem;color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em;vertical-align:middle">NEW</span>':'')+'</div>'
         +(trapNote?'<div style="font-size:.7rem;color:#9f7aea;margin:2px 0;font-style:italic">🏷 '+trapNote+'</div>':'')
         +'<div style="font-size:.72rem;color:#ccc;word-break:break-all;margin:2px 0">'+esc(url)+'</div>'
         +'<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;align-items:center">'
@@ -4088,7 +4082,7 @@ function loadOpTrapList(){
         +'<button class="btn-sm" style="font-size:.68rem;padding:2px 8px" id="optrapvisbtn-'+esc(id)+'" data-trap-view="'+esc(id)+'">Visitors</button>'
         +'<button class="btn-sm danger" style="font-size:.68rem;padding:2px 8px" data-trap-del="'+esc(id)+'">Delete</button>'
         +'<span id="optraphitbadge-'+esc(id)+'" style="font-size:.58rem;color:#555;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:1px 6px;background:rgba(255,255,255,.03)">— hits</span>'
-        +'<span id="optrapactive-'+esc(id)+'" style="display:none;font-size:.58rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 6px;animation:hitpulse 2s infinite">🟢 active</span>'
+        +'<span id="optrapactive-'+esc(id)+'" style="display:none;font-size:.58rem;color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:10px;padding:1px 6px;animation:hitpulse 2s infinite">🟢 active</span>'
         +'<span class="op-trap-last-visit" style="font-size:.58rem;color:#3a3a3a;margin-left:auto"></span>'
         +'</div>'
         +'<div style="display:flex;gap:5px;margin-top:5px;align-items:center">'
@@ -4373,7 +4367,7 @@ function loadDevTrapList(){
       var haystack=(short+' '+note+' '+id+(muted?' muted':'')).toLowerCase();
       var opacity=muted?'0.38':'1';
       var isNew=e.createdAt&&(now-new Date(e.createdAt).getTime()<86400000);
-      var liExtra=isNew?';box-shadow:0 0 0 1px rgba(79,255,204,.2);border-radius:4px':'';
+      var liExtra=isNew?';box-shadow:0 0 0 1px rgba(192,0,14,.2);border-radius:4px':'';
       return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07);opacity:'+opacity+liExtra+'" data-trap-id="'+esc(id)+'" data-trap-hits-val="0" data-trap-haystack="'+esc(haystack)+'" data-trap-muted="'+esc(String(muted))+'">'
         +(muted?'<div style="font-size:.58rem;color:#666;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px">🔇 MUTED / ARCHIVED</div>':'')
         +'<label style="display:inline-flex;align-items:center;gap:4px;font-size:.6rem;color:#444;cursor:pointer;margin-bottom:2px"><input type="checkbox" class="trap-bulk-chk" data-trap-chk-id="'+esc(id)+'" style="accent-color:#c0000e;width:11px;height:11px;cursor:pointer"> Select</label>'
@@ -4381,13 +4375,13 @@ function loadDevTrapList(){
         +'<span style="font-size:.78rem;color:#ccc;flex:1">'
         +'🔗 <code style="font-size:.72rem;color:'+(expiryOver?'#555':'#f5c800')+';background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px">'+esc(short)+'</code>'
         +(ageStr?' <span style="font-size:.58rem;color:#3a3a3a;margin-left:2px">'+esc(ageStr)+'</span>':'')
-        +(isNew?' <span style="font-size:.56rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em">NEW</span>':'')
+        +(isNew?' <span style="font-size:.56rem;color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em">NEW</span>':'')
         +(note?' <span style="font-size:.65rem;color:#9f7aea;font-style:italic">'+esc(note)+'</span>':'')
         +(!e.expiresAt?' <span style="font-size:.56rem;color:#2a2a2a;border:1px solid rgba(255,255,255,.07);border-radius:3px;padding:1px 4px" title="No expiry">🔒</span>':'')
         +(expiryStr?' <span style="font-size:.58rem;color:'+(expiryOver?'#ff4444':'#555')+';border:1px solid '+(expiryOver?'rgba(255,68,68,.35)':'rgba(255,255,255,.1)')+';border-radius:3px;padding:1px 5px">'+esc(expiryStr)+'</span>':'')
         +'</span>'
         +'<span style="font-size:.6rem;color:#555;background:rgba(255,255,255,.05);border-radius:10px;padding:1px 7px" id="devtraphits-'+esc(id)+'">— hits</span>'
-        +'<span id="devtrapactive-'+esc(id)+'" style="display:none;font-size:.58rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 6px;animation:hitpulse 2s infinite">🟢 active</span>'
+        +'<span id="devtrapactive-'+esc(id)+'" style="display:none;font-size:.58rem;color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:10px;padding:1px 6px;animation:hitpulse 2s infinite">🟢 active</span>'
         +'<span style="font-size:.58rem;color:#3a3a3a" id="devtraplast-'+esc(id)+'"></span>'
         +'<button class="btn-sm" style="font-size:.68rem;padding:2px 8px" data-copy-trap="'+esc(url)+'">Copy</button>'
         +'<button class="btn-sm" style="font-size:.68rem;padding:2px 8px;color:#777" data-dup-trap="'+esc(id)+'" title="Duplicate this link">Dup</button>'
@@ -4397,7 +4391,7 @@ function loadDevTrapList(){
         +'<div style="display:flex;gap:5px;margin-top:5px;align-items:center">'
         +'<input type="text" data-trap-note-input="'+esc(id)+'" value="'+esc(note)+'" placeholder="Add note…" maxlength="80" style="flex:1;font-size:.68rem;padding:3px 7px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:5px;color:inherit;outline:none">'
         +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px" data-trap-note-save="'+esc(id)+'">Save note</button>'
-        +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px;color:'+(muted?'#4fc':'#777')+'" data-trap-mute="'+esc(id)+'" title="'+(muted?'Unmute link':'Mute / archive link')+'">'+(muted?'Unmute':'Mute')+'</button>'
+        +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px;color:'+(muted?'#ff3333':'#777')+'" data-trap-mute="'+esc(id)+'" title="'+(muted?'Unmute link':'Mute / archive link')+'">'+(muted?'Unmute':'Mute')+'</button>'
         +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px;color:#9f7aea" data-dev-archive-link="'+esc(id)+'" data-dev-archive-type="trap" title="Move to archive">🗂 Archive</button>'
         +'</div>'
         +'<div style="display:flex;gap:5px;margin-top:4px;align-items:center">'
@@ -4692,8 +4686,8 @@ function _renderDevTrapFeed(){
   var entries=_devFeedEntries.slice(0,10);
   feedList.innerHTML=entries.map(function(h){
     var t=h.time?new Date(h.time).toLocaleTimeString():'?';
-    return '<li style="font-size:.65rem;padding:3px 0;border-bottom:1px solid rgba(79,255,204,.07);display:flex;gap:6px;align-items:center">'
-      +'<span style="color:#4fc;font-weight:700;font-family:monospace">'+esc(h.short)+'</span>'
+    return '<li style="font-size:.65rem;padding:3px 0;border-bottom:1px solid rgba(192,0,14,.07);display:flex;gap:6px;align-items:center">'
+      +'<span style="color:#ff3333;font-weight:700;font-family:monospace">'+esc(h.short)+'</span>'
       +'<span style="color:#ccc;flex:1">📍 '+esc(h.loc)+'</span>'
       +'<span style="color:#444;white-space:nowrap">'+esc(t)+'</span>'
       +'</li>';
@@ -4787,15 +4781,15 @@ function loadDevRedirectList(){
       var destIcon=getDestIcon(e.target||'');
       var redirIsNew=e.createdAt&&(Date.now()-new Date(e.createdAt).getTime()<86400000);
       var redirHaystack=((e.target||'')+' '+(note||'')+' '+id).toLowerCase();
-      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)'+(redirIsNew?';box-shadow:0 0 0 1px rgba(79,255,204,.2);border-radius:4px':'')+'" data-redir-id="'+esc(id)+'" data-redir-hits-val="0" data-redir-haystack="'+esc(redirHaystack)+'">'
-        +'<div style="font-size:.65rem;color:'+(redirExpiryOver?'#555':'#888')+';margin-bottom:2px">'+destIcon+' → '+esc(dest)+(redirAgeStr?' <span style="font-size:.58rem;color:#3a3a3a">'+esc(redirAgeStr)+'</span>':'')+(redirIsNew?' <span style="font-size:.56rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em">NEW</span>':'')+(created?' <span style="color:#333;font-size:.6rem" title="Created: '+esc(created)+'">·</span>':'')+'</div>'
+      return '<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)'+(redirIsNew?';box-shadow:0 0 0 1px rgba(192,0,14,.2);border-radius:4px':'')+'" data-redir-id="'+esc(id)+'" data-redir-hits-val="0" data-redir-haystack="'+esc(redirHaystack)+'">'
+        +'<div style="font-size:.65rem;color:'+(redirExpiryOver?'#555':'#888')+';margin-bottom:2px">'+destIcon+' → '+esc(dest)+(redirAgeStr?' <span style="font-size:.58rem;color:#3a3a3a">'+esc(redirAgeStr)+'</span>':'')+(redirIsNew?' <span style="font-size:.56rem;color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em">NEW</span>':'')+(created?' <span style="color:#333;font-size:.6rem" title="Created: '+esc(created)+'">·</span>':'')+'</div>'
         +(note?'<div style="font-size:.65rem;color:#9f7aea;margin-bottom:3px;font-style:italic">🏷 '+esc(note)+'</div>':'')
         +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
         +'<code style="font-size:.65rem;color:'+(redirExpiryOver?'#555':'#f5c800')+';background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;word-break:break-all;flex:1">'+esc(url)+'</code>'
         +(redirExpiryStr?' <span style="font-size:.58rem;color:'+(redirExpiryOver?'#ff4444':'#555')+';border:1px solid '+(redirExpiryOver?'rgba(255,68,68,.35)':'rgba(255,255,255,.1)')+';border-radius:3px;padding:1px 5px">'+esc(redirExpiryStr)+'</span>':'')
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" data-redir-copy="'+esc(url)+'">Copy</button>'
         +'<a href="'+esc(e.target||'')+'" target="_blank" rel="noopener" class="btn-sm" style="font-size:.65rem;padding:2px 7px;text-decoration:none;color:inherit" title="Open destination">↗</a>'
-        +'<span id="devrdiractive-'+esc(id)+'" style="display:none;font-size:.58rem;color:#4fc;border:1px solid rgba(79,255,204,.3);border-radius:10px;padding:1px 6px;animation:hitpulse 2s infinite">🟢 active</span>'
+        +'<span id="devrdiractive-'+esc(id)+'" style="display:none;font-size:.58rem;color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:10px;padding:1px 6px;animation:hitpulse 2s infinite">🟢 active</span>'
         +'<span style="font-size:.58rem;color:#3a3a3a" id="devrdrlast-'+esc(id)+'"></span>'
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" id="devrhitbtn-'+esc(id)+'" data-redir-hits="'+esc(id)+'">Hits</button>'
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px;color:#777" data-dup-redir="'+esc(id)+'" title="Duplicate this redirect link">Dup</button>'
@@ -4870,9 +4864,9 @@ function loadDevRedirectList(){
         var rli=list.querySelector('[data-redir-id="'+id+'"]');
         if(rli){
           if(n===0){rli.style.borderLeft='';}
-          else if(n<=3){rli.style.borderLeft='3px solid rgba(79,255,204,.3)';rli.style.paddingLeft='8px';}
-          else if(n<=10){rli.style.borderLeft='3px solid rgba(79,255,204,.55)';rli.style.paddingLeft='8px';}
-          else{rli.style.borderLeft='3px solid rgba(79,255,204,.85)';rli.style.paddingLeft='8px';}
+          else if(n<=3){rli.style.borderLeft='3px solid rgba(192,0,14,.3)';rli.style.paddingLeft='8px';}
+          else if(n<=10){rli.style.borderLeft='3px solid rgba(192,0,14,.55)';rli.style.paddingLeft='8px';}
+          else{rli.style.borderLeft='3px solid rgba(192,0,14,.85)';rli.style.paddingLeft='8px';}
         }
         // Store hit count on <li> for sorting
         if(rli)rli.setAttribute('data-redir-hits-val',String(n));
@@ -4931,9 +4925,9 @@ function loadDevRedirectList(){
             var did='devrhit-'+id+'-'+hi;
             return '<li style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
               +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'
-              +(vpnBlocked?'<span style="font-size:.6rem;background:rgba(255,40,40,.25);color:#ff3333;border:1px solid #ff3333;border-radius:3px;padding:1px 5px">🚫 VPN BLOCKED</span>':vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN / PROXY</span>':'<span style="font-size:.6rem;background:rgba(80,255,160,.12);color:#4fc;border:1px solid rgba(80,255,160,.3);border-radius:3px;padding:1px 5px">✓ Clean</span>')
+              +(vpnBlocked?'<span style="font-size:.6rem;background:rgba(255,40,40,.25);color:#ff3333;border:1px solid #ff3333;border-radius:3px;padding:1px 5px">🚫 VPN BLOCKED</span>':vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN / PROXY</span>':'<span style="font-size:.6rem;background:rgba(192,0,14,.12);color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:3px;padding:1px 5px">✓ Clean</span>')
               +(tzCheck.mismatch?'<span style="font-size:.6rem;background:rgba(255,165,0,.18);color:#ffaa33;border:1px solid rgba(255,165,0,.4);border-radius:3px;padding:1px 5px">🌐 TZ mismatch</span>':'')
-              +'<span style="font-size:.72rem;color:#4fc;font-weight:600">📍 '+esc(loc)+'</span>'
+              +'<span style="font-size:.72rem;color:#ff3333;font-weight:600">📍 '+esc(loc)+'</span>'
               +(dwellStr?'<span style="font-size:.65rem;color:#a0cfff">⏱ '+esc(dwellStr)+'</span>':'')
               +'<span style="margin-left:auto;font-size:.6rem;color:#555">'+esc(new Date(h.time).toLocaleString())+'</span>'
               +'</div>'
@@ -5230,7 +5224,7 @@ document.getElementById('devTrapPurgeExpired').addEventListener('click',function
 document.getElementById('devTrapAutoRefreshToggle').addEventListener('click',function(){
   _devTrapAutoRefresh=!_devTrapAutoRefresh;
   if(_devTrapAutoRefresh){
-    this.style.color='#4fc';this.style.borderColor='rgba(79,255,204,.4)';
+    this.style.color='#ff3333';this.style.borderColor='rgba(192,0,14,.4)';
     if(_devTrapAutoRefreshInterval)clearInterval(_devTrapAutoRefreshInterval);
     _devTrapAutoRefreshInterval=setInterval(function(){loadDevTrapList();},30000);
   }else{
@@ -5257,7 +5251,7 @@ function liveStreamStart(){
   _liveStreamLastKey='';
   document.getElementById('liveStreamStatus').textContent='Running…';
   document.getElementById('liveStreamToggle').textContent='Stop';
-  document.getElementById('liveStreamDot').style.background='#4fc';
+  document.getElementById('liveStreamDot').style.background='#c0000e';
   _liveStreamPoll();
   _liveStreamTimer=setInterval(_liveStreamPoll,5000);
 }
@@ -5295,7 +5289,7 @@ function _liveStreamPoll(){
     if(!newEntries.length){
       // Flash dot to show we polled
       var dot=document.getElementById('liveStreamDot');
-      dot.style.background='#fff';setTimeout(function(){dot.style.background='#4fc';},150);
+      dot.style.background='#fff';setTimeout(function(){dot.style.background='#c0000e';},150);
       return;
     }
     newEntries.sort(function(a,b){return (b.time||'').localeCompare(a.time||'');});
@@ -5306,7 +5300,7 @@ function _liveStreamPoll(){
     _renderLiveStream();
     // Flash dot on new hit
     var dot=document.getElementById('liveStreamDot');
-    dot.style.background='#ff6b6b';setTimeout(function(){dot.style.background='#4fc';},400);
+    dot.style.background='#ff6b6b';setTimeout(function(){dot.style.background='#c0000e';},400);
   });
 }
 function _renderLiveStream(){
@@ -5327,7 +5321,7 @@ function _renderLiveStream(){
     var isVpnBlocked=e.action&&e.action.indexOf('VPN blocked')>=0;
     var isGeoBlocked=e.action&&e.action.indexOf('Geo-blocked')>=0;
     var isVpn=e.isVpn===true||isVpnBlocked;
-    var dotColor=isVpnBlocked||isGeoBlocked?'#ff3333':isVpn?'#ff6b6b':'#4fc';
+    var dotColor=isVpnBlocked||isGeoBlocked?'#ff3333':isVpn?'#ff6b6b':'#c0000e';
     var hasIp=e.ip&&e.ip!=='?';
     return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
       +'<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">'
@@ -5338,7 +5332,7 @@ function _renderLiveStream(){
       +'<span style="margin-left:auto"></span>'
       +(hasIp?'<button class="btn-sm ls-ban-btn" data-ip="'+esc(e.ip)+'" style="font-size:.6rem;padding:1px 7px;border-color:rgba(255,107,107,.4);color:#ff6b6b">Ban IP</button>':'')
       +'</div>'
-      +'<div style="font-size:.72rem;color:#4fc;margin-top:2px">📍 '+esc(loc)+'</div>'
+      +'<div style="font-size:.72rem;color:#ff3333;margin-top:2px">📍 '+esc(loc)+'</div>'
       +'<div style="font-size:.68rem;color:#888;margin-top:1px">🖥 '+esc(dev)+'</div>'
       +(hasIp?'<div style="font-size:.65rem;color:#f5c800;margin-top:1px">🌐 '+esc(e.ip)+(isp?' · <span style="color:#888">'+esc(isp)+'</span>':'')+'</div>':'')
       +(isVpnBlocked||isGeoBlocked?'<div style="font-size:.62rem;color:#666;margin-top:1px">'+esc(e.action||'')+'</div>':'')
@@ -5439,7 +5433,7 @@ function sc6TestAlert(toEmail,resultElId){
   var el=document.getElementById(resultElId);
   if(el){el.textContent='Sending…';el.style.color='#aaa';}
   sc6SendAlert(toEmail,'SC6 Test Alert','This is a test alert from SC6. If you received this, email alerts are working correctly.')
-    .then(function(){if(el){el.textContent='✓ Sent — check your inbox';el.style.color='#4fc';}})
+    .then(function(){if(el){el.textContent='✓ Sent — check your inbox';el.style.color='#ff3333';}})
     .catch(function(e){if(el){el.textContent='✗ '+sc6EmailErrMsg(e);el.style.color='#ff6b6b';}});
 }
 
@@ -5640,9 +5634,9 @@ function _renderGeoMode(mode){
 function _renderGeoList(list,mode){
   var el=document.getElementById('opGeoCountriesList');
   if(!el)return;
-  var color=mode==='block'?'rgba(255,100,100,.15)':'rgba(79,255,204,.1)';
-  var border=mode==='block'?'rgba(255,100,100,.35)':'rgba(79,255,204,.25)';
-  var textColor=mode==='block'?'#ff8888':'#4fc';
+  var color=mode==='block'?'rgba(255,100,100,.15)':'rgba(192,0,14,.1)';
+  var border=mode==='block'?'rgba(255,100,100,.35)':'rgba(192,0,14,.25)';
+  var textColor=mode==='block'?'#ff8888':'#ff3333';
   if(!list||!list.length){el.innerHTML='<span style="font-size:.7rem;color:#555">No countries added — all visitors allowed</span>';return;}
   el.innerHTML=list.map(function(c){
     var name=GEO_COUNTRIES.find(function(x){return x[0]===c;});
@@ -5697,7 +5691,7 @@ _geoSearchEl.addEventListener('input',function(){
   var matches=GEO_COUNTRIES.filter(function(c){return c[0].toLowerCase().indexOf(q)>=0||c[1].toLowerCase().indexOf(q)>=0;}).slice(0,12);
   if(!matches.length){_geoDropEl.style.display='none';return;}
   _geoDropEl.innerHTML=matches.map(function(c){
-    return '<div style="padding:7px 10px;cursor:pointer;font-size:.75rem;border-bottom:1px solid #2a2a2a;color:#ccc" data-geo-code="'+c[0]+'"><span style="color:#4fc;font-weight:600;margin-right:6px">'+c[0]+'</span>'+esc(c[1])+'</div>';
+    return '<div style="padding:7px 10px;cursor:pointer;font-size:.75rem;border-bottom:1px solid #2a2a2a;color:#ccc" data-geo-code="'+c[0]+'"><span style="color:#ff3333;font-weight:600;margin-right:6px">'+c[0]+'</span>'+esc(c[1])+'</div>';
   }).join('');
   _geoDropEl.style.display='';
   _geoDropEl.querySelectorAll('[data-geo-code]').forEach(function(item){
@@ -5935,13 +5929,13 @@ function loadFailedLogins(){
       return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
         +'<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:2px">'
         +(isBrute?'<span style="font-size:.65rem;background:#ff2222;color:#fff;border-radius:4px;padding:1px 6px;font-weight:700">🚨 BRUTE</span>':'')
-        +(vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN</span>':'<span style="font-size:.6rem;background:rgba(80,255,160,.12);color:#4fc;border:1px solid rgba(80,255,160,.3);border-radius:3px;padding:1px 5px">✓ Clean IP</span>')
+        +(vpn?'<span style="font-size:.6rem;background:rgba(255,80,80,.2);color:#ff5050;border:1px solid #ff5050;border-radius:3px;padding:1px 5px">⚠ VPN</span>':'<span style="font-size:.6rem;background:rgba(192,0,14,.12);color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:3px;padding:1px 5px">✓ Clean IP</span>')
         +(e.panel?'<span style="font-size:.62rem;color:#f5c800;background:rgba(245,200,0,.1);border-radius:3px;padding:1px 5px">'+esc(e.panel)+' panel</span>':'')
         +'<span style="margin-left:auto;font-size:.62rem;color:#555">'+esc(t)+'</span>'
         +'</div>'
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
         +'<span style="font-size:.7rem;color:#ff6b6b;font-family:monospace;font-weight:600">'+esc(e.ip||'?')+'</span> <button onclick="(function(b){navigator.clipboard.writeText(\''+esc(e.ip||'')+'\').then(function(){b.textContent=\'✓\';setTimeout(function(){b.textContent=\'Copy\';},1200)}).catch(function(){});})(this)" style="background:none;border:1px solid rgba(255,107,107,.35);border-radius:3px;color:#ff6b6b;font-size:.6rem;padding:1px 6px;cursor:pointer;margin-left:2px;font-family:Manrope,sans-serif">Copy</button>'
-        +'<span style="font-size:.68rem;color:#4fc">📍 '+esc(loc)+'</span>'
+        +'<span style="font-size:.68rem;color:#ff3333">📍 '+esc(loc)+'</span>'
         +'</div>'
         +'<div style="margin-top:4px">'
         +'<button class="btn-sm" style="font-size:.6rem;padding:1px 7px" onclick="(function(el,id){var d=document.getElementById(id);var open=d.style.display!==\'none\';d.style.display=open?\'none\':\'\';el.textContent=open?\'Details\':\'Hide\';})(this,\''+did+'\')" >Details</button>'
