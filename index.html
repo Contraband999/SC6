@@ -1503,7 +1503,7 @@ function redirectLinksUrl(){return fbUrl('_sc6/workspaces/'+getSyncCode()+'/redi
 function redirectLogsUrl(id){return fbUrl('_sc6/workspaces/'+getSyncCode()+'/redirectLogs'+(id?'/'+id:''))}
 var ERROR_PAGE_BASE=location.origin+location.pathname.replace(/[^/]*$/,'')+'error.html';
 var WORKER_BASE='https://media.sharelink-1.workers.dev';
-var SC6_VERSION='2.0.15';
+var SC6_VERSION='2.0.21';
 
 // ── Version check — publish to Firebase on load, poll every 5s for newer version ──
 function versionNewer(a,b){
