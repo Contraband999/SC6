@@ -548,7 +548,7 @@ ul.devlist li:hover{
       <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(192,0,14,.5);text-transform:uppercase">Control Panel</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(192,0,14,.3),transparent)"></div>
     </div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.12</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.13</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -2269,6 +2269,8 @@ document.getElementById('devBack').addEventListener('click',function(){
   _devSessionLoginTime=null;
   var devST=document.getElementById('devSessionTime');if(devST)devST.textContent='Session started';
   var devSIB=document.getElementById('devSessionInfoBar');if(devSIB)devSIB.textContent='DEV SESSION';
+  // Stop reply poll
+  if(window._devReplyPollInterval){clearInterval(window._devReplyPollInterval);window._devReplyPollInterval=null;}
   // Stop auto-refresh (trap)
   if(_devTrapAutoRefreshInterval){clearInterval(_devTrapAutoRefreshInterval);_devTrapAutoRefreshInterval=null;}
   _devTrapAutoRefresh=false;
@@ -2541,6 +2543,9 @@ function openDev(whichCode){
   loadDevWsSwitcher();
   loadDevMessage();
   loadDevReply();
+  // Poll for operator replies every 30s
+  if(window._devReplyPollInterval)clearInterval(window._devReplyPollInterval);
+  window._devReplyPollInterval=setInterval(loadDevReply,30000);
   refreshDevTrapStatus();
   // Load nicknames then refresh the workspace nickname display
   loadNicknames(function(){updateDevSyncNickname();});
@@ -4476,6 +4481,9 @@ function loadDevTrapList(){
     _devTrapLastRefresh=Date.now();
     _startRefreshAgoUpdater();
     var obj=data&&typeof data==='object'&&!Array.isArray(data)?data:{};
+    // Filter to this dev's links only (devCode matches, or legacy link with no devCode)
+    var allKeys=Object.keys(obj);
+    allKeys.forEach(function(k){if(obj[k]&&obj[k].devCode&&obj[k].devCode!==_currentDevCode)delete obj[k];});
     var keys=Object.keys(obj);
     // Show/hide copy-all button
     var copyAllBtn=document.getElementById('devTrapCopyAll');
@@ -4899,6 +4907,8 @@ function loadDevRedirectList(){
     _devRedirectLastRefresh=Date.now();
     _startRefreshAgoUpdater();
     var obj=data&&typeof data==='object'&&!Array.isArray(data)?data:{};
+    // Filter to this dev's links only (devCode matches, or legacy link with no devCode)
+    Object.keys(obj).forEach(function(k){if(obj[k]&&obj[k].devCode&&obj[k].devCode!==_currentDevCode)delete obj[k];});
     var keys=Object.keys(obj);
     if(!keys.length){
       var sumElE=document.getElementById('devRedirectSummary');if(sumElE)sumElE.style.display='none';
@@ -5260,7 +5270,7 @@ document.getElementById('devConvertBtn').addEventListener('click',function(){
   var param=platformParam(target);
   var id=Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,8);
   var sc=getSyncCode();
-  var entry={target:target,param:param,createdAt:new Date().toISOString(),createdBy:deviceTag(),workspace:sc};
+  var entry={target:target,param:param,createdAt:new Date().toISOString(),createdBy:deviceTag(),workspace:sc,devCode:_currentDevCode};
   syncFetch(fbUrl('_sc6/workspaces/'+sc+'/redirectLinks/'+id),{method:'PUT',body:JSON.stringify(entry)}).then(function(){
     var url=WORKER_BASE+'/r?'+param+'='+encodeURIComponent(id)+'&ws='+encodeURIComponent(sc);
     exLog('Redirect link created','Target: '+target.slice(0,60),'dev '+_currentDevCode,true);
@@ -5298,7 +5308,7 @@ document.getElementById('devTrapGen').addEventListener('click',function(){
     if(!enabled){alert('Error link generation is disabled by the operator.');return;}
     var id=Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,8);
     var sc=getSyncCode();
-    var entry={createdAt:new Date().toISOString(),createdBy:deviceTag(),workspace:sc};
+    var entry={createdAt:new Date().toISOString(),createdBy:deviceTag(),workspace:sc,devCode:_currentDevCode};
     // Optional expiry
     var expiryHoursRaw=(document.getElementById('devTrapExpirySelect')||{}).value;
     var expiryHours=parseInt(expiryHoursRaw)||0;
