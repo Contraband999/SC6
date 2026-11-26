@@ -1,6 +1,7 @@
-// SC6 Redirect Tracker Worker — v1.9.41
+// SC6 Redirect Tracker Worker — v2.0.15
 // Deploy at: media.sharelink-1.workers.dev
 
+const SC6_VERSION = '2.0.15';
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
 const PARAMS = ['yt','ig','tt','tw','sc','fb','dc','tv','sp','sl','rd','wa','tg','r'];
 
@@ -207,6 +208,17 @@ async function writeExecLog(entry) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+
+    // ── Version endpoint ──
+    if (url.pathname === '/version') {
+      return new Response(JSON.stringify({ v: SC6_VERSION }), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
 
     // ── Dwell ping endpoint: POST /ping with JSON body ──
     if (url.pathname === '/ping' && request.method === 'POST') {
