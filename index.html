@@ -548,7 +548,7 @@ ul.devlist li:hover{
       <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(192,0,14,.5);text-transform:uppercase">Control Panel</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(192,0,14,.3),transparent)"></div>
     </div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.19</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.20</div>
     <div id="versionWarning" style="display:none;margin-top:6px;padding:4px 10px;background:rgba(192,0,14,.18);border:1px solid rgba(192,0,14,.5);border-radius:7px;font-size:.6rem;font-weight:700;color:#ff4444;letter-spacing:.06em;cursor:pointer" onclick="location.reload()" title="Click to reload">&#33; Version outdated — tap to refresh</div>
   </div>
   <div class="home-btns">
@@ -1505,7 +1505,7 @@ var ERROR_PAGE_BASE=location.origin+location.pathname.replace(/[^/]*$/,'')+'erro
 var WORKER_BASE='https://media.sharelink-1.workers.dev';
 var SC6_VERSION='2.0.15';
 
-// ── Version check — poll every 30s, show banner instantly when worker is ahead ──
+// ── Version check — publish to Firebase on load, poll every 5s for newer version ──
 function versionNewer(a,b){
   var pa=a.replace(/^v/,'').split('.').map(Number);
   var pb=b.replace(/^v/,'').split('.').map(Number);
@@ -1513,16 +1513,21 @@ function versionNewer(a,b){
   return false;
 }
 (function(){
+  // Write this page's version to Firebase (only if it's newer than what's stored)
+  var _versionUrl=fbUrl('_sc6/meta/version');
+  fetch(_versionUrl).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    if(!d||!d.v||versionNewer(SC6_VERSION,d.v)){
+      fetch(_versionUrl,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({v:SC6_VERSION,updatedAt:new Date().toISOString()})}).catch(function(){});
+    }
+  });
+  // Poll Firebase every 5s — show banner if a newer version was published
   function checkVersion(){
-    fetch(WORKER_BASE+'/version',{cache:'no-store'})
-      .then(function(r){return r.ok?r.json():null})
-      .then(function(d){
-        if(d&&d.v&&versionNewer(d.v,SC6_VERSION)){
-          var el=document.getElementById('versionWarning');
-          if(el)el.style.display='';
-        }
-      })
-      .catch(function(){});
+    fetch(_versionUrl,{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+      if(d&&d.v&&versionNewer(d.v,SC6_VERSION)){
+        var el=document.getElementById('versionWarning');
+        if(el)el.style.display='';
+      }
+    });
   }
   setTimeout(checkVersion,3000);
   setInterval(checkVersion,5000);
