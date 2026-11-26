@@ -548,7 +548,7 @@ ul.devlist li:hover{
       <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(192,0,14,.5);text-transform:uppercase">Control Panel</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(192,0,14,.3),transparent)"></div>
     </div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.13</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.14</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -1569,11 +1569,13 @@ function renderDevArchives(){
           var logsData=entry&&entry.logs||null;
           var hitCount=logsData?(Array.isArray(logsData)?logsData.length:Object.keys(logsData).length):0;
           var note=linkData.note||linkData.label||'';
+          var linkDevCode=linkData.devCode||'';
           var archivedAt=entry&&entry.archivedAt?new Date(entry.archivedAt).toLocaleDateString():'';
           return '<li style="display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:.65rem;color:#888;padding:6px 8px;background:rgba(255,255,255,.03);border-radius:6px;border:1px solid rgba(255,255,255,.06)">'
-            +'<span style="font-size:.56rem;color:'+(linkType==='trap'?'#ff9955':'#ff3333')+';border:1px solid '+(linkType==='trap'?'rgba(255,153,85,.25)':'rgba(192,0,14,.25)')+';border-radius:8px;padding:1px 5px;font-weight:600">'+(linkType==='trap'?'ERROR':'TRACKER')+'</span>'
+            +'<span style="font-size:.56rem;color:'+(linkType==='trap'?'#ff3333':'#9f7aea')+';border:1px solid '+(linkType==='trap'?'rgba(192,0,14,.3)':'rgba(159,122,234,.3)')+';border-radius:8px;padding:1px 5px;font-weight:600">'+(linkType==='trap'?'ERROR':'TRACKER')+'</span>'
             +'<code style="font-size:.62rem;color:#f5c800;background:rgba(255,200,0,.08);padding:1px 5px;border-radius:3px;flex:1;min-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(linkId)+'">…'+esc(linkId.slice(-12))+'</code>'
             +(note?'<span style="font-size:.6rem;color:#9f7aea;font-style:italic">'+esc(note)+'</span>':'')
+            +(linkDevCode?'<span style="font-size:.56rem;color:#f5c800;opacity:.6;font-family:monospace;background:rgba(245,200,0,.07);border-radius:4px;padding:1px 4px">'+esc(linkDevCode)+'</span>':'')
             +(hitCount?'<span style="font-size:.58rem;color:#ff3333;border:1px solid rgba(192,0,14,.25);border-radius:8px;padding:1px 5px;font-weight:600">'+hitCount+' hits</span>':'<span style="font-size:.58rem;color:#333">0 hits</span>')
             +(archivedAt?'<span style="font-size:.56rem;color:#3a3a3a;width:100%;margin-top:1px">Archived '+esc(archivedAt)+'</span>':'')
             +'<div style="display:flex;gap:5px;width:100%;margin-top:3px">'
@@ -1619,7 +1621,9 @@ function renderDevArchives(){
       var arch=_devArchivesCache[archId];
       if(!arch||!arch.links||!arch.links[linkId])return;
       var entry=arch.links[linkId];
-      var linkData=typeof entry==='string'?{}:(entry.data||{});
+      var linkData=typeof entry==='string'?{}:Object.assign({},entry.data||{});
+      // Ensure devCode is set so the link appears in the filtered list after restore
+      if(!linkData.devCode)linkData.devCode=_currentDevCode;
       var logsData=typeof entry==='string'?null:(entry.logs||null);
       var sc=getSyncCode();
       var linkWriteUrl=linkType==='trap'
@@ -3149,12 +3153,14 @@ function loadOpRedirectList(){
       var created=e.createdAt?new Date(e.createdAt).toLocaleString():'?';
       var opRdrIsNew=e.createdAt&&(Date.now()-new Date(e.createdAt).getTime()<86400000);
       var creator=e.createdBy?esc(e.createdBy):'?';
+      var rdrDevCode=e.devCode||'';
       var note=e.note?esc(e.note):'';
       var opDestIcon=getDestIcon(e.target||'');
-      var opRdrHaystack=(id+' '+(e.note||'')+' '+(e.target||'')+' '+url+' '+(e.createdBy||'')).toLowerCase();
+      var opRdrHaystack=(id+' '+(e.note||'')+' '+(e.target||'')+' '+url+' '+(e.createdBy||'')+' '+(e.devCode||'')).toLowerCase();
       return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)'+(opRdrIsNew?';box-shadow:0 0 0 1px rgba(192,0,14,.2);border-radius:4px':'')+'" data-op-redir-id="'+esc(id)+'" data-op-redir-haystack="'+esc(opRdrHaystack)+'">'
         +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">'
         +'<span style="font-size:.62rem;color:#555">'+esc(created)+' · by '+creator+'</span>'
+        +(rdrDevCode?'<span style="font-size:.58rem;color:#f5c800;opacity:.7;font-family:monospace;background:rgba(245,200,0,.07);border-radius:4px;padding:1px 5px">'+esc(rdrDevCode)+'</span>':'')
         +(opRdrIsNew?'<span style="font-size:.56rem;color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em">NEW</span>':'')
         +'<span style="margin-left:auto;font-size:.62rem;background:rgba(192,0,14,.1);color:#ff3333;border:1px solid rgba(192,0,14,.25);border-radius:10px;padding:1px 8px;font-weight:600" id="oprhitcount-'+esc(id)+'">— hits</span>'
         +'</div>'
@@ -4237,9 +4243,13 @@ function loadOpTrapList(){
       var ws=link.workspace||getOpWs();
       var url=ERROR_PAGE_BASE+'?id='+encodeURIComponent(id)+'&ws='+encodeURIComponent(ws);
       var trapNote=link.note?esc(link.note):'';
-      var opHaystack=(id+' '+(link.note||'')+' '+url).toLowerCase();
+      var trapDevCode=link.devCode||'';
+      var opHaystack=(id+' '+(link.note||'')+' '+url+(link.devCode||'')).toLowerCase();
       return '<li style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)'+(opTrapIsNew?';box-shadow:0 0 0 1px rgba(192,0,14,.2);border-radius:4px':'')+'" data-trap-id-op="'+esc(id)+'" data-op-trap-hits-val="0" data-op-trap-haystack="'+esc(opHaystack)+'">'
-        +'<div style="font-size:.7rem;color:#888">'+esc(created)+(opTrapIsNew?' <span style="font-size:.56rem;color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em;vertical-align:middle">NEW</span>':'')+'</div>'
+        +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+        +'<span style="font-size:.7rem;color:#888">'+esc(created)+(opTrapIsNew?' <span style="font-size:.56rem;color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em;vertical-align:middle">NEW</span>':'')+'</span>'
+        +(trapDevCode?'<span style="font-size:.58rem;color:#f5c800;opacity:.7;font-family:monospace;background:rgba(245,200,0,.07);border-radius:4px;padding:1px 5px">'+esc(trapDevCode)+'</span>':'')
+        +'</div>'
         +(trapNote?'<div style="font-size:.7rem;color:#9f7aea;margin:2px 0;font-style:italic">🏷 '+trapNote+'</div>':'')
         +'<div style="font-size:.72rem;color:#ccc;word-break:break-all;margin:2px 0">'+esc(url)+'</div>'
         +'<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;align-items:center">'
