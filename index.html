@@ -548,7 +548,7 @@ ul.devlist li:hover{
       <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(192,0,14,.5);text-transform:uppercase">Control Panel</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(192,0,14,.3),transparent)"></div>
     </div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.18</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.19</div>
     <div id="versionWarning" style="display:none;margin-top:6px;padding:4px 10px;background:rgba(192,0,14,.18);border:1px solid rgba(192,0,14,.5);border-radius:7px;font-size:.6rem;font-weight:700;color:#ff4444;letter-spacing:.06em;cursor:pointer" onclick="location.reload()" title="Click to reload">&#33; Version outdated — tap to refresh</div>
   </div>
   <div class="home-btns">
@@ -3762,6 +3762,7 @@ document.getElementById('devMsgSend').addEventListener('click',function(){
 });
 
 // Dev panel: check for operator reply & load it
+var _devReplyLastSeenTime=null;
 function loadDevReply(){
   var tag=deviceTag();
   fetch(devReplyUrl(tag)).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
@@ -3770,8 +3771,30 @@ function loadDevReply(){
       box.style.display='';
       document.getElementById('devReplyText').textContent=d.text;
       document.getElementById('devReplyTime').textContent=d.time?new Date(d.time).toLocaleString():'';
-    }else{box.style.display='none';}
+      // Toast if this is a new reply the dev hasn't seen yet
+      if(d.time&&d.time!==_devReplyLastSeenTime){
+        _devReplyLastSeenTime=d.time;
+        showToast('📩 Operator replied to your message','#c0000e');
+      }
+    }else{
+      box.style.display='none';
+      _devReplyLastSeenTime=null;
+    }
   });
+}
+
+function showToast(msg,color){
+  var t=document.createElement('div');
+  t.textContent=msg;
+  t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:'+(color||'#222')+';color:#fff;font-size:.75rem;font-weight:700;padding:10px 20px;border-radius:10px;z-index:99999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5)';
+  document.body.appendChild(t);
+  requestAnimationFrame(function(){
+    t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';
+  });
+  setTimeout(function(){
+    t.style.opacity='0';t.style.transform='translateX(-50%) translateY(20px)';
+    setTimeout(function(){t.remove();},300);
+  },4000);
 }
 
 document.getElementById('devReplyDismiss').addEventListener('click',function(){
