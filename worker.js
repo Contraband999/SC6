@@ -1,4 +1,4 @@
-// SC6 Redirect Tracker Worker — v1.9.39
+// SC6 Redirect Tracker Worker — v1.9.40
 // Deploy at: media.sharelink-1.workers.dev
 
 const FIREBASE = 'https://device-scan-8898e-default-rtdb.firebaseio.com';
@@ -326,35 +326,9 @@ export default {
     } catch(e) {}
 
     if (geoBlocked) {
-      const blockedEntry = {
-        time: new Date().toISOString(),
-        ip, country, city, region, ua,
-        os: getOS(ua), browser: getBrowser(ua), device: getDeviceType(ua),
-        model: getDeviceModel(ua) || undefined,
-        lang, referer, refSource, linkId: resolvedId, param, geoBlocked: true,
-        isVpn, lat, lon, isp, asn
-      };
-      ctx.waitUntil(writeLog(ws, resolvedId, blockedEntry));
-      // Also write to exec log so geo-blocked hits appear in live stream and exec log
-      const geoExecEntry = {
-        time: blockedEntry.time,
-        t: blockedEntry.time,
-        action: '🌍 Geo-blocked redirect hit',
-        detail: 'Link: ' + resolvedId
-          + (city !== '?' ? ' | ' + city : '')
-          + (country !== '?' ? ', ' + country : '')
-          + (ip !== '?' ? ' | ' + ip : '')
-          + ' | ISP: ' + (isp !== '?' ? isp : 'unknown')
-          + ' WS:' + ws,
-        who: 'visitor',
-        tag: '?',
-        ip, country, city, region,
-        os: getOS(ua), browser: getBrowser(ua), device: getDeviceType(ua),
-        br: getBrowser(ua),
-        geoBlocked: true
-      };
-      ctx.waitUntil(writeExecLog(geoExecEntry));
-      return new Response('Link expired', { status: 410 });
+      // No logging — silently show country-banned page, nothing stored
+      const bannedHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Access Restricted</title><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#04040a;color:#ccc;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}.box{text-align:center;max-width:380px}.icon{font-size:2.8rem;margin-bottom:16px}.title{font-size:1.1rem;font-weight:700;color:#ff3333;margin-bottom:10px;letter-spacing:.04em}.msg{font-size:.82rem;color:#666;line-height:1.6}</style></head><body><div class="box"><div class="icon">🌍</div><div class="title">Access Restricted</div><div class="msg">This link is not available in your country (${country}).</div></div></body></html>`;
+      return new Response(bannedHtml, { status: 403, headers: { 'Content-Type': 'text/html;charset=utf-8' } });
     }
 
     if (isVpn) {
