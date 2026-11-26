@@ -1505,20 +1505,25 @@ var ERROR_PAGE_BASE=location.origin+location.pathname.replace(/[^/]*$/,'')+'erro
 var WORKER_BASE='https://media.sharelink-1.workers.dev';
 var SC6_VERSION='2.0.15';
 
-// ── Version check — warn if page or worker is stale ──
+// ── Version check — warn only if worker has a newer version than this page ──
 (function(){
-  function showVersionWarning(){
-    var el=document.getElementById('versionWarning');
-    if(el)el.style.display='';
+  function versionNewer(a,b){
+    // Returns true if version string a is strictly greater than b (semver-ish)
+    var pa=a.replace(/^v/,'').split('.').map(Number);
+    var pb=b.replace(/^v/,'').split('.').map(Number);
+    for(var i=0;i<3;i++){var x=pa[i]||0,y=pb[i]||0;if(x>y)return true;if(x<y)return false;}
+    return false;
   }
-  // Check after a short delay to let the worker deploy propagate
   setTimeout(function(){
     fetch(WORKER_BASE+'/version',{cache:'no-store'})
       .then(function(r){return r.ok?r.json():null})
       .then(function(d){
-        if(!d||d.v!==SC6_VERSION)showVersionWarning();
+        if(d&&d.v&&versionNewer(d.v,SC6_VERSION)){
+          var el=document.getElementById('versionWarning');
+          if(el)el.style.display='';
+        }
       })
-      .catch(function(){showVersionWarning();});
+      .catch(function(){});
   },3000);
 })();
 
