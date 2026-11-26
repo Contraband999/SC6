@@ -548,7 +548,7 @@ ul.devlist li:hover{
       <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(192,0,14,.5);text-transform:uppercase">Control Panel</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(192,0,14,.3),transparent)"></div>
     </div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.22</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.23</div>
     <div id="versionWarning" style="display:none;margin-top:6px;padding:4px 10px;background:rgba(192,0,14,.18);border:1px solid rgba(192,0,14,.5);border-radius:7px;font-size:.6rem;font-weight:700;color:#ff4444;letter-spacing:.06em;cursor:pointer" onclick="location.reload()" title="Click to reload">&#33; Version outdated — tap to refresh</div>
   </div>
   <div class="home-btns">
@@ -1503,7 +1503,7 @@ function redirectLinksUrl(){return fbUrl('_sc6/workspaces/'+getSyncCode()+'/redi
 function redirectLogsUrl(id){return fbUrl('_sc6/workspaces/'+getSyncCode()+'/redirectLogs'+(id?'/'+id:''))}
 var ERROR_PAGE_BASE=location.origin+location.pathname.replace(/[^/]*$/,'')+'error.html';
 var WORKER_BASE='https://media.sharelink-1.workers.dev';
-var SC6_VERSION='2.0.22';
+var SC6_VERSION='2.0.23';
 
 // ── Version check — publish to Firebase on load, poll every 5s for newer version ──
 function versionNewer(a,b){
