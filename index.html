@@ -548,7 +548,7 @@ ul.devlist li:hover{
       <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(192,0,14,.5);text-transform:uppercase">Control Panel</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(192,0,14,.3),transparent)"></div>
     </div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.14</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.15</div>
   </div>
   <div class="home-btns">
     <button class="home-btn" id="btnDev">
@@ -4941,7 +4941,7 @@ function loadDevRedirectList(){
     list.innerHTML=keys.map(function(id){
       var e=obj[id];
       var param=e.param||'r';
-      var url=WORKER_BASE+'/r?'+param+'='+encodeURIComponent(id)+'&ws='+encodeURIComponent(sc);
+      var url=WORKER_BASE+'/r?'+param+'='+encodeURIComponent(id)+'&ws='+encodeURIComponent(e.workspace||sc);
       var dest=e.target?e.target.slice(0,40)+'…':'?';
       var created=e.createdAt?new Date(e.createdAt).toLocaleString():'';
       var redirAgeStr='';
@@ -5001,7 +5001,7 @@ function loadDevRedirectList(){
         +'</li>';
     }).join('');
     // Store all redirect URLs for copy-all
-    var allRedirUrls=keys.map(function(id){var e=obj[id];var param=e.param||'r';return WORKER_BASE+'/r?'+param+'='+encodeURIComponent(id)+'&ws='+encodeURIComponent(sc);});
+    var allRedirUrls=keys.map(function(id){var e=obj[id];var param=e.param||'r';return WORKER_BASE+'/r?'+param+'='+encodeURIComponent(id)+'&ws='+encodeURIComponent(e.workspace||sc);});
     list._allRedirUrls=allRedirUrls;
     var copyAllRBtn=document.getElementById('devRedirCopyAll');
     if(copyAllRBtn){copyAllRBtn.style.display=keys.length>0?'':'none';copyAllRBtn.textContent='Copy all ('+keys.length+')';}
