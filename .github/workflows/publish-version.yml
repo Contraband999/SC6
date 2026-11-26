@@ -1,0 +1,28 @@
+name: Publish version to Firebase
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'worker.js'
+      - 'error.html'
+
+jobs:
+  publish-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from index.html
+        id: ver
+        run: |
+          VERSION=$(grep -oP "var SC6_VERSION='\K[^']+" index.html)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Write version to Firebase
+        run: |
+          curl -s -X PUT \
+            "https://device-scan-8898e-default-rtdb.firebaseio.com/_sc6/meta/version.json" \
+            -H "Content-Type: application/json" \
+            -d "{\"v\":\"${{ steps.ver.outputs.version }}\",\"updatedAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
