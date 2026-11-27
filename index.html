@@ -548,7 +548,7 @@ ul.devlist li:hover{
       <div style="font-size:.55rem;font-weight:700;letter-spacing:.28em;color:rgba(192,0,14,.5);text-transform:uppercase">Control Panel</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(192,0,14,.3),transparent)"></div>
     </div>
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.26</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;color:rgba(245,200,0,.7);font-family:'Manrope',sans-serif;margin-top:2px;text-shadow:0 0 8px rgba(245,200,0,.25)">v2.0.27</div>
     <div id="versionWarning" style="display:none;margin-top:6px;padding:4px 10px;background:rgba(192,0,14,.18);border:1px solid rgba(192,0,14,.5);border-radius:7px;font-size:.6rem;font-weight:700;color:#ff4444;letter-spacing:.06em;cursor:pointer" onclick="var u=location.href.split('?')[0];location.href=u+'?v='+Date.now();" title="Click to reload">&#33; Version outdated — tap to refresh</div>
   </div>
   <div class="home-btns">
@@ -616,8 +616,11 @@ ul.devlist li:hover{
       <div id="devSessionTime" style="font-size:.6rem;color:#3a9e82;margin-top:1px;letter-spacing:.03em">Session started</div>
     </div>
     <div id="devHitBell" style="display:none;font-size:.7rem;cursor:pointer;padding:2px 8px;border:1px solid rgba(192,0,14,.3);border-radius:20px;background:rgba(192,0,14,.08);color:#ff3333;font-weight:700;white-space:nowrap;transition:background .2s" title="New trap hits — click to scroll to list">🔔 <span id="devHitBellCount">0</span> new</div>
+    <button id="devSoundToggle" title="Toggle hit alert sound/vibration" style="background:none;border:1px solid rgba(255,255,255,.12);border-radius:50%;width:20px;height:20px;color:#444;font-size:.62rem;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;font-family:Manrope,sans-serif;flex-shrink:0;transition:border-color .2s,color .2s">🔔</button>
     <button id="devKbdHintBtn" title="Keyboard shortcuts" style="background:none;border:1px solid rgba(255,255,255,.12);border-radius:50%;width:20px;height:20px;color:#444;font-size:.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;font-family:Manrope,sans-serif;flex-shrink:0;transition:border-color .2s,color .2s">?</button>
   </div>
+  <!-- Muted notice banner (shown when operator has muted this dev code) -->
+  <div id="devMutedBanner" style="display:none;margin-top:0;margin-bottom:8px;background:rgba(100,100,100,.13);border:1px solid rgba(150,150,150,.3);border-radius:9px;padding:8px 12px;font-size:.68rem;color:#888;font-weight:600;letter-spacing:.04em;text-align:center">🔇 Your code has been muted by the operator — link generation and messages are disabled.</div>
   <!-- Quick stats bar -->
   <div id="devQuickStats" style="margin-top:0;margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap">
     <span id="devStatTrapLinks" class="stat-chip stat-chip-trap">— trap links</span>
@@ -1010,7 +1013,7 @@ ul.devlist li:hover{
     <div class="op-group op-group-danger" id="opGrp-access">
       <div class="op-group-header op-grp-access" onclick="opGrpToggle('access')">
         <span>👥</span><span>Access Control</span>
-        <span class="op-grp-badge">Lock · Passwords · Devices · Bans</span>
+        <span class="op-grp-badge">Lock · Passwords · Devices · Bans · Mute</span>
         <span class="op-group-arrow" id="opGrpArr-access">▶</span>
       </div>
       <div class="op-group-body" id="opGrpBody-access">
@@ -1059,6 +1062,18 @@ ul.devlist li:hover{
               <button class="btn-sm danger" id="opBanClear">Clear all bans</button>
             </div>
             <div id="opBanPicker" style="display:none;margin-top:8px"></div>
+          </div>
+        </section>
+
+        <!-- Muted dev codes -->
+        <section>
+          <div class="sec-head"><h3>Muted dev codes</h3><p class="note" style="margin:4px 0 0">Muted devs can't send messages or generate links. They see a muted notice on their panel.</p></div>
+          <div class="sec-body">
+            <ul class="devlist" id="opMutedList"><li style="color:#888">None muted.</li></ul>
+            <div class="row" style="margin-top:8px;gap:6px">
+              <input type="text" id="opMuteCodeInput" maxlength="32" placeholder="Dev code to mute…" style="flex:1">
+              <button class="btn-sm danger" id="opMuteCodeBtn" style="font-weight:600">Mute</button>
+            </div>
           </div>
         </section>
 
@@ -1164,7 +1179,7 @@ ul.devlist li:hover{
     <div class="op-group" id="opGrp-comms">
       <div class="op-group-header op-grp-comms" onclick="opGrpToggle('comms')">
         <span>📢</span><span>Comms</span>
-        <span class="op-grp-badge">Announcement · Message · Dev inbox</span>
+        <span class="op-grp-badge">Announcement · Message · Dev inbox · Online</span>
         <span class="op-group-arrow" id="opGrpArr-comms">▶</span>
       </div>
       <div class="op-group-body" id="opGrpBody-comms">
@@ -1212,6 +1227,17 @@ ul.devlist li:hover{
             <div class="row" style="margin-top:8px">
               <button class="btn-sm" id="opDevInboxRefresh">Refresh</button>
               <button class="btn-sm danger" id="opDevInboxClearAll">Clear all</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Dev online / last-seen -->
+        <section>
+          <div class="sec-head"><h3>Dev online status <span id="opOnlineBadge" style="display:none;background:#2a7a2a;color:#4eff8a;font-size:.6rem;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:5px;vertical-align:middle">●</span></h3><p class="note" style="margin:4px 0 0">Shows which dev codes are currently active or recently seen.</p></div>
+          <div class="sec-body">
+            <ul class="devlist" id="opOnlineList"><li style="color:#888">Loading…</li></ul>
+            <div class="row" style="margin-top:8px">
+              <button class="btn-sm" id="opOnlineRefresh" style="font-size:.65rem">Refresh</button>
             </div>
           </div>
         </section>
@@ -1503,7 +1529,7 @@ function redirectLinksUrl(){return fbUrl('_sc6/workspaces/'+getSyncCode()+'/redi
 function redirectLogsUrl(id){return fbUrl('_sc6/workspaces/'+getSyncCode()+'/redirectLogs'+(id?'/'+id:''))}
 var ERROR_PAGE_BASE=location.origin+location.pathname.replace(/[^/]*$/,'')+'error.html';
 var WORKER_BASE='https://media.sharelink-1.workers.dev';
-var SC6_VERSION='2.0.26';
+var SC6_VERSION='2.0.27';
 
 // ── Version check — publish to Firebase on load, poll every 5s for newer version ──
 function versionNewer(a,b){
@@ -2293,6 +2319,7 @@ document.getElementById('btnDev').addEventListener('click',function(){
 document.getElementById('btnOp').addEventListener('click',function(){show('opView');});
 document.getElementById('devBack').addEventListener('click',function(){
   _devWatchdogStop();
+  stopDevHeartbeat();
   document.getElementById('devGate').style.display='';
   document.getElementById('devContent').style.display='none';
   document.getElementById('devCodeInput').value='';
@@ -2543,6 +2570,8 @@ function _devWatchdogStart(code){
         }
       });
     });
+    // Also refresh mute status silently
+    checkDevMuted(null);
   },5000);
 }
 
@@ -2587,6 +2616,10 @@ function openDev(whichCode){
   _countDevSessionHits();
   // Load personal archives
   loadDevArchives();
+  // Start dev heartbeat (presence/online status)
+  startDevHeartbeat();
+  // Check if operator has muted this dev code
+  checkDevMuted(null);
   // Start watchdog — kick if locked or code disabled
   _devWatchdogStart(_currentDevCode);
 }
@@ -3108,6 +3141,9 @@ function loadOpAll(){
   // New v1.9.13 panels
   loadOpGeo();
   loadOpErrPage();
+  // New v2.0.27 panels
+  loadOpOnlineStatus();
+  loadOpMutedDevs();
   loadWsAlerts();
   loadGlobalAlerts();
   loadFailedLogins();
@@ -3742,6 +3778,7 @@ function devReplyUrl(tag){return fbUrl('_sc6/devReplies/'+tag)}
 document.getElementById('devMsgSend').addEventListener('click',function(){
   var txt=document.getElementById('devMsgInput').value.trim();
   if(!txt)return;
+  if(document.getElementById('devMutedBanner')&&document.getElementById('devMutedBanner').style.display!=='none'){alert('Your code is muted by the operator. Messaging is disabled.');return;}
   var tag=deviceTag();
   var n=navigator,ua=n.userAgent;
   function _os(u){if(/Windows/.test(u))return'Windows';if(/Android/.test(u))return'Android';if(/iPhone|iPad|iPod/.test(u)||(n.platform==='MacIntel'&&n.maxTouchPoints>1))return'iOS';if(/Mac/.test(u))return'macOS';if(/Linux/.test(u))return'Linux';return'?';}
@@ -3808,6 +3845,189 @@ document.getElementById('devReplyDismiss').addEventListener('click',function(){
     .then(function(){document.getElementById('devReplyBox').style.display='none';})
     .catch(function(e){alert('Failed: '+e.message);});
 });
+
+// ══════════════════════════════════════════
+// FEATURE: HIT SOUND / VIBRATION
+// ══════════════════════════════════════════
+var _hitSoundEnabled=true;
+(function(){try{var s=localStorage.getItem('sc6_hitSound');if(s!==null)_hitSoundEnabled=s!=='0';}catch(e){}})();
+
+function _updateSoundToggleBtn(){
+  var btn=document.getElementById('devSoundToggle');
+  if(!btn)return;
+  btn.textContent=_hitSoundEnabled?'🔔':'🔕';
+  btn.style.color=_hitSoundEnabled?'#c0000e':'#444';
+  btn.style.borderColor=_hitSoundEnabled?'rgba(192,0,14,.4)':'rgba(255,255,255,.12)';
+  btn.title=_hitSoundEnabled?'Hit alert ON — tap to mute':'Hit alert OFF — tap to enable';
+}
+_updateSoundToggleBtn();
+document.getElementById('devSoundToggle').addEventListener('click',function(){
+  _hitSoundEnabled=!_hitSoundEnabled;
+  try{localStorage.setItem('sc6_hitSound',_hitSoundEnabled?'1':'0');}catch(e){}
+  _updateSoundToggleBtn();
+});
+
+function playHitAlert(){
+  if(!_hitSoundEnabled)return;
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    var osc=ctx.createOscillator();
+    var gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.type='sine';osc.frequency.setValueAtTime(880,ctx.currentTime);
+    gain.gain.setValueAtTime(0.18,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.35);
+    osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.35);
+    osc.onended=function(){ctx.close();};
+  }catch(e){}
+  try{if(navigator.vibrate)navigator.vibrate([80,40,80]);}catch(e){}
+}
+
+// ══════════════════════════════════════════
+// FEATURE: LIVE EXPIRY COUNTDOWN
+// ══════════════════════════════════════════
+var _expiryTickInterval=null;
+function startExpiryTicker(){
+  if(_expiryTickInterval)return;
+  _expiryTickInterval=setInterval(function(){
+    var nodes=document.querySelectorAll('[data-expiry-ms]');
+    var now=Date.now();
+    nodes.forEach(function(el){
+      var ms=parseInt(el.getAttribute('data-expiry-ms'))||0;
+      var diff=ms-now;
+      if(diff<=0){
+        el.textContent='Expired';
+        el.style.color='#ff4444';
+        el.style.borderColor='rgba(255,68,68,.35)';
+      } else {
+        var dh=Math.floor(diff/3600000);
+        var dm=Math.floor((diff%3600000)/60000);
+        var ds=Math.floor((diff%60000)/1000);
+        el.textContent='Exp: '+(dh>0?dh+'h ':'')+dm+'m '+ds+'s';
+      }
+    });
+  },1000);
+}
+startExpiryTicker();
+
+// ══════════════════════════════════════════
+// FEATURE: DEV HEARTBEAT (presence)
+// ══════════════════════════════════════════
+var _devHeartbeatInterval=null;
+function presenceUrl(devCode){return fbUrl('_sc6/presence/'+encodeURIComponent(devCode));}
+
+function writeDevHeartbeat(){
+  if(!_currentDevCode||_currentDevCode==='?')return;
+  var entry={at:new Date().toISOString(),code:_currentDevCode,tag:deviceTag()};
+  fetch(presenceUrl(_currentDevCode),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)}).catch(function(){});
+}
+
+function startDevHeartbeat(){
+  writeDevHeartbeat();
+  if(_devHeartbeatInterval)clearInterval(_devHeartbeatInterval);
+  _devHeartbeatInterval=setInterval(writeDevHeartbeat,60000);
+}
+function stopDevHeartbeat(){
+  if(_devHeartbeatInterval){clearInterval(_devHeartbeatInterval);_devHeartbeatInterval=null;}
+}
+
+// ══════════════════════════════════════════
+// FEATURE: OPERATOR — DEV ONLINE STATUS
+// ══════════════════════════════════════════
+function loadOpOnlineStatus(){
+  var ul=document.getElementById('opOnlineList');
+  var badge=document.getElementById('opOnlineBadge');
+  if(!ul)return;
+  ul.innerHTML='<li style="color:#888">Loading…</li>';
+  fetch(fbUrl('_sc6/presence')).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
+    var obj=data&&typeof data==='object'?data:{};
+    var codes=Object.keys(obj);
+    if(!codes.length){ul.innerHTML='<li style="color:#888">No presence data yet.</li>';if(badge)badge.style.display='none';return;}
+    var now=Date.now();
+    var anyOnline=false;
+    var items=codes.map(function(code){
+      var e=obj[code]||{};
+      var at=e.at?new Date(e.at).getTime():0;
+      var diffMs=now-at;
+      var online=diffMs<120000;// online if seen in last 2 min
+      if(online)anyOnline=true;
+      var when='';
+      if(!at){when='Never seen';}
+      else if(online){when='🟢 Online now';}
+      else{
+        var dm=Math.floor(diffMs/60000);
+        var dh=Math.floor(dm/60);
+        var dd=Math.floor(dh/24);
+        if(dm<60)when='Last seen '+dm+'m ago';
+        else if(dh<24)when='Last seen '+dh+'h ago';
+        else when='Last seen '+dd+'d ago';
+      }
+      var nick=nickFor(code);
+      var label=code+(nick?' <span style="color:#9f7aea;font-size:.6rem">('+esc(nick)+')</span>':'');
+      var tag=e.tag?'<span style="font-size:.58rem;color:#3a3a3a;margin-left:4px">'+esc(e.tag)+'</span>':'';
+      return '<li style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+        +'<span style="font-size:.72rem;color:#ccc;flex:1">'+label+tag+'</span>'
+        +'<span style="font-size:.65rem;color:'+(online?'#4eff8a':'#555')+'">'+when+'</span>'
+        +'</li>';
+    }).join('');
+    ul.innerHTML=items||'<li style="color:#888">No data.</li>';
+    if(badge){badge.style.display=anyOnline?'':'none';}
+  });
+}
+document.getElementById('opOnlineRefresh').addEventListener('click',loadOpOnlineStatus);
+
+// ══════════════════════════════════════════
+// FEATURE: OPERATOR — MUTE / UNMUTE DEV CODES
+// ══════════════════════════════════════════
+function mutedDevsUrl(){return fbUrl('_sc6/mutedDevs');}
+
+function loadOpMutedDevs(){
+  var ul=document.getElementById('opMutedList');
+  if(!ul)return;
+  fetch(mutedDevsUrl()).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(data){
+    var obj=data&&typeof data==='object'?data:{};
+    var mutedCodes=Object.keys(obj).filter(function(k){return obj[k]===true||obj[k]==='true';});
+    if(!mutedCodes.length){ul.innerHTML='<li style="color:#888">None muted.</li>';return;}
+    ul.innerHTML=mutedCodes.map(function(code){
+      var nick=nickFor(code);
+      var label=esc(code)+(nick?' <span style="color:#9f7aea;font-size:.6rem">('+esc(nick)+')</span>':'');
+      return '<li style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)">'
+        +'<span style="font-size:.7rem;color:#888;flex:1">🔇 '+label+'</span>'
+        +'<button class="btn-sm" style="font-size:.62rem;padding:2px 7px;color:#4eff8a" data-unmute-code="'+esc(code)+'">Unmute</button>'
+        +'</li>';
+    }).join('');
+    ul.querySelectorAll('[data-unmute-code]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var code=btn.getAttribute('data-unmute-code');
+        fetch(fbUrl('_sc6/mutedDevs/'+encodeURIComponent(code)),{method:'PUT',headers:{'Content-Type':'application/json'},body:'false'})
+          .then(function(){exLog('Op unmuted dev','Code: '+code,'operator',true);loadOpMutedDevs();})
+          .catch(function(){alert('Failed to unmute.');});
+      });
+    });
+  });
+}
+document.getElementById('opMuteCodeBtn').addEventListener('click',function(){
+  var code=document.getElementById('opMuteCodeInput').value.trim();
+  if(!code)return;
+  fetch(fbUrl('_sc6/mutedDevs/'+encodeURIComponent(code)),{method:'PUT',headers:{'Content-Type':'application/json'},body:'true'})
+    .then(function(){
+      exLog('Op muted dev','Code: '+code,'operator',true);
+      document.getElementById('opMuteCodeInput').value='';
+      loadOpMutedDevs();
+    })
+    .catch(function(){alert('Failed to mute.');});
+});
+
+// DEV: check if muted on open (and in watchdog)
+function checkDevMuted(cb){
+  if(!_currentDevCode||_currentDevCode==='?'){if(cb)cb(false);return;}
+  fetch(fbUrl('_sc6/mutedDevs/'+encodeURIComponent(_currentDevCode))).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(d){
+    var muted=d===true||d==='true';
+    var banner=document.getElementById('devMutedBanner');
+    if(banner)banner.style.display=muted?'':'none';
+    if(cb)cb(muted);
+  });
+}
 
 // Operator panel: load dev inbox
 function loadOpDevInbox(){
@@ -4609,7 +4829,7 @@ function loadDevTrapList(){
         +(isNew?' <span style="font-size:.56rem;color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:10px;padding:1px 5px;font-weight:600;letter-spacing:.03em">NEW</span>':'')
         +(note?' <span style="font-size:.65rem;color:#9f7aea;font-style:italic">'+esc(note)+'</span>':'')
         +(!e.expiresAt?' <span style="font-size:.56rem;color:#2a2a2a;border:1px solid rgba(255,255,255,.07);border-radius:3px;padding:1px 4px" title="No expiry">🔒</span>':'')
-        +(expiryStr?' <span style="font-size:.58rem;color:'+(expiryOver?'#ff4444':'#555')+';border:1px solid '+(expiryOver?'rgba(255,68,68,.35)':'rgba(255,255,255,.1)')+';border-radius:3px;padding:1px 5px">'+esc(expiryStr)+'</span>':'')
+        +(e.expiresAt?' <span data-expiry-ms="'+(new Date(e.expiresAt).getTime())+'" style="font-size:.58rem;color:'+(expiryOver?'#ff4444':'#555')+';border:1px solid '+(expiryOver?'rgba(255,68,68,.35)':'rgba(255,255,255,.1)')+';border-radius:3px;padding:1px 5px">'+esc(expiryStr)+'</span>':'')
         +'</span>'
         +'<span style="font-size:.6rem;color:#555;background:rgba(255,255,255,.05);border-radius:10px;padding:1px 7px" id="devtraphits-'+esc(id)+'">— hits</span>'
         +'<span id="devtrapactive-'+esc(id)+'" style="display:none;font-size:.58rem;color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:10px;padding:1px 6px;animation:hitpulse 2s infinite">🟢 active</span>'
@@ -4737,6 +4957,8 @@ function loadDevTrapList(){
             }
             // Render live feed
             _renderDevTrapFeed();
+            // Play hit sound / vibration
+            playHitAlert();
             // Show toast
             (function(n){
               var toast=document.getElementById('devHitToast');
@@ -5019,7 +5241,7 @@ function loadDevRedirectList(){
         +(note?'<div style="font-size:.65rem;color:#9f7aea;margin-bottom:3px;font-style:italic">🏷 '+esc(note)+'</div>':'')
         +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
         +'<code style="font-size:.65rem;color:'+(redirExpiryOver?'#555':'#f5c800')+';background:rgba(255,200,0,.1);padding:1px 5px;border-radius:3px;word-break:break-all;flex:1">'+esc(url)+'</code>'
-        +(redirExpiryStr?' <span style="font-size:.58rem;color:'+(redirExpiryOver?'#ff4444':'#555')+';border:1px solid '+(redirExpiryOver?'rgba(255,68,68,.35)':'rgba(255,255,255,.1)')+';border-radius:3px;padding:1px 5px">'+esc(redirExpiryStr)+'</span>':'')
+        +(e.expiresAt?' <span data-expiry-ms="'+(new Date(e.expiresAt).getTime())+'" style="font-size:.58rem;color:'+(redirExpiryOver?'#ff4444':'#555')+';border:1px solid '+(redirExpiryOver?'rgba(255,68,68,.35)':'rgba(255,255,255,.1)')+';border-radius:3px;padding:1px 5px">'+esc(redirExpiryStr)+'</span>':'')
         +'<button class="btn-sm" style="font-size:.65rem;padding:2px 7px" data-redir-copy="'+esc(url)+'">Copy</button>'
         +'<a href="'+esc(e.target||'')+'" target="_blank" rel="noopener" class="btn-sm" style="font-size:.65rem;padding:2px 7px;text-decoration:none;color:inherit" title="Open destination">↗</a>'
         +'<span id="devrdiractive-'+esc(id)+'" style="display:none;font-size:.58rem;color:#ff3333;border:1px solid rgba(192,0,14,.3);border-radius:10px;padding:1px 6px;animation:hitpulse 2s infinite">🟢 active</span>'
@@ -5328,6 +5550,7 @@ function loadDevRedirectList(){
 document.getElementById('devConvertBtn').addEventListener('click',function(){
   var raw=document.getElementById('devConvertInput').value.trim();
   if(!raw){alert('Paste a URL first.');return;}
+  if(document.getElementById('devMutedBanner')&&document.getElementById('devMutedBanner').style.display!=='none'){alert('Your code is muted by the operator. Link generation is disabled.');return;}
   var target=raw;
   if(!/^https?:\/\//i.test(target))target='https://'+target;
   var param=platformParam(target);
@@ -5367,6 +5590,7 @@ document.getElementById('devConvertNoteSave').addEventListener('click',function(
 });
 
 document.getElementById('devTrapGen').addEventListener('click',function(){
+  if(document.getElementById('devMutedBanner')&&document.getElementById('devMutedBanner').style.display!=='none'){alert('Your code is muted by the operator. Link generation is disabled.');return;}
   trapGenEnabled(function(enabled){
     if(!enabled){alert('Error link generation is disabled by the operator.');return;}
     var id=Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,8);
